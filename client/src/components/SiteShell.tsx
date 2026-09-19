@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Bell, Bird, Heart, LogIn, LogOut, Menu, MessageCircle, Plus, Search, ShieldAlert, Users, X } from "lucide-react";
+import { Bell, Bird, Heart, LogIn, LogOut, Menu, MessageCircle, Plus, Search, ShieldAlert, UserRound, Users, X } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { ADMIN_EMAIL } from "@shared/const";
@@ -20,6 +20,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     { href: "/community", label: "Community", labelAr: "المجتمع", icon: Users },
     { href: "/favorites", label: "Saved", labelAr: "المحفوظات", icon: Heart },
     { href: "/messages", label: "Messages", labelAr: "الرسائل", icon: MessageCircle },
+    ...(isAuthenticated ? [{ href: "/profile", label: "Profile", labelAr: "ملفي", icon: UserRound }] : []),
   ];
   return (
     <div className="min-h-screen bg-[#f7f5ef] text-[#183b39]">

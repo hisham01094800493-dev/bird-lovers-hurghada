@@ -37,6 +37,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   for (const field of textFields) {
     if (user[field] !== undefined) { values[field] = user[field] ?? null; updateSet[field] = user[field] ?? null; }
   }
+  if (user.whatsappOptIn !== undefined) { values.whatsappOptIn = user.whatsappOptIn; updateSet.whatsappOptIn = user.whatsappOptIn; }
   if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
   if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
   else if (user.openId === ENV.ownerOpenId || user.email === ADMIN_EMAIL) { values.role = "admin"; updateSet.role = "admin"; }
@@ -65,7 +66,7 @@ export async function listListings(input: { search?: string; categoryId?: number
 
 export async function getListingById(id: number) {
   const db = await getDb(); if (!db) return undefined;
-  const rows = await db.select({ id: listings.id, titleEn: listings.titleEn, titleAr: listings.titleAr, descriptionEn: listings.descriptionEn, descriptionAr: listings.descriptionAr, price: listings.price, currency: listings.currency, negotiable: listings.negotiable, exchangeAvailable: listings.exchangeAvailable, location: listings.location, status: listings.status, views: listings.views, favoritesCount: listings.favoritesCount, createdAt: listings.createdAt, updatedAt: listings.updatedAt, categoryId: categories.id, categoryNameEn: categories.nameEn, categoryNameAr: categories.nameAr, sellerId: users.id, sellerName: users.name, sellerArea: users.area, sellerAvatar: users.avatarUrl, sellerPhone: users.phone, coverImage: listingImages.storagePath })
+  const rows = await db.select({ id: listings.id, titleEn: listings.titleEn, titleAr: listings.titleAr, descriptionEn: listings.descriptionEn, descriptionAr: listings.descriptionAr, price: listings.price, currency: listings.currency, negotiable: listings.negotiable, exchangeAvailable: listings.exchangeAvailable, location: listings.location, status: listings.status, views: listings.views, favoritesCount: listings.favoritesCount, createdAt: listings.createdAt, updatedAt: listings.updatedAt, categoryId: categories.id, categoryNameEn: categories.nameEn, categoryNameAr: categories.nameAr, sellerId: users.id, sellerName: users.name, sellerArea: users.area, sellerAvatar: users.avatarUrl, sellerPhone: users.phone, sellerWhatsAppOptIn: users.whatsappOptIn, sellerPhoneVerifiedAt: users.phoneVerifiedAt, coverImage: listingImages.storagePath })
     .from(listings).leftJoin(categories, eq(listings.categoryId, categories.id)).leftJoin(users, eq(listings.sellerId, users.id)).leftJoin(listingImages, and(eq(listingImages.listingId, listings.id), eq(listingImages.isCover, true))).where(and(eq(listings.id, id), eq(listings.status, "published"), eq(listings.moderationStatus, "approved"))).limit(1);
   if (!rows[0]) return undefined;
   await db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, id));
@@ -189,4 +190,68 @@ export async function createReport(input: { reporterId: number; targetType: stri
 export async function createReview(input: { reviewerId: number; sellerId: number; listingId: number; rating: number; body: string }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   const [created] = await db.insert(reviews).values(input); return Number(created.insertId);
+}
+
+export async function getProfile(userId: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const rows = await db.select({ id: users.id, name: users.name, email: users.email, avatarUrl: users.avatarUrl, phone: users.phone, whatsappOptIn: users.whatsappOptIn, phoneVerifiedAt: users.phoneVerifiedAt, area: users.area, bio: users.bio, role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+  return rows[0];
+}
+
+export async function updateProfile(userId: number, input: { name?: string; phone?: string; area?: string; bio?: string; whatsappOptIn?: boolean }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.update(users).set({ name: input.name, phone: input.phone || null, area: input.area || null, bio: input.bio || null, whatsappOptIn: Boolean(input.whatsappOptIn) }).where(eq(users.id, userId));
+  return getProfile(userId);
+}
+
+export async function reorderListingImages(userId: number, listingId: number, imageIds: number[]) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const owner = await db.select({ sellerId: listings.sellerId }).from(listings).where(eq(listings.id, listingId)).limit(1);
+  if (!owner[0] || owner[0].sellerId !== userId) return false;
+  for (let index = 0; index < imageIds.length; index += 1) await db.update(listingImages).set({ sortOrder: index, isCover: index === 0 }).where(and(eq(listingImages.id, imageIds[index]), eq(listingImages.listingId, listingId)));
+  return true;
+}
+
+export async function canReviewCompletedListing(reviewerId: number, sellerId: number, listingId: number) {
+  const db = await getDb(); if (!db) return false;
+  const listing = await db.select({ status: listings.status }).from(listings).where(and(eq(listings.id, listingId), eq(listings.sellerId, sellerId))).limit(1);
+  if (!listing[0] || (listing[0].status !== "sold" && listing[0].status !== "exchanged")) return false;
+  const conversation = await db.select({ id: conversations.id }).from(conversations).where(and(eq(conversations.listingId, listingId), eq(conversations.buyerId, reviewerId), eq(conversations.sellerId, sellerId))).limit(1);
+  return Boolean(conversation[0]);
+}
+
+export async function listOpenReports() {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ id: reports.id, targetType: reports.targetType, targetId: reports.targetId, reason: reports.reason, status: reports.status, createdAt: reports.createdAt, reporterName: users.name, reporterEmail: users.email }).from(reports).leftJoin(users, eq(reports.reporterId, users.id)).where(or(eq(reports.status, "open"), eq(reports.status, "reviewing"))).orderBy(asc(reports.createdAt)).limit(80);
+}
+
+export async function resolveReport(reportId: number, actorId: number, status: "resolved" | "dismissed", resolution: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const report = await db.select({ targetType: reports.targetType, targetId: reports.targetId }).from(reports).where(eq(reports.id, reportId)).limit(1);
+  await db.update(reports).set({ status, resolution, resolvedBy: actorId, resolvedAt: new Date() }).where(eq(reports.id, reportId));
+  if (status === "resolved" && report[0]?.targetType === "contact_verification") await db.update(users).set({ phoneVerifiedAt: new Date() }).where(eq(users.id, report[0].targetId));
+  await db.insert(auditLogs).values({ actorId, action: `report_${status}`, targetType: "report", targetId: reportId, metadata: JSON.stringify({ resolution }) });
+  return true;
+}
+
+export async function requestContactVerification(userId: number, phone: string) {
+  return createReport({ reporterId: userId, targetType: "contact_verification", targetId: userId, reason: `Verify seller contact ${phone}` });
+}
+
+export async function moderateCommunityPost(postId: number, actorId: number, status: "published" | "hidden" | "locked") {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.update(communityPosts).set({ status }).where(eq(communityPosts.id, postId));
+  await db.insert(auditLogs).values({ actorId, action: `post_${status}`, targetType: "community_post", targetId: postId });
+  return true;
+}
+
+export async function listMyListings(userId: number) {
+  const db = await getDb(); if (!db) return [];
+  const rows = await db.select({ id: listings.id, titleEn: listings.titleEn, status: listings.status, moderationStatus: listings.moderationStatus, createdAt: listings.createdAt }).from(listings).where(eq(listings.sellerId, userId)).orderBy(desc(listings.createdAt)).limit(50);
+  return Promise.all(rows.map(async listing => ({ ...listing, images: await db.select({ id: listingImages.id, storagePath: listingImages.storagePath, sortOrder: listingImages.sortOrder, isCover: listingImages.isCover }).from(listingImages).where(eq(listingImages.listingId, listing.id)).orderBy(asc(listingImages.sortOrder)) })));
+}
+
+export async function listModerationPosts() {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ id: communityPosts.id, title: communityPosts.title, body: communityPosts.body, status: communityPosts.status, createdAt: communityPosts.createdAt, authorName: users.name }).from(communityPosts).leftJoin(users, eq(communityPosts.authorId, users.id)).orderBy(desc(communityPosts.createdAt)).limit(50);
 }

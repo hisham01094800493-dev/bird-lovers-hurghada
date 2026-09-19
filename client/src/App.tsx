@@ -14,6 +14,8 @@ import Messages from "./pages/Messages";
 import Notifications from "./pages/Notifications";
 import AdminDashboard from "./pages/AdminDashboard";
 import BrandSplash from "./components/BrandSplash";
+import Profile from "./pages/Profile";
+import MyListings from "./pages/MyListings";
 
 function Router() {
   return <Switch>
@@ -26,6 +28,8 @@ function Router() {
     <Route path="/messages" component={Messages} />
     <Route path="/notifications" component={Notifications} />
     <Route path="/admin" component={AdminDashboard} />
+    <Route path="/profile" component={Profile} />
+    <Route path="/my-listings" component={MyListings} />
     <Route path="/404" component={NotFound} />
     <Route component={NotFound} />
   </Switch>;

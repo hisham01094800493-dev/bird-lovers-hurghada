@@ -10,6 +10,14 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => undefined); });
+}
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", () => localStorage.setItem("bird-lovers-install-available", new Date().toISOString()));
+  window.addEventListener("appinstalled", () => localStorage.setItem("bird-lovers-installed", new Date().toISOString()));
+}
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;

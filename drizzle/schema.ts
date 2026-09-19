@@ -20,6 +20,8 @@ export const users = mysqlTable("users", {
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   avatarUrl: text("avatarUrl"),
   phone: varchar("phone", { length: 32 }),
+  whatsappOptIn: boolean("whatsappOptIn").notNull().default(false),
+  phoneVerifiedAt: timestamp("phoneVerifiedAt"),
   area: varchar("area", { length: 120 }),
   bio: text("bio"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
