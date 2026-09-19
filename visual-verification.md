@@ -23,3 +23,7 @@ Full-page screenshots show `/sell`, `/marketplace`, and `/notifications` renderi
 ## Language switch pass
 
 Browser verification confirmed the header toggle changes the full page to Arabic, updates navigation and marketplace content, sets `document.documentElement.lang` to `ar`, sets `dir` to `rtl`, and stores `bird-lovers-language=ar` in localStorage. The toggle label changes to `English`, allowing the user to switch back.
+
+## Category selector stability pass
+
+The mobile `/sell` screenshot now shows one stable Radix Select trigger with the bilingual placeholder `اختر الفئة / Choose category`; loading and error states are rendered outside the option list, and the field is disabled until category data is ready. TypeScript, all 10 tests, and the production build pass.
