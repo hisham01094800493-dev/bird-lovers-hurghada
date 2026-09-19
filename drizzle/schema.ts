@@ -130,6 +130,17 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({ inboxIdx: index("notifications_inbox_idx").on(table.userId, table.readAt, table.createdAt) }));
 
+export const notificationPreferences = mysqlTable("notificationPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  newMessage: boolean("newMessage").notNull().default(true),
+  listingUpdates: boolean("listingUpdates").notNull().default(true),
+  communityUpdates: boolean("communityUpdates").notNull().default(true),
+  customUpdates: boolean("customUpdates").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({ userIdx: uniqueIndex("notification_preferences_user_unique").on(table.userId) }));
+
 export const reports = mysqlTable("reports", {
   id: int("id").autoincrement().primaryKey(),
   reporterId: int("reporterId").notNull().references(() => users.id),

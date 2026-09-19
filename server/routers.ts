@@ -9,7 +9,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { communityPosts, favorites, listingImages, listings, notifications } from "../drizzle/schema";
-import { addMessage, canReviewCompletedListing, createConversationMessage, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, getListingSeller, getProfile, isFavorite, listCategories, listCommunityPosts, listConversations, listFavorites, listListings, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateProfile } from "./db";
+import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, getListingSeller, getNotificationPreferences, getProfile, isFavorite, listCategories, listCommunityPosts, listConversations, listFavorites, listListings, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile } from "./db";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin" && ctx.user.email !== ADMIN_EMAIL) throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
@@ -76,6 +76,8 @@ export const appRouter = router({
   notifications: router({
     list: protectedProcedure.query(({ ctx }) => listNotifications(ctx.user.id)),
     unreadCount: protectedProcedure.query(({ ctx }) => unreadNotificationCount(ctx.user.id)),
+    preferences: protectedProcedure.query(({ ctx }) => getNotificationPreferences(ctx.user.id)),
+    updatePreferences: protectedProcedure.input(z.object({ newMessage: z.boolean(), listingUpdates: z.boolean(), communityUpdates: z.boolean(), customUpdates: z.boolean() })).mutation(({ ctx, input }) => updateNotificationPreferences(ctx.user.id, input)),
     markRead: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); await db.update(notifications).set({ readAt: new Date() }).where(and(eq(notifications.id, input.id), eq(notifications.userId, ctx.user.id))); return { success: true } as const; }),
   }),
   messages: router({
@@ -95,6 +97,7 @@ export const appRouter = router({
     stats: adminProcedure.query(() => getAdminStats()),
     pendingListings: adminProcedure.query(() => listPendingListings()),
     moderationPosts: adminProcedure.query(() => listModerationPosts()),
+    sendCustomNotification: adminProcedure.input(z.object({ recipientId: z.number().int().positive().optional(), title: z.string().min(3).max(180), body: z.string().min(5).max(1000), link: z.string().max(240).optional() })).mutation(async ({ input }) => ({ delivered: await createCustomNotifications(input) })),
     moderateListing: adminProcedure.input(z.object({ listingId: z.number().int().positive(), decision: z.enum(["approved", "rejected"]) })).mutation(({ ctx, input }) => moderateListing(input.listingId, ctx.user.id, input.decision)),
     openReports: adminProcedure.query(() => listOpenReports()),
     resolveReport: adminProcedure.input(z.object({ reportId: z.number().int().positive(), status: z.enum(["resolved", "dismissed"]), resolution: z.string().min(3).max(500) })).mutation(({ ctx, input }) => resolveReport(input.reportId, ctx.user.id, input.status, input.resolution)),

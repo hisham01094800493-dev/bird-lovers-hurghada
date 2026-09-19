@@ -10,6 +10,7 @@ import {
   listingImages,
   listings,
   messages,
+  notificationPreferences,
   notifications,
   reports,
   reviews,
@@ -150,8 +151,32 @@ export async function addMessage(conversationId: number, senderId: number, body:
 }
 
 export async function createNotification(userId: number, type: string, title: string, body: string, link?: string) {
-  const db = await getDb(); if (!db) return;
+  const db = await getDb(); if (!db) return false;
+  const preferenceKey = type === "new_message" ? "newMessage" : type.startsWith("listing_") ? "listingUpdates" : type.startsWith("community_") ? "communityUpdates" : "customUpdates";
+  const preferenceRows = await db.select({ enabled: notificationPreferences[preferenceKey] }).from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1);
+  if (preferenceRows[0] && preferenceRows[0].enabled === false) return false;
   await db.insert(notifications).values({ userId, type, title, body, link });
+  return true;
+}
+
+export async function getNotificationPreferences(userId: number) {
+  const db = await getDb(); if (!db) return { newMessage: true, listingUpdates: true, communityUpdates: true, customUpdates: true };
+  const rows = await db.select({ newMessage: notificationPreferences.newMessage, listingUpdates: notificationPreferences.listingUpdates, communityUpdates: notificationPreferences.communityUpdates, customUpdates: notificationPreferences.customUpdates }).from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1);
+  return rows[0] ?? { newMessage: true, listingUpdates: true, communityUpdates: true, customUpdates: true };
+}
+
+export async function updateNotificationPreferences(userId: number, input: { newMessage: boolean; listingUpdates: boolean; communityUpdates: boolean; customUpdates: boolean }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.insert(notificationPreferences).values({ userId, ...input }).onDuplicateKeyUpdate({ set: input });
+  return getNotificationPreferences(userId);
+}
+
+export async function createCustomNotifications(input: { recipientId?: number; title: string; body: string; link?: string }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const recipients = input.recipientId ? [{ id: input.recipientId }] : await db.select({ id: users.id }).from(users).limit(5000);
+  let delivered = 0;
+  for (const recipient of recipients) if (await createNotification(recipient.id, "custom", input.title, input.body, input.link)) delivered += 1;
+  return delivered;
 }
 
 export async function getAdminStats() {

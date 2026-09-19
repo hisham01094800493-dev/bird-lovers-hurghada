@@ -11,3 +11,7 @@
 ## Second pass
 
 The seller profile and seller studio routes render through the same bilingual shell, and the admin route renders the moderation header, KPI cards, report area, and community-safety section. Protected profile/studio routes can show a brief authentication/data loading state in a cold preview, while the admin shell remains visible with zero-state cards when no records are available in that session. The layout remains responsive and preserves the existing visual system.
+
+## Custom notifications pass
+
+The notifications page now presents a two-column inbox and preferences layout with clear empty-state handling. The admin dashboard renders the protected custom-notification composer directly beneath the KPI cards, with a calm green surface that matches the existing visual system. Desktop screenshots confirmed the controls are readable and aligned; member preferences remain separated from admin broadcast controls.

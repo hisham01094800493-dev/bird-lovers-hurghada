@@ -1,0 +1,1 @@
+ALTER TABLE `notificationPreferences` DROP INDEX `notificationPreferences_userId_unique`;
