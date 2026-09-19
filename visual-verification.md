@@ -19,3 +19,7 @@ The notifications page now presents a two-column inbox and preferences layout wi
 ## Stability and listing-form pass
 
 Full-page screenshots show `/sell`, `/marketplace`, and `/notifications` rendering without the blank error screen. The listing form now clearly separates `الفئة / Category` from `السعر بالجنيه المصري / Price in EGP`, uses a dedicated EGP suffix, bilingual labels, Arabic direction for Arabic fields, and visible image constraints. The notification preferences panel remains intact after the stability changes.
+
+## Language switch pass
+
+Browser verification confirmed the header toggle changes the full page to Arabic, updates navigation and marketplace content, sets `document.documentElement.lang` to `ar`, sets `dir` to `rtl`, and stores `bird-lovers-language=ar` in localStorage. The toggle label changes to `English`, allowing the user to switch back.
