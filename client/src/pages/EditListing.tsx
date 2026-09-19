@@ -1,0 +1,18 @@
+import { FormEvent, useEffect, useState } from "react";
+import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { Link, useLocation, useRoute } from "wouter";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import SiteShell from "@/components/SiteShell";
+import { toast } from "sonner";
+
+export default function EditListing() {
+  const [, params] = useRoute("/listing/:id/edit"); const [, navigate] = useLocation(); const id = Number(params?.id);
+  const [form, setForm] = useState({ titleEn: "", titleAr: "", descriptionEn: "", descriptionAr: "", price: "", location: "Hurghada" }); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false);
+  useEffect(() => { fetch("/api/listings/mine").then(response => response.json()).then((items: Array<any>) => { const item = items.find(candidate => candidate.id === id); if (!item) throw new Error("الإعلان غير موجود"); setForm({ titleEn: item.titleEn || "", titleAr: item.titleAr || "", descriptionEn: item.descriptionEn || "", descriptionAr: item.descriptionAr || "", price: String(item.price || ""), location: item.location || "Hurghada" }); }).catch(error => toast.error(error.message)).finally(() => setLoading(false)); }, [id]);
+  const update = (key: keyof typeof form, value: string) => setForm(current => ({ ...current, [key]: value }));
+  const submit = async (event: FormEvent) => { event.preventDefault(); setSaving(true); try { const response = await fetch(`/api/listings/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) }); const result = await response.json(); if (!response.ok) throw new Error(result.message || "تعذر حفظ التعديلات"); toast.success("تم حفظ التعديلات وإرسال الإعلان للمراجعة"); navigate("/my-listings"); } catch (error) { toast.error(error instanceof Error ? error.message : "حدث خطأ"); } finally { setSaving(false); } };
+  if (loading) return <SiteShell><div className="shell py-24 text-center"><Loader2 className="mx-auto animate-spin" /></div></SiteShell>;
+  return <SiteShell><section className="shell py-10 sm:py-16"><Link href="/my-listings" className="back-link"><ArrowLeft size={16} /> العودة لإعلاناتي</Link><div className="form-card mx-auto mt-8 max-w-3xl"><p className="eyebrow">Edit listing / تعديل الإعلان</p><h1 className="page-title mt-3">حسّن إعلانك،<br /><em>واجعله أوضح.</em></h1><p className="page-lede">بعد الحفظ سيعود الإعلان إلى حالة قيد المراجعة حفاظًا على جودة السوق.</p><form onSubmit={submit} className="mt-8 grid gap-4 md:grid-cols-2"><Input required value={form.titleEn} onChange={event => update("titleEn", event.target.value)} placeholder="Title in English" /><Input dir="rtl" value={form.titleAr} onChange={event => update("titleAr", event.target.value)} placeholder="العنوان بالعربية" /><Textarea required className="md:col-span-2" value={form.descriptionEn} onChange={event => update("descriptionEn", event.target.value)} placeholder="Description in English" /><Textarea dir="rtl" className="md:col-span-2" value={form.descriptionAr} onChange={event => update("descriptionAr", event.target.value)} placeholder="الوصف بالعربية" /><Input required type="number" min="0" step="0.01" value={form.price} onChange={event => update("price", event.target.value)} placeholder="Price" /><Input required value={form.location} onChange={event => update("location", event.target.value)} placeholder="Location" /><Button disabled={saving} type="submit" className="cta-primary md:col-span-2">{saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} حفظ وإرسال للمراجعة</Button></form></div></section></SiteShell>;
+}
