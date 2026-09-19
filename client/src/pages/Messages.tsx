@@ -1,0 +1,28 @@
+import { FormEvent, useState } from "react";
+import { Link, useLocation } from "wouter";
+import { ArrowLeft, Bird, CheckCheck, Loader2, MessageCircle, Send, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
+import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
+import SiteShell from "@/components/SiteShell";
+
+export default function Messages() {
+  const { isAuthenticated, loading } = useAuth();
+  const [location, navigate] = useLocation();
+  const listingId = Number(new URLSearchParams(location.split("?")[1] || "").get("listing"));
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [body, setBody] = useState("");
+  const conversations = trpc.messages.conversations.useQuery(undefined, { enabled: isAuthenticated, refetchInterval: 10000 });
+  const activeId = selectedId || conversations.data?.[0]?.id || null;
+  const messages = trpc.messages.byConversation.useQuery({ conversationId: activeId as number }, { enabled: Boolean(activeId), refetchInterval: 5000 });
+  const utils = trpc.useUtils();
+  const start = trpc.messages.start.useMutation({ onSuccess: data => { setBody(""); navigate(`/messages?conversation=${data.conversationId}`); conversations.refetch(); utils.messages.byConversation.invalidate({ conversationId: data.conversationId }); toast.success("Message sent securely"); }, onError: error => toast.error(error.message) });
+  const send = trpc.messages.send.useMutation({ onSuccess: () => { setBody(""); if (activeId) { utils.messages.byConversation.invalidate({ conversationId: activeId }); conversations.refetch(); } }, onError: error => toast.error(error.message) });
+  if (loading) return <SiteShell><div className="shell py-24 text-center"><Loader2 className="mx-auto animate-spin" /></div></SiteShell>;
+  if (!isAuthenticated) return <SiteShell><div className="shell py-24"><div className="auth-card"><span className="brand-mark mx-auto"><MessageCircle size={20} /></span><h1 className="mt-5 font-display text-3xl font-semibold">Private conversations, safely.</h1><p className="mt-3 text-sm leading-6 text-[#718780]">Log in to message sellers and keep your conversations linked to the right listing.</p><Button className="cta-primary mt-7" onClick={() => startLogin()}>Log in securely</Button></div></div></SiteShell>;
+  const submit = (event: FormEvent) => { event.preventDefault(); if (!body.trim()) return; if (listingId && !activeId) start.mutate({ listingId, body }); else if (activeId) send.mutate({ conversationId: activeId, body }); };
+  return <SiteShell><section className="shell py-10 sm:py-14"><Link href="/marketplace" className="back-link"><ArrowLeft size={16} /> Back to marketplace</Link><div className="mt-8 flex items-end justify-between gap-4"><div><p className="eyebrow">Messages / الرسائل</p><h1 className="page-title mt-3">Good conversations<br /><em>start here.</em></h1></div><div className="hidden items-center gap-2 text-xs text-[#799087] sm:flex"><ShieldCheck size={16} className="text-[#76a68f]" /> Server-authorized conversations</div></div><div className="messages-shell mt-9"><aside className="messages-list"><div className="border-b border-[#dce7df] px-5 py-4"><p className="eyebrow">Your inbox</p><p className="mt-1 text-sm text-[#7c918b]">{conversations.data?.length || 0} conversations</p></div>{conversations.data?.length ? conversations.data.map(conversation => <button key={conversation.id} className={`conversation-row ${activeId === conversation.id ? "conversation-row-active" : ""}`} onClick={() => { setSelectedId(conversation.id); navigate(`/messages?conversation=${conversation.id}`); }}><span className="avatar-placeholder"><Bird size={16} /></span><span className="min-w-0 text-left"><strong className="block truncate text-sm text-[#183b39]">{conversation.listingTitle}</strong><small className="mt-1 block text-xs text-[#82948e]">{conversation.status}</small></span></button>) : <div className="p-6 text-sm leading-6 text-[#82948e]">Start from any listing by tapping “Message seller”.</div>}</aside><section className="message-thread">{activeId ? <><div className="border-b border-[#dce7df] px-5 py-4"><p className="font-display text-lg font-semibold">{conversations.data?.find(item => item.id === activeId)?.listingTitle || "Conversation"}</p><p className="mt-1 text-xs text-[#82948e]">Messages stay attached to the listing.</p></div><div className="thread-body">{messages.isLoading ? <Loader2 className="mx-auto animate-spin text-[#76a68f]" /> : messages.data?.map(message => <div key={message.id} className={`message-bubble ${message.senderId === (conversations.data?.find(item => item.id === activeId)?.buyerId) ? "message-incoming" : "message-outgoing"}`}><p>{message.body}</p><small>{message.senderName || "Member"} · {new Date(message.createdAt).toLocaleString()}</small></div>)}</div><form onSubmit={submit} className="thread-composer"><Textarea value={body} onChange={event => setBody(event.target.value)} placeholder="Write a respectful message…" className="min-h-14 flex-1 resize-none rounded-xl border-[#dce7df] bg-[#fbfcfa]" /><Button type="submit" className="cta-primary h-12" disabled={send.isPending || start.isPending}>{send.isPending || start.isPending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />} Send</Button></form></> : <div className="empty-state m-5"><CheckCheck size={30} /><h2 className="font-display text-xl font-semibold">Your inbox is ready.</h2><p>Choose a listing to start a secure conversation.</p></div>}</section></div></section></SiteShell>;
+}

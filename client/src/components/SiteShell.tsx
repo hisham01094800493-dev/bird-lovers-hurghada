@@ -2,19 +2,24 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { Button } from "@/components/ui/button";
-import { Bird, Heart, LogIn, LogOut, Menu, Plus, Search, Users, X } from "lucide-react";
+import { Bell, Bird, Heart, LogIn, LogOut, Menu, MessageCircle, Plus, Search, ShieldAlert, Users, X } from "lucide-react";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { ADMIN_EMAIL } from "@shared/const";
 
 const FACEBOOK_GROUP_URL = "https://www.facebook.com/groups/798363001904219/?ref=share_group_link";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
+  const unread = trpc.notifications.unreadCount.useQuery(undefined, { enabled: isAuthenticated });
+  const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
   const [menuOpen, setMenuOpen] = useState(false);
   const nav = [
     { href: "/marketplace", label: "Marketplace", labelAr: "السوق", icon: Search },
     { href: "/community", label: "Community", labelAr: "المجتمع", icon: Users },
     { href: "/favorites", label: "Saved", labelAr: "المحفوظات", icon: Heart },
+    { href: "/messages", label: "Messages", labelAr: "الرسائل", icon: MessageCircle },
   ];
   return (
     <div className="min-h-screen bg-[#f7f5ef] text-[#183b39]">
@@ -33,6 +38,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 <Icon size={16} /> <span>{label}</span><span className="text-xs text-[#94a4a0]">{labelAr}</span>
               </Link>
             ))}
+            <Link href="/notifications" className={`nav-link relative ${location.startsWith("/notifications") ? "nav-link-active" : ""}`} aria-label="Notifications"><Bell size={16} />{Boolean(unread.data) && <span className="notification-dot">{unread.data}</span>}</Link>
+            {isAdmin && <Link href="/admin" className={`nav-link ${location.startsWith("/admin") ? "nav-link-active" : ""}`} aria-label="Admin"><ShieldAlert size={16} /></Link>}
           </nav>
           <div className="flex items-center gap-2">
             <Link href="/sell" className="sell-button"><Plus size={17} /> <span className="hidden sm:inline">Sell an item</span><span className="sm:hidden">Sell</span></Link>
@@ -44,7 +51,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             <button className="icon-button md:hidden" onClick={() => setMenuOpen(value => !value)} aria-label="Toggle menu">{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
           </div>
         </div>
-        {menuOpen && <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 md:hidden"><div className="mx-auto flex max-w-6xl flex-col gap-1">{nav.map(({ href, label, labelAr, icon: Icon }) => <Link key={href} href={href} className="nav-link justify-start" onClick={() => setMenuOpen(false)}><Icon size={17} /> {label} <span className="text-xs text-[#94a4a0]">{labelAr}</span></Link>)}<button className="nav-link justify-start" onClick={() => isAuthenticated ? logout() : startLogin()}>{isAuthenticated ? <LogOut size={17} /> : <LogIn size={17} />} {isAuthenticated ? "Log out" : "Log in"}</button></div></div>}
+        {menuOpen && <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 md:hidden"><div className="mx-auto flex max-w-6xl flex-col gap-1">{nav.map(({ href, label, labelAr, icon: Icon }) => <Link key={href} href={href} className="nav-link justify-start" onClick={() => setMenuOpen(false)}><Icon size={17} /> {label} <span className="text-xs text-[#94a4a0]">{labelAr}</span></Link>)}<Link href="/notifications" className="nav-link justify-start" onClick={() => setMenuOpen(false)}><Bell size={17} /> Notifications <span className="text-xs text-[#94a4a0]">الإشعارات</span></Link>{isAdmin && <Link href="/admin" className="nav-link justify-start" onClick={() => setMenuOpen(false)}><ShieldAlert size={17} /> Admin <span className="text-xs text-[#94a4a0]">الإدارة</span></Link>}<button className="nav-link justify-start" onClick={() => isAuthenticated ? logout() : startLogin()}>{isAuthenticated ? <LogOut size={17} /> : <LogIn size={17} />} {isAuthenticated ? "Log out" : "Log in"}</button></div></div>}
       </header>
       <main>{children}</main>
       <footer className="mt-24 border-t border-[#dce7df] bg-[#eef3ed]">

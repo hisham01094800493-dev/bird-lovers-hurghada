@@ -10,6 +10,10 @@ import ListingDetails from "./pages/ListingDetails";
 import CreateListing from "./pages/CreateListing";
 import Community from "./pages/Community";
 import Favorites from "./pages/Favorites";
+import Messages from "./pages/Messages";
+import Notifications from "./pages/Notifications";
+import AdminDashboard from "./pages/AdminDashboard";
+import BrandSplash from "./components/BrandSplash";
 
 function Router() {
   return <Switch>
@@ -19,13 +23,16 @@ function Router() {
     <Route path="/sell" component={CreateListing} />
     <Route path="/community" component={Community} />
     <Route path="/favorites" component={Favorites} />
+    <Route path="/messages" component={Messages} />
+    <Route path="/notifications" component={Notifications} />
+    <Route path="/admin" component={AdminDashboard} />
     <Route path="/404" component={NotFound} />
     <Route component={NotFound} />
   </Switch>;
 }
 
 function App() {
-  return <ErrorBoundary><ThemeProvider defaultTheme="light"><TooltipProvider><Toaster /><Router /></TooltipProvider></ThemeProvider></ErrorBoundary>;
+  return <ErrorBoundary><ThemeProvider defaultTheme="light"><TooltipProvider><Toaster /><BrandSplash /><Router /></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 
 export default App;
