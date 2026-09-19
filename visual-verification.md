@@ -27,3 +27,7 @@ Browser verification confirmed the header toggle changes the full page to Arabic
 ## Category selector stability pass
 
 The mobile `/sell` screenshot now shows one stable Radix Select trigger with the bilingual placeholder `اختر الفئة / Choose category`; loading and error states are rendered outside the option list, and the field is disabled until category data is ready. TypeScript, all 10 tests, and the production build pass.
+
+## Product updates pass
+
+The notification center now includes a product-updates area when announcements exist and labels the preference as `Product updates / تحديثات الموقع`. Mobile visual verification confirmed the notification preferences layout remains readable and includes the new product-update switch.

@@ -21,5 +21,6 @@ describe("custom notifications", () => {
   it("keeps custom broadcast restricted to administrators", async () => {
     const caller = appRouter.createCaller(context(member()));
     await expect(caller.admin.sendCustomNotification({ title: "A useful update", body: "Please check the new community guide." })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.admin.publishUpdate({ version: "1.2.0", titleEn: "New feature", titleAr: "ميزة جديدة", bodyEn: "A useful feature is now available.", bodyAr: "أصبحت هناك ميزة جديدة متاحة." })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });

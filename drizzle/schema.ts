@@ -141,6 +141,18 @@ export const notificationPreferences = mysqlTable("notificationPreferences", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({ userIdx: uniqueIndex("notification_preferences_user_unique").on(table.userId) }));
 
+export const appUpdates = mysqlTable("appUpdates", {
+  id: int("id").autoincrement().primaryKey(),
+  version: varchar("version", { length: 40 }).notNull(),
+  titleEn: varchar("titleEn", { length: 180 }).notNull(),
+  titleAr: varchar("titleAr", { length: 180 }).notNull(),
+  bodyEn: text("bodyEn").notNull(),
+  bodyAr: text("bodyAr").notNull(),
+  link: varchar("link", { length: 240 }),
+  publishedAt: timestamp("publishedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ publishedIdx: index("app_updates_published_idx").on(table.publishedAt) }));
+
 export const reports = mysqlTable("reports", {
   id: int("id").autoincrement().primaryKey(),
   reporterId: int("reporterId").notNull().references(() => users.id),
@@ -184,6 +196,7 @@ export type CommunityPost = typeof communityPosts.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type AppUpdate = typeof appUpdates.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;

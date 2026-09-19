@@ -2,6 +2,7 @@ import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   auditLogs,
+  appUpdates,
   categories,
   communityPosts,
   conversations,
@@ -94,6 +95,23 @@ export async function listCommunityPosts() {
 export async function listNotifications(userId: number) {
   const db = await getDb(); if (!db) return [];
   return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(30);
+}
+
+export async function listAppUpdates() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(appUpdates).orderBy(desc(appUpdates.publishedAt)).limit(20);
+}
+
+export async function publishAppUpdate(input: { version: string; titleEn: string; titleAr: string; bodyEn: string; bodyAr: string; link?: string }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const [created] = await db.insert(appUpdates).values(input);
+  const updateId = Number(created.insertId);
+  const recipients = await db.select({ id: users.id }).from(users).limit(5000);
+  let notified = 0;
+  for (const recipient of recipients) {
+    if (await createNotification(recipient.id, "app_update", "New app update / تحديث جديد", `${input.titleEn} / ${input.titleAr}`, input.link || "/notifications")) notified += 1;
+  }
+  return { id: updateId, notified } as const;
 }
 
 export async function unreadNotificationCount(userId: number) {
