@@ -13,8 +13,13 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 // with "invalid oauth state". It returns void by design, so there is no URL to
 // stash across renders.
 export const startLogin = () => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
+  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL || import.meta.env.VITE_OAUTH_SERVER_URL;
   const appId = import.meta.env.VITE_APP_ID;
+  if (!oauthPortalUrl || !appId) {
+    console.error("Login is not configured: missing OAuth portal URL or app ID");
+    window.alert("تسجيل الدخول غير متاح مؤقتًا. يرجى المحاولة بعد قليل / Login is temporarily unavailable.");
+    return;
+  }
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
 
   const nonce = crypto.randomUUID();
