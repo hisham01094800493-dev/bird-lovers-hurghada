@@ -35,6 +35,29 @@ pnpm dev
 
 The project relies on the managed environment variables already provided by WebDev, including `DATABASE_URL`, Manus OAuth variables, and storage credentials. Do not commit secrets or `.env` files.
 
+## Railway deployment
+
+The repository includes `railway.json` for a single Railway web service. Railway uses Railpack to install the pinned pnpm dependencies and run `pnpm build`, executes the committed Drizzle migrations before each deployment, starts the server with `pnpm start`, and checks `/health` before routing traffic. The server listens on Railway's injected `PORT` and binds to `0.0.0.0`.
+
+Create a Railway MySQL-compatible database and connect it to the application service so that `DATABASE_URL` is available. Configure the following variables in the Railway service before the first deployment:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Yes | MySQL/TiDB connection string used by Drizzle and the migration command |
+| `JWT_SECRET` | Yes | Secret used to sign login session cookies; use a long random value |
+| `VITE_APP_ID` | Yes | Application identifier used by the OAuth client and frontend |
+| `OAUTH_SERVER_URL` | Yes | OAuth server base URL |
+| `OWNER_OPEN_ID` | Recommended | Open ID that receives owner/admin behavior |
+| `BUILT_IN_FORGE_API_URL` | Feature-dependent | Server-side storage, maps, media, and data API endpoint |
+| `BUILT_IN_FORGE_API_KEY` | Feature-dependent | Server-side credential for the Forge endpoint |
+| `VITE_OAUTH_PORTAL_URL` | Yes for login | Public OAuth portal URL embedded in the client build |
+| `VITE_FRONTEND_FORGE_API_URL` | Feature-dependent | Browser-facing maps/API endpoint embedded in the client build |
+| `VITE_FRONTEND_FORGE_API_KEY` | Feature-dependent | Browser-facing maps/API key embedded in the client build |
+
+Variables beginning with `VITE_` are embedded into the client bundle at build time, so set them before deploying or redeploy after changing them. Do not expose server-only secrets such as `JWT_SECRET`, `DATABASE_URL`, or `BUILT_IN_FORGE_API_KEY` as `VITE_` variables. After deployment, set the OAuth callback URL to `<Railway public URL>/api/oauth/callback` in the OAuth provider. The first deployment should be checked at `<Railway public URL>/health` before testing login, listings, uploads, and map features.
+
+Railway's pre-deploy migration command is intentionally limited to applying committed migrations. It does not generate schema changes in production; create and review new migrations locally, commit them, and deploy them through version control.
+
 ## Database
 
 Schema source: `drizzle/schema.ts`
