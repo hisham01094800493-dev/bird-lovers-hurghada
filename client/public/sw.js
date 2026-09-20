@@ -1,4 +1,4 @@
-const CACHE_NAME = "bird-lovers-shell-v1";
+const CACHE_NAME = "bird-lovers-shell-v1-1-0";
 const SHELL = ["/", "/manifest.json", "/manus-storage/bird-lovers-icon-192_aa7c7d7a.png"];
 
 self.addEventListener("install", event => {
