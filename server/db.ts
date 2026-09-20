@@ -29,6 +29,19 @@ export async function getDb() {
   return _db;
 }
 
+export async function ensureLocalAuthSchema() {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.execute(sql.raw("ALTER TABLE `users` ADD COLUMN `passwordHash` text NULL"));
+  } catch (error) {
+    const message = String(error);
+    if (!message.toLowerCase().includes("duplicate column") && !message.toLowerCase().includes("already exists")) {
+      console.warn("[Database] Local auth schema check failed:", message);
+    }
+  }
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
