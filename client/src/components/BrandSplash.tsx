@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Bird } from "lucide-react";
 
 const SPLASH_SEEN = "bird-lovers-splash-seen";
 
@@ -18,5 +19,5 @@ export default function BrandSplash() {
     return () => window.clearTimeout(timer);
   }, [visible]);
   if (!visible) return null;
-  return <div className="brand-splash" role="status" aria-label="Loading Bird Lovers"><img src="/manus-storage/bird-lovers-splash_65a5fb44.png" alt="Bird Lovers" /></div>;
+  return <div className="brand-splash" role="status" aria-label="Loading Bird Lovers"><span className="brand-splash-mark"><Bird size={38} /></span><strong>Bird Lovers</strong></div>;
 }
