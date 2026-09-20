@@ -10,7 +10,7 @@ export default function ChatComposer({ disabled, sending, onSend }: { disabled?:
   const [body, setBody] = useState("");
   const [attachment, setAttachment] = useState<ChatAttachment>();
   const [recording, setRecording] = useState(false);
-  const recorder = useRef<MediaRecorder>();
+  const recorder = useRef<MediaRecorder | null>(null);
   const chunks = useRef<Blob[]>([]);
   const chooseImage = (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; if (!file.type.startsWith("image/")) return; if (file.size > 8_000_000) return; setAttachment({ kind: "image", file, preview: URL.createObjectURL(file) }); event.target.value = ""; };
   const startRecording = async () => { if (!navigator.mediaDevices?.getUserMedia) return; const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const media = new MediaRecorder(stream); chunks.current = []; media.ondataavailable = event => chunks.current.push(event.data); media.onstop = () => { stream.getTracks().forEach(track => track.stop()); const file = new File([new Blob(chunks.current, { type: media.mimeType || "audio/webm" })], `voice-${Date.now()}.webm`, { type: media.mimeType || "audio/webm" }); setAttachment({ kind: "audio", file }); }; recorder.current = media; media.start(); setRecording(true); };
