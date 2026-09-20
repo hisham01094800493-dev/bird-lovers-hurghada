@@ -6,7 +6,7 @@
   },
   "deploy": {
     "preDeployCommand": "pnpm exec drizzle-kit migrate",
-    "startCommand": "pnpm start",
+    "startCommand": "pnpm exec drizzle-kit migrate && pnpm start",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
