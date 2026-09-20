@@ -5,8 +5,8 @@
     "buildCommand": "pnpm build"
   },
   "deploy": {
-    "preDeployCommand": "pnpm exec drizzle-kit migrate",
-    "startCommand": "pnpm exec drizzle-kit migrate && pnpm start",
+    "preDeployCommand": "pnpm exec drizzle-kit push --force",
+    "startCommand": "pnpm exec drizzle-kit push --force && pnpm start",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
