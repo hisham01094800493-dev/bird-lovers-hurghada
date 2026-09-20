@@ -2,14 +2,36 @@ import { COOKIE_NAME } from "@shared/const";
 import { ADMIN_EMAIL } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
+import { randomBytes, randomUUID, scrypt as nodeScrypt, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import sharp from "sharp";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
+import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { communityPosts, favorites, listingImages, listings, notifications } from "../drizzle/schema";
-import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, getListingSeller, getNotificationPreferences, getProfile, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile } from "./db";
+import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createLocalUser, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, getListingSeller, getNotificationPreferences, getProfile, getUserByEmail, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile, upsertUser } from "./db";
+
+const scrypt = promisify(nodeScrypt);
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const derived = await scrypt(password, salt, 64) as Buffer;
+  return `scrypt:${salt}:${derived.toString("hex")}`;
+}
+async function verifyPassword(password: string, stored: string) {
+  const [, salt, encoded] = stored.split(":");
+  if (!salt || !encoded) return false;
+  const expected = Buffer.from(encoded, "hex");
+  const actual = await scrypt(password, salt, expected.length) as Buffer;
+  return actual.length === expected.length && timingSafeEqual(actual, expected);
+}
+function publicUser(user: NonNullable<Awaited<ReturnType<typeof getUserByEmail>>>) {
+  const { passwordHash: _passwordHash, ...safeUser } = user;
+  return safeUser;
+}
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin" && ctx.user.email !== ADMIN_EMAIL) throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
@@ -56,7 +78,24 @@ const listingInput = z.object({
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => opts.ctx.user ? publicUser(opts.ctx.user) : null),
+    register: publicProcedure.input(z.object({ name: z.string().trim().min(2).max(120), email: z.string().trim().email().max(320), password: z.string().min(8).max(128) })).mutation(async ({ ctx, input }) => {
+      const email = input.email.toLowerCase();
+      if (await getUserByEmail(email)) throw new TRPCError({ code: "CONFLICT", message: "An account with this email already exists" });
+      const user = await createLocalUser({ openId: `local_${randomUUID()}`, name: input.name.trim(), email, passwordHash: await hashPassword(input.password) });
+      if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is not available" });
+      const token = await sdk.signSession({ openId: user.openId, appId: ENV.appId || "local-auth", name: user.name || input.name }, { expiresInMs: 1000 * 60 * 60 * 24 * 365 });
+      ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: 1000 * 60 * 60 * 24 * 365 });
+      return publicUser(user);
+    }),
+    login: publicProcedure.input(z.object({ email: z.string().trim().email().max(320), password: z.string().min(8).max(128) })).mutation(async ({ ctx, input }) => {
+      const user = await getUserByEmail(input.email.toLowerCase());
+      if (!user?.passwordHash || !(await verifyPassword(input.password, user.passwordHash))) throw new TRPCError({ code: "UNAUTHORIZED", message: "Email or password is incorrect" });
+      await upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+      const token = await sdk.signSession({ openId: user.openId, appId: ENV.appId || "local-auth", name: user.name || user.email || "Member" }, { expiresInMs: 1000 * 60 * 60 * 24 * 365 });
+      ctx.res.cookie(COOKIE_NAME, token, { ...getSessionCookieOptions(ctx.req), maxAge: 1000 * 60 * 60 * 24 * 365 });
+      return publicUser(user);
+    }),
     logout: publicProcedure.mutation(({ ctx }) => { const cookieOptions = getSessionCookieOptions(ctx.req); ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 }); return { success: true } as const; }),
   }),
   categories: router({ list: publicProcedure.query(() => listCategories()) }),
@@ -144,5 +183,3 @@ export const appRouter = router({
 });
 
 export type AppRouter = typeof appRouter;
-
-

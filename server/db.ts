@@ -35,7 +35,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!db) return;
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
-  const textFields = ["name", "email", "loginMethod", "avatarUrl", "phone", "area", "bio"] as const;
+  const textFields = ["name", "email", "passwordHash", "loginMethod", "avatarUrl", "phone", "area", "bio"] as const;
   for (const field of textFields) {
     if (user[field] !== undefined) { values[field] = user[field] ?? null; updateSet[field] = user[field] ?? null; }
   }
@@ -50,6 +50,17 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 export async function getUserByOpenId(openId: string) {
   const db = await getDb(); if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1); return result[0];
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb(); if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email)).limit(1); return result[0];
+}
+
+export async function createLocalUser(input: { openId: string; name: string; email: string; passwordHash: string }) {
+  const db = await getDb(); if (!db) return undefined;
+  await db.insert(users).values({ openId: input.openId, name: input.name, email: input.email, passwordHash: input.passwordHash, loginMethod: "password", lastSignedIn: new Date() });
+  return getUserByOpenId(input.openId);
 }
 
 export async function listCategories() {

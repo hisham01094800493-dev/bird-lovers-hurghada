@@ -2,68 +2,15 @@
   "version": "7",
   "dialect": "mysql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1789804745307,
-      "tag": "0000_fuzzy_toad",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1789804859067,
-      "tag": "0001_natural_chronomancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1789806228168,
-      "tag": "0002_mysterious_rattler",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1789806811765,
-      "tag": "0003_clever_the_twelve",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1789807129663,
-      "tag": "0004_public_scream",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "5",
-      "when": 1789808472600,
-      "tag": "0005_green_pestilence",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1789808489916,
-      "tag": "0006_slow_komodo",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1789812893167,
-      "tag": "0007_curious_chimera",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1789813797818,
-      "tag": "0008_nice_black_knight",
-      "breakpoints": true
-    }
+    { "idx": 0, "version": "5", "when": 1789804745307, "tag": "0000_fuzzy_toad", "breakpoints": true },
+    { "idx": 1, "version": "5", "when": 1789804859067, "tag": "0001_natural_chronomancer", "breakpoints": true },
+    { "idx": 2, "version": "5", "when": 1789806228168, "tag": "0002_mysterious_rattler", "breakpoints": true },
+    { "idx": 3, "version": "5", "when": 1789806811765, "tag": "0003_clever_the_twelve", "breakpoints": true },
+    { "idx": 4, "version": "5", "when": 1789807129663, "tag": "0004_public_scream", "breakpoints": true },
+    { "idx": 5, "version": "5", "when": 1789808472600, "tag": "0005_green_pestilence", "breakpoints": true },
+    { "idx": 6, "version": "5", "when": 1789808489916, "tag": "0006_slow_komodo", "breakpoints": true },
+    { "idx": 7, "version": "5", "when": 1789812893167, "tag": "0007_curious_chimera", "breakpoints": true },
+    { "idx": 8, "version": "5", "when": 1789813797818, "tag": "0008_nice_black_knight", "breakpoints": true },
+    { "idx": 9, "version": "5", "when": 1789815000000, "tag": "0009_direct_password_auth", "breakpoints": true }
   ]
 }
