@@ -19,15 +19,16 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const notifications = trpc.notifications.list.useQuery(undefined, { enabled: isAuthenticated, refetchInterval: 15000 });
   const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
   const [menuOpen, setMenuOpen] = useState(false);
-  const newestMessageId = useRef<number | null>(null);
+  const newestNotificationId = useRef<number | null>(null);
   useEffect(() => {
-    const newest = notifications.data?.find(item => item.type === "new_message" && !item.readAt);
+    const newest = notifications.data?.find(item => (item.type === "new_message" || item.type === "app_update") && !item.readAt);
     if (!newest) return;
-    if (newestMessageId.current === null) { newestMessageId.current = newest.id; return; }
-    if (newest.id <= newestMessageId.current) return;
-    newestMessageId.current = newest.id;
-    toast.info(isArabic ? "وصلتك رسالة جديدة" : "You have a new message", { description: newest.body, action: { label: isArabic ? "فتح" : "Open", onClick: () => { window.location.assign(newest.link || "/messages"); } } });
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") new Notification(isArabic ? "رسالة جديدة" : "New message", { body: newest.body });
+    if (newestNotificationId.current === null) { newestNotificationId.current = newest.id; return; }
+    if (newest.id <= newestNotificationId.current) return;
+    newestNotificationId.current = newest.id;
+    const isUpdate = newest.type === "app_update";
+    toast.info(isUpdate ? (isArabic ? "تحديث جديد للتطبيق" : "A new app update is available") : (isArabic ? "وصلتك رسالة جديدة" : "You have a new message"), { description: newest.body, action: { label: isArabic ? "فتح" : "Open", onClick: () => { window.location.assign(newest.link || (isUpdate ? "/notifications" : "/messages")); } } });
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") new Notification(isUpdate ? (isArabic ? "تحديث جديد للتطبيق" : "New app update") : (isArabic ? "رسالة جديدة" : "New message"), { body: newest.body });
   }, [notifications.data, isArabic]);
   const nav = [
     { href: "/marketplace", label: t("marketplace"), icon: Search },
