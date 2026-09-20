@@ -1,0 +1,1 @@
+-- Migration 0005 was a metadata-only schema checkpoint.
