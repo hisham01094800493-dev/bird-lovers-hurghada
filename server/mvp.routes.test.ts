@@ -36,6 +36,11 @@ describe("MVP protected routes", () => {
     const caller = appRouter.createCaller(createPublicContext());
     await expect(caller.messages.conversations()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.notifications.list()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.messages.send({ conversationId: 1, body: "hello" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+  });
+  it("keeps listing galleries publicly readable", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(caller.listings.images({ listingId: 1 })).resolves.toBeDefined();
   });
   it("protects profile settings and completed-transaction reviews", async () => {
     const publicCaller = appRouter.createCaller(createPublicContext());

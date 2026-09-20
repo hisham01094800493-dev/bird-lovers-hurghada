@@ -115,6 +115,7 @@ export const messages = mysqlTable("messages", {
   senderId: int("senderId").notNull().references(() => users.id),
   body: text("body").notNull(),
   attachmentPath: text("attachmentPath"),
+  attachmentType: varchar("attachmentType", { length: 80 }),
   readAt: timestamp("readAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({ conversationIdx: index("messages_conversation_idx").on(table.conversationId, table.createdAt) }));

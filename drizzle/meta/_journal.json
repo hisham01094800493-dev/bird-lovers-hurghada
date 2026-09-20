@@ -57,6 +57,13 @@
       "when": 1789812893167,
       "tag": "0007_curious_chimera",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1789813797818,
+      "tag": "0008_nice_black_knight",
+      "breakpoints": true
     }
   ]
 }

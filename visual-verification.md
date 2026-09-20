@@ -31,3 +31,7 @@ The mobile `/sell` screenshot now shows one stable Radix Select trigger with the
 ## Product updates pass
 
 The notification center now includes a product-updates area when announcements exist and labels the preference as `Product updates / تحديثات الموقع`. Mobile visual verification confirmed the notification preferences layout remains readable and includes the new product-update switch.
+
+## Gallery and chat media pass
+
+Mobile verification confirmed the listing detail page renders a large image stage with touch-friendly carousel controls and thumbnails when multiple images are returned. The `/messages` route renders the bilingual inbox and preserves the secure logged-out guard. The first-contact flow now keeps the message composer visible when opened from `/messages?listing=<id>`, before a conversation exists; the composer explains what to write and offers photo and voice-note controls. Server tests cover protected message procedures and public gallery reads.

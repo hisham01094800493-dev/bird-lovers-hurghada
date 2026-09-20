@@ -1,0 +1,13 @@
+import fs from "node:fs";
+const path = "/home/ubuntu/bird-lovers-hurghada/server/routers.ts";
+const source = fs.readFileSync(path, "utf8");
+const start = source.indexOf("const messageAttachmentInput = z.object({");
+if (start < 0) throw new Error("helper block not found");
+const end = source.indexOf("\n}\n", start) + 3;
+const block = source.slice(start, end);
+const without = `${source.slice(0, start)}${source.slice(end)}`.replace(/\n{3,}export type AppRouter/, "\n\nexport type AppRouter");
+const marker = "const listingInput = z.object({";
+const markerIndex = without.indexOf(marker);
+if (markerIndex < 0) throw new Error("router marker not found");
+const updated = `${without.slice(0, markerIndex)}${block}\n\n${without.slice(markerIndex)}`;
+fs.writeFileSync(path, updated);

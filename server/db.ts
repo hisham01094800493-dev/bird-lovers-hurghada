@@ -75,6 +75,12 @@ export async function getListingById(id: number) {
   return rows[0];
 }
 
+export async function listListingImages(listingId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ id: listingImages.id, storagePath: listingImages.storagePath, altText: listingImages.altText, sortOrder: listingImages.sortOrder, isCover: listingImages.isCover })
+    .from(listingImages).innerJoin(listings, eq(listingImages.listingId, listings.id)).where(and(eq(listingImages.listingId, listingId), eq(listings.status, "published"), eq(listings.moderationStatus, "approved"))).orderBy(asc(listingImages.sortOrder));
+}
+
 export async function isFavorite(userId: number, listingId: number) {
   const db = await getDb(); if (!db) return false;
   const row = await db.select({ id: favorites.id }).from(favorites).where(and(eq(favorites.userId, userId), eq(favorites.listingId, listingId))).limit(1); return Boolean(row[0]);
@@ -133,7 +139,7 @@ export async function getConversation(conversationId: number) {
 
 export async function listMessages(conversationId: number) {
   const db = await getDb(); if (!db) return [];
-  return db.select({ id: messages.id, conversationId: messages.conversationId, senderId: messages.senderId, senderName: users.name, body: messages.body, attachmentPath: messages.attachmentPath, readAt: messages.readAt, createdAt: messages.createdAt })
+  return db.select({ id: messages.id, conversationId: messages.conversationId, senderId: messages.senderId, senderName: users.name, body: messages.body, attachmentPath: messages.attachmentPath, attachmentType: messages.attachmentType, readAt: messages.readAt, createdAt: messages.createdAt })
     .from(messages).innerJoin(users, eq(messages.senderId, users.id)).where(eq(messages.conversationId, conversationId)).orderBy(asc(messages.createdAt)).limit(100);
 }
 
@@ -147,24 +153,24 @@ export async function findConversation(listingId: number, buyerId: number, selle
   const rows = await db.select().from(conversations).where(and(eq(conversations.listingId, listingId), eq(conversations.buyerId, buyerId), eq(conversations.sellerId, sellerId))).limit(1); return rows[0];
 }
 
-export async function createConversationMessage(input: { listingId: number; buyerId: number; sellerId: number; body: string }) {
+export async function createConversationMessage(input: { listingId: number; buyerId: number; sellerId: number; body: string; attachmentPath?: string; attachmentType?: string }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   let conversation = await findConversation(input.listingId, input.buyerId, input.sellerId);
   if (!conversation) { const [created] = await db.insert(conversations).values({ listingId: input.listingId, buyerId: input.buyerId, sellerId: input.sellerId }); conversation = await getConversation(Number(created.insertId)); }
   if (!conversation) throw new Error("Conversation could not be created");
-  await db.insert(messages).values({ conversationId: conversation.id, senderId: input.buyerId, body: input.body });
+  await db.insert(messages).values({ conversationId: conversation.id, senderId: input.buyerId, body: input.body, attachmentPath: input.attachmentPath, attachmentType: input.attachmentType });
   await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversation.id));
-  await db.insert(notifications).values({ userId: input.sellerId, type: "new_message", title: "New message about your listing", body: input.body.slice(0, 140), link: `/messages/${conversation.id}` });
+  await createNotification(input.sellerId, "new_message", "New message about your listing", input.body.slice(0, 140) || "New attachment", `/messages/${conversation.id}`);
   return conversation;
 }
 
-export async function addMessage(conversationId: number, senderId: number, body: string) {
+export async function addMessage(conversationId: number, senderId: number, body: string, attachmentPath?: string, attachmentType?: string) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   const conversation = await getConversation(conversationId); if (!conversation) return undefined;
-  await db.insert(messages).values({ conversationId, senderId, body });
+  await db.insert(messages).values({ conversationId, senderId, body, attachmentPath, attachmentType });
   await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
   const recipientId = conversation.buyerId === senderId ? conversation.sellerId : conversation.buyerId;
-  await db.insert(notifications).values({ userId: recipientId, type: "new_message", title: "New message", body: body.slice(0, 140), link: `/messages/${conversationId}` });
+  await createNotification(recipientId, "new_message", "New message", body.slice(0, 140) || "New attachment", `/messages/${conversationId}`);
   return { success: true } as const;
 }
 
