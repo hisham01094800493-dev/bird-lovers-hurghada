@@ -160,7 +160,7 @@ export async function createConversationMessage(input: { listingId: number; buye
   if (!conversation) throw new Error("Conversation could not be created");
   await db.insert(messages).values({ conversationId: conversation.id, senderId: input.buyerId, body: input.body, attachmentPath: input.attachmentPath, attachmentType: input.attachmentType });
   await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversation.id));
-  await createNotification(input.sellerId, "new_message", "New message about your listing", input.body.slice(0, 140) || "New attachment", `/messages/${conversation.id}`);
+  await createNotification(input.sellerId, "new_message", "New message about your listing", input.body.slice(0, 140) || "New attachment", `/messages?conversation=${conversation.id}`);
   return conversation;
 }
 
@@ -170,7 +170,7 @@ export async function addMessage(conversationId: number, senderId: number, body:
   await db.insert(messages).values({ conversationId, senderId, body, attachmentPath, attachmentType });
   await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
   const recipientId = conversation.buyerId === senderId ? conversation.sellerId : conversation.buyerId;
-  await createNotification(recipientId, "new_message", "New message", body.slice(0, 140) || "New attachment", `/messages/${conversationId}`);
+  await createNotification(recipientId, "new_message", "New message", body.slice(0, 140) || "New attachment", `/messages?conversation=${conversationId}`);
   return { success: true } as const;
 }
 

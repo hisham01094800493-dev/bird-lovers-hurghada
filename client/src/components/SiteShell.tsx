@@ -2,10 +2,11 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { Bell, Bird, Heart, Languages, LogIn, LogOut, Menu, MessageCircle, Plus, Search, ShieldAlert, UserRound, Users, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { ADMIN_EMAIL } from "@shared/const";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 const FACEBOOK_GROUP_URL = "https://www.facebook.com/groups/798363001904219/?ref=share_group_link";
 
@@ -14,8 +15,19 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, logout } = useAuth();
   const { language, isArabic, toggleLanguage, t } = useLanguage();
   const unread = trpc.notifications.unreadCount.useQuery(undefined, { enabled: isAuthenticated });
+  const notifications = trpc.notifications.list.useQuery(undefined, { enabled: isAuthenticated, refetchInterval: 15000 });
   const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
   const [menuOpen, setMenuOpen] = useState(false);
+  const newestMessageId = useRef<number | null>(null);
+  useEffect(() => {
+    const newest = notifications.data?.find(item => item.type === "new_message" && !item.readAt);
+    if (!newest) return;
+    if (newestMessageId.current === null) { newestMessageId.current = newest.id; return; }
+    if (newest.id <= newestMessageId.current) return;
+    newestMessageId.current = newest.id;
+    toast.info(isArabic ? "وصلتك رسالة جديدة" : "You have a new message", { description: newest.body, action: { label: isArabic ? "فتح" : "Open", onClick: () => { window.location.assign(newest.link || "/messages"); } } });
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") new Notification(isArabic ? "رسالة جديدة" : "New message", { body: newest.body });
+  }, [notifications.data, isArabic]);
   const nav = [
     { href: "/marketplace", label: t("marketplace"), icon: Search },
     { href: "/community", label: t("community"), icon: Users },
