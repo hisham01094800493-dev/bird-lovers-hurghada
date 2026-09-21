@@ -14,8 +14,15 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => undefined); });
 }
 if (typeof window !== "undefined") {
-  window.addEventListener("beforeinstallprompt", () => localStorage.setItem("bird-lovers-install-available", new Date().toISOString()));
-  window.addEventListener("appinstalled", () => localStorage.setItem("bird-lovers-installed", new Date().toISOString()));
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    (window as Window & { __birdLoversInstallPrompt?: Event }).__birdLoversInstallPrompt = event;
+    localStorage.setItem("bird-lovers-install-available", new Date().toISOString());
+  });
+  window.addEventListener("appinstalled", () => {
+    delete (window as Window & { __birdLoversInstallPrompt?: Event }).__birdLoversInstallPrompt;
+    localStorage.setItem("bird-lovers-installed", new Date().toISOString());
+  });
 }
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {

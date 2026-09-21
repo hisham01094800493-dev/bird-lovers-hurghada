@@ -1,5 +1,5 @@
-const CACHE_NAME = "bird-lovers-shell-v1-1-0";
-const SHELL = ["/", "/manifest.json", "/manus-storage/bird-lovers-icon-192_aa7c7d7a.png"];
+const CACHE_NAME = "bird-lovers-shell-v1-1-1";
+const SHELL = ["/", "/manifest.json", "/icons/bird-lovers-icon-192.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

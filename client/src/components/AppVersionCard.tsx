@@ -8,6 +8,7 @@ export const APP_VERSION = "1.1.0";
 const UPDATE_COMPLETED_KEY = `bird-lovers-update-completed-${APP_VERSION}`;
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
+type InstallWindow = Window & { __birdLoversInstallPrompt?: InstallPromptEvent };
 
 export default function AppVersionCard() {
   const { isArabic } = useLanguage();
@@ -17,9 +18,10 @@ export default function AppVersionCard() {
   const [updateComplete, setUpdateComplete] = useState(false);
 
   useEffect(() => {
-    const onBeforeInstallPrompt = (event: Event) => { event.preventDefault(); setInstallPrompt(event as InstallPromptEvent); };
-    const onInstalled = () => { setInstalled(true); setInstallPrompt(null); toast.success(isArabic ? "تم تثبيت التطبيق بنجاح" : "App installed successfully"); };
+    const onBeforeInstallPrompt = (event: Event) => { event.preventDefault(); const prompt = event as InstallPromptEvent; (window as InstallWindow).__birdLoversInstallPrompt = prompt; setInstallPrompt(prompt); };
+    const onInstalled = () => { setInstalled(true); setInstallPrompt(null); delete (window as InstallWindow).__birdLoversInstallPrompt; toast.success(isArabic ? "تم تثبيت التطبيق بنجاح" : "App installed successfully"); };
     setInstalled(window.matchMedia("(display-mode: standalone)").matches || Boolean((navigator as Navigator & { standalone?: boolean }).standalone));
+    setInstallPrompt((window as InstallWindow).__birdLoversInstallPrompt ?? null);
     setUpdateComplete(window.localStorage.getItem(UPDATE_COMPLETED_KEY) === "true");
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onInstalled);
@@ -29,9 +31,13 @@ export default function AppVersionCard() {
   const installNow = async () => {
     if (installed) { toast.info(isArabic ? "التطبيق مثبت بالفعل على جهازك" : "The app is already installed"); return; }
     if (!installPrompt) { toast.info(isArabic ? "افتح قائمة Chrome ثم اختر إضافة إلى الشاشة الرئيسية" : "Open the Chrome menu and choose Add to Home screen"); return; }
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") { setInstallPrompt(null); setInstalled(true); }
+    try {
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      if (choice.outcome === "accepted") { setInstallPrompt(null); setInstalled(true); }
+    } catch {
+      toast.info(isArabic ? "افتح قائمة المتصفح واختر إضافة إلى الشاشة الرئيسية" : "Open the browser menu and choose Add to Home screen");
+    }
   };
 
   const updateNow = async () => {
