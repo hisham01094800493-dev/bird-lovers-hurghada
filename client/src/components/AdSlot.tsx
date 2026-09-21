@@ -18,11 +18,12 @@ type AdSlotProps = {
   description?: string;
   cta?: string;
   href?: string;
+  external?: boolean;
   image?: string;
   imageAlt?: string;
 };
 
-export default function AdSlot({ variant = "banner", title, description, cta, href = "/sell", image, imageAlt }: AdSlotProps) {
+export default function AdSlot({ variant = "banner", title, description, cta, href = "/sell", external = false, image, imageAlt }: AdSlotProps) {
   const slotId = variant === "banner" ? ADSENSE_SLOT_1 : ADSENSE_SLOT_2;
   const hasAdSense = Boolean(ADSENSE_CLIENT_ID && slotId);
   const adRef = useRef<HTMLModElement>(null);
@@ -46,10 +47,12 @@ export default function AdSlot({ variant = "banner", title, description, cta, hr
     }
     const adElement = adRef.current;
     if (!adElement) return;
-    const observer = new MutationObserver(() => {
-      if (adElement.querySelector("iframe")) setAdReady(true);
-    });
-    observer.observe(adElement, { childList: true, subtree: true });
+    const updateAdState = () => {
+      if (adElement.getAttribute("data-ad-status") === "filled") setAdReady(true);
+    };
+    const observer = new MutationObserver(updateAdState);
+    observer.observe(adElement, { attributes: true, childList: true, subtree: true });
+    updateAdState();
     return () => observer.disconnect();
   }, [hasAdSense, slotId]);
 
@@ -62,7 +65,7 @@ export default function AdSlot({ variant = "banner", title, description, cta, hr
         <div className="ad-promo">
           <img className="ad-promo-image" src={image || "/images/hurghada-parrot-hero.jpg"} alt={imageAlt || "Colourful bird"} />
           <div className="ad-promo-copy"><strong>{title || "انضم إلى مجتمع طيور الغردقة"}</strong><span>{description || "شارك، اسأل، واعثر على بيت أفضل لطيرك."}</span></div>
-          <Link href={href} className="ad-promo-cta">{cta || "انضم الآن"} <ArrowRight size={15} /></Link>
+          {external ? <a href={href} target="_blank" rel="noreferrer" className="ad-promo-cta">{cta || "انضم الآن"} <ArrowRight size={15} /></a> : <Link href={href} className="ad-promo-cta">{cta || "انضم الآن"} <ArrowRight size={15} /></Link>}
           <span className="ad-promo-badge">{variant === "compact" ? <Bird size={15} /> : <Sparkles size={15} />}</span>
         </div>
       )}
