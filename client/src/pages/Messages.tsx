@@ -22,6 +22,28 @@ function readAsDataUrl(blob: Blob) {
   });
 }
 
+async function prepareImageAttachment(file: File) {
+  try {
+    const source = await readAsDataUrl(file);
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = () => reject(new Error("Could not decode image"));
+      element.src = source;
+    });
+    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const compressed = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/webp", 0.82));
+    if (!compressed) return { data: source, type: file.type };
+    return { data: await readAsDataUrl(compressed), type: "image/webp" };
+  } catch {
+    return { data: await readAsDataUrl(file), type: file.type };
+  }
+}
+
 export default function Messages() {
   const { isAuthenticated, loading, user } = useAuth();
   const { isArabic } = useLanguage();
@@ -73,7 +95,7 @@ export default function Messages() {
     if (!file) return;
     if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) { toast.error(isArabic ? "استخدم صورة PNG أو JPG أو WebP" : "Use a PNG, JPEG, or WebP image"); return; }
     if (file.size > 7_000_000) { toast.error(isArabic ? "حجم الصورة يجب أن يكون أقل من 7 ميجابايت" : "Image must be under 7MB"); return; }
-    try { setAttachment({ data: await readAsDataUrl(file), type: file.type, name: file.name }); } catch { toast.error(isArabic ? "تعذر قراءة الصورة" : "Could not read the image"); }
+    try { const prepared = await prepareImageAttachment(file); setAttachment({ ...prepared, name: file.name }); } catch { toast.error(isArabic ? "تعذر قراءة الصورة" : "Could not read the image"); }
   };
 
   const startRecording = async () => {
@@ -85,8 +107,9 @@ export default function Messages() {
       recorder.ondataavailable = event => { if (event.data.size) chunksRef.current.push(event.data); };
       recorder.onstop = async () => {
         stream.getTracks().forEach(track => track.stop());
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
-        setAttachment({ data: await readAsDataUrl(blob), type: recorder.mimeType?.includes("ogg") ? "audio/ogg" : "audio/webm", name: isArabic ? "تسجيل صوتي" : "Voice note" });
+        const audioType = recorder.mimeType?.includes("ogg") ? "audio/ogg" : "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: audioType });
+        setAttachment({ data: await readAsDataUrl(blob), type: audioType, name: isArabic ? "تسجيل صوتي" : "Voice note" });
         setRecording(false);
       };
       recorder.start(); recorderRef.current = recorder; setRecording(true);

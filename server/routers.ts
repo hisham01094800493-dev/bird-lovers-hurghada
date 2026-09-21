@@ -46,8 +46,9 @@ const messageAttachmentInput = z.object({
 async function storeMessageAttachment(userId: number, attachmentData?: string, attachmentType?: string) {
   if (!attachmentData) return {};
   if (!attachmentType) throw new TRPCError({ code: "BAD_REQUEST", message: "Attachment type is required" });
-  const match = attachmentData.match(/^data:([^;]+);base64,(.+)$/);
-  if (!match || match[1] !== attachmentType) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid attachment payload" });
+  const match = attachmentData.match(/^data:([^;]+)(?:;[^,]*)?;base64,(.+)$/);
+  const payloadType = match?.[1]?.toLowerCase().split(",")[0];
+  if (!match || payloadType !== attachmentType.toLowerCase()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid attachment payload" });
   const buffer = Buffer.from(match[2], "base64");
   if (buffer.byteLength > 9_000_000) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Attachments must be under 9MB" });
   let uploadBuffer = buffer;
