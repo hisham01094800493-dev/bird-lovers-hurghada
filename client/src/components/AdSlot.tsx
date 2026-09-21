@@ -1,6 +1,6 @@
 import { ArrowRight, Bird, Sparkles } from "lucide-react";
 import { Link } from "wouter";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID?.trim();
 const ADSENSE_SLOT_1 = import.meta.env.VITE_ADSENSE_SLOT_1?.trim() || import.meta.env.VITE_ADSENSE_SLOT_ID?.trim();
@@ -25,6 +25,8 @@ type AdSlotProps = {
 export default function AdSlot({ variant = "banner", title, description, cta, href = "/sell", image, imageAlt }: AdSlotProps) {
   const slotId = variant === "banner" ? ADSENSE_SLOT_1 : ADSENSE_SLOT_2;
   const hasAdSense = Boolean(ADSENSE_CLIENT_ID && slotId);
+  const adRef = useRef<HTMLModElement>(null);
+  const [adReady, setAdReady] = useState(false);
 
   useEffect(() => {
     if (!hasAdSense) return;
@@ -42,13 +44,21 @@ export default function AdSlot({ variant = "banner", title, description, cta, hr
     } catch {
       // Ad blockers and restricted browsers can prevent the ad from loading.
     }
+    const adElement = adRef.current;
+    if (!adElement) return;
+    const observer = new MutationObserver(() => {
+      if (adElement.querySelector("iframe")) setAdReady(true);
+    });
+    observer.observe(adElement, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [hasAdSense, slotId]);
 
   return (
     <aside className={`ad-slot ad-slot-${variant}`} aria-label="Advertisement">
-      {hasAdSense ? (
-        <ins className="adsbygoogle" style={{ display: "block", minHeight: variant === "compact" ? 70 : 90 }} data-ad-client={ADSENSE_CLIENT_ID} data-ad-slot={slotId} data-ad-format="auto" data-full-width-responsive="true" />
-      ) : (
+      {hasAdSense && (
+        <ins ref={adRef} className={`adsbygoogle${adReady ? "" : " ad-slot-pending"}`} style={{ display: "block", minHeight: variant === "compact" ? 70 : 90 }} data-ad-client={ADSENSE_CLIENT_ID} data-ad-slot={slotId} data-ad-format="auto" data-full-width-responsive="true" />
+      )}
+      {!adReady && (
         <div className="ad-promo">
           <img className="ad-promo-image" src={image || "/images/hurghada-parrot-hero.jpg"} alt={imageAlt || "Colourful bird"} />
           <div className="ad-promo-copy"><strong>{title || "انضم إلى مجتمع طيور الغردقة"}</strong><span>{description || "شارك، اسأل، واعثر على بيت أفضل لطيرك."}</span></div>
