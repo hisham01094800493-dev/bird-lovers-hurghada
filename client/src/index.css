@@ -9,7 +9,8 @@ button:active, a:active { transform: scale(.98); }
 button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 3px solid rgba(118,166,143,.35); outline-offset: 2px; }
 .font-display { font-family: 'Playfair Display', Georgia, serif; }
 .shell { width: min(1160px, calc(100% - 40px)); margin-inline: auto; }
-.brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 39px; height: 39px; border-radius: 14px 14px 14px 5px; color: #f7f5ef; background: #183b39; box-shadow: 0 8px 20px rgba(24,59,57,.15); }
+.brand-mark { display: inline-flex; align-items: center; justify-content: center; width: 39px; height: 39px; overflow: hidden; border-radius: 14px 14px 14px 5px; color: #f7f5ef; background: #183b39; box-shadow: 0 8px 20px rgba(24,59,57,.15); }
+.brand-mark img { width: 100%; height: 100%; object-fit: cover; }
 .nav-link { display: inline-flex; align-items: center; gap: 7px; border-radius: 12px; padding: 10px 12px; color: #6f8580; font-size: 13px; font-weight: 600; }
 .nav-link:hover, .nav-link-active { color: #183b39; background: #eaf1ea; }
 .sell-button { display: inline-flex; align-items: center; gap: 7px; border-radius: 12px; background: #d26246; padding: 10px 14px; color: white; font-size: 13px; font-weight: 700; box-shadow: 0 7px 16px rgba(210,98,70,.2); }
@@ -100,7 +101,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .ad-slot-placeholder small { color: #9aaca5; font-size: 10px; }
 @media (max-width: 640px) { .hero-symbol { width: 150px; height: 150px; } .ad-slot { margin-block: 12px; } }
 
-.ad-promo { display: flex; min-height: inherit; align-items: center; gap: 13px; padding: 10px 14px; background: linear-gradient(110deg,#eef5ed,#fffaf0); } .ad-promo-image { width: 92px; height: 76px; flex: 0 0 92px; border-radius: 12px; object-fit: cover; box-shadow: 0 8px 18px rgba(24,59,57,.12); } .ad-promo-badge { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 10px; background: #183b39; color: #f1d1a4; }
+.ad-promo { display: flex; min-height: inherit; align-items: center; gap: 13px; padding: 10px 14px; background: linear-gradient(110deg,#eef5ed,#fffaf0); } .ad-promo-image { width: 92px; height: 76px; flex: 0 0 92px; border-radius: 12px; object-fit: cover; box-shadow: 0 8px 18px rgba(24,59,57,.12); } .ad-promo-badge { display: grid; width: 32px; height: 32px; flex: 0 0 32px; place-items: center; border-radius: 10px; background: #183b39; color: #f1d1a4; } .ad-promo-badge img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .ad-promo-icon { display: grid; flex: 0 0 40px; width: 40px; height: 40px; place-items: center; border-radius: 13px; background: #183b39; color: #f1d1a4; }
 .ad-promo-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 3px; }
 .ad-promo-copy strong { color: #183b39; font-size: 14px; font-weight: 800; }

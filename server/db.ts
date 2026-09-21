@@ -20,10 +20,10 @@ import {
 import { ADMIN_EMAIL } from "@shared/const";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
-  { match: /lorikeet/i, path: "/manus-storage/rainbow-lorikeet_6273d539.jpg" },
-  { match: /parakeet|budgerigar/i, path: "/manus-storage/green-budgerigar_f47e1082.jpg" },
-  { match: /macaw/i, path: "/manus-storage/blue-gold-macaw_e9110acc.jpg" },
-  { match: /cockatiel/i, path: "/manus-storage/cockatiel_b7203d6a.jpg" },
+  { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
+  { match: /parakeet|budgerigar|budgie/i, path: "/images/listing-green-parakeet.jpg" },
+  { match: /macaw/i, path: "/images/listing-blue-gold-macaw.jpg" },
+  { match: /cockatiel/i, path: "/images/listing-cockatiel.jpg" },
 ];
 
 function promotionalImageFor(title: string | null | undefined, fallback: string | null | undefined) {
