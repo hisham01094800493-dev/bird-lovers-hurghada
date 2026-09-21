@@ -18,6 +18,17 @@ import {
   users,
 } from "../drizzle/schema";
 import { ADMIN_EMAIL } from "@shared/const";
+
+const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
+  { match: /lorikeet/i, path: "/manus-storage/rainbow-lorikeet_6273d539.jpg" },
+  { match: /parakeet|budgerigar/i, path: "/manus-storage/green-budgerigar_f47e1082.jpg" },
+  { match: /macaw/i, path: "/manus-storage/blue-gold-macaw_e9110acc.jpg" },
+  { match: /cockatiel/i, path: "/manus-storage/cockatiel_b7203d6a.jpg" },
+];
+
+function promotionalImageFor(title: string | null | undefined, fallback: string | null | undefined) {
+  return PROMOTIONAL_IMAGES.find(entry => entry.match.test(title || ""))?.path || fallback;
+}
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -86,8 +97,9 @@ export async function listListings(input: { search?: string; categoryId?: number
   const filters = [eq(listings.status, "published"), eq(listings.moderationStatus, "approved")];
   if (input.categoryId) filters.push(eq(listings.categoryId, input.categoryId));
   if (input.search?.trim()) { const term = `%${input.search.trim()}%`; filters.push(or(like(listings.titleEn, term), like(listings.titleAr, term), like(listings.descriptionEn, term), like(listings.location, term))!); }
-  return db.select({ id: listings.id, titleEn: listings.titleEn, titleAr: listings.titleAr, descriptionEn: listings.descriptionEn, descriptionAr: listings.descriptionAr, price: listings.price, currency: listings.currency, negotiable: listings.negotiable, exchangeAvailable: listings.exchangeAvailable, location: listings.location, status: listings.status, views: listings.views, favoritesCount: listings.favoritesCount, createdAt: listings.createdAt, categoryId: categories.id, categoryNameEn: categories.nameEn, categoryNameAr: categories.nameAr, sellerName: users.name, coverImage: listingImages.storagePath })
+  const rows = await db.select({ id: listings.id, titleEn: listings.titleEn, titleAr: listings.titleAr, descriptionEn: listings.descriptionEn, descriptionAr: listings.descriptionAr, price: listings.price, currency: listings.currency, negotiable: listings.negotiable, exchangeAvailable: listings.exchangeAvailable, location: listings.location, status: listings.status, views: listings.views, favoritesCount: listings.favoritesCount, createdAt: listings.createdAt, categoryId: categories.id, categoryNameEn: categories.nameEn, categoryNameAr: categories.nameAr, sellerName: users.name, coverImage: listingImages.storagePath })
     .from(listings).leftJoin(categories, eq(listings.categoryId, categories.id)).leftJoin(users, eq(listings.sellerId, users.id)).leftJoin(listingImages, and(eq(listingImages.listingId, listings.id), eq(listingImages.isCover, true))).where(and(...filters)).orderBy(desc(listings.createdAt)).limit(input.limit).offset(input.offset);
+  return rows.map(row => ({ ...row, coverImage: promotionalImageFor(row.titleEn, row.coverImage) || null }));
 }
 
 export async function getListingById(id: number) {
@@ -96,13 +108,14 @@ export async function getListingById(id: number) {
     .from(listings).leftJoin(categories, eq(listings.categoryId, categories.id)).leftJoin(users, eq(listings.sellerId, users.id)).leftJoin(listingImages, and(eq(listingImages.listingId, listings.id), eq(listingImages.isCover, true))).where(and(eq(listings.id, id), eq(listings.status, "published"), eq(listings.moderationStatus, "approved"))).limit(1);
   if (!rows[0]) return undefined;
   await db.update(listings).set({ views: sql`${listings.views} + 1` }).where(eq(listings.id, id));
-  return rows[0];
+  return { ...rows[0], coverImage: promotionalImageFor(rows[0].titleEn, rows[0].coverImage) || null };
 }
 
 export async function listListingImages(listingId: number) {
   const db = await getDb(); if (!db) return [];
-  return db.select({ id: listingImages.id, storagePath: listingImages.storagePath, altText: listingImages.altText, sortOrder: listingImages.sortOrder, isCover: listingImages.isCover })
+  const rows = await db.select({ id: listingImages.id, storagePath: listingImages.storagePath, altText: listingImages.altText, sortOrder: listingImages.sortOrder, isCover: listingImages.isCover, titleEn: listings.titleEn })
     .from(listingImages).innerJoin(listings, eq(listingImages.listingId, listings.id)).where(and(eq(listingImages.listingId, listingId), eq(listings.status, "published"), eq(listings.moderationStatus, "approved"))).orderBy(asc(listingImages.sortOrder));
+  return rows.map((row, index) => ({ id: row.id, storagePath: (index === 0 ? promotionalImageFor(row.titleEn, row.storagePath) : row.storagePath) || "", altText: row.altText, sortOrder: row.sortOrder, isCover: row.isCover }));
 }
 
 export async function isFavorite(userId: number, listingId: number) {

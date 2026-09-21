@@ -25,8 +25,8 @@ function readAsDataUrl(blob: Blob) {
 export default function Messages() {
   const { isAuthenticated, loading, user } = useAuth();
   const { isArabic } = useLanguage();
-  const [location, navigate] = useLocation();
-  const params = new URLSearchParams(location.split("?")[1] || "");
+  const [, navigate] = useLocation();
+  const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
   const listingId = Number(params.get("listing"));
   const queryConversationId = Number(params.get("conversation"));
   const [selectedId, setSelectedId] = useState<number | null>(null);
