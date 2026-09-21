@@ -149,6 +149,7 @@ export const appRouter = router({
     preferences: protectedProcedure.query(({ ctx }) => getNotificationPreferences(ctx.user.id)),
     updatePreferences: protectedProcedure.input(z.object({ newMessage: z.boolean(), listingUpdates: z.boolean(), communityUpdates: z.boolean(), customUpdates: z.boolean() })).mutation(({ ctx, input }) => updateNotificationPreferences(ctx.user.id, input)),
     markRead: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); await db.update(notifications).set({ readAt: new Date() }).where(and(eq(notifications.id, input.id), eq(notifications.userId, ctx.user.id))); return { success: true } as const; }),
+    markAllRead: protectedProcedure.mutation(async ({ ctx }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" }); await db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.userId, ctx.user.id)); return { success: true } as const; }),
   }),
   updates: router({
     list: publicProcedure.query(() => listAppUpdates()),
