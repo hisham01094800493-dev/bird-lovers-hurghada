@@ -116,7 +116,7 @@ export const appRouter = router({
           const pipeline = sharp(buffer, { failOn: "error" });
           const metadata = await pipeline.metadata();
           if (!metadata.width || !metadata.height || metadata.width < 320 || metadata.height < 320) throw new Error("Image dimensions are too small");
-          normalized = await pipeline.rotate().resize({ width: 2400, height: 2400, fit: "inside", withoutEnlargement: true }).webp({ quality: 84 }).toBuffer();
+          normalized = await pipeline.rotate().resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
         } catch {
           throw new TRPCError({ code: "BAD_REQUEST", message: "Images must be valid and at least 320×320 pixels" });
         }

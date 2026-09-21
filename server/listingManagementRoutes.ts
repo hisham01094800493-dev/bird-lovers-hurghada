@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { listingImages, listings } from "../drizzle/schema";
 import { sdk } from "./_core/sdk";
 import { storagePut } from "./storage";
+import sharp from "sharp";
 
 async function currentUser(req: Request) {
   try { return await sdk.authenticateRequest(req); } catch { return null; }
@@ -14,8 +15,12 @@ async function storeListingImage(userId: number, listingId: number, index: numbe
   const match = value.match(/^data:(image\/(?:png|jpeg|webp));base64,(.+)$/);
   if (!match) throw new Error("Use PNG, JPEG, or WebP images");
   const buffer = Buffer.from(match[2], "base64");
-  if (buffer.byteLength > 5_000_000) throw new Error("Each image must be under 5MB");
-  return (await storagePut(`listings/${userId}/listing-${listingId}-${Date.now()}-${index}.webp`, buffer, match[1])).url;
+  if (buffer.byteLength > 12_000_000) throw new Error("Each image must be under 12MB");
+  const image = sharp(buffer, { failOn: "error" });
+  const metadata = await image.metadata();
+  if (!metadata.width || !metadata.height || metadata.width < 320 || metadata.height < 320) throw new Error("Images must be at least 320×320 pixels");
+  const normalized = await image.rotate().resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+  return (await storagePut(`listings/${userId}/listing-${listingId}-${Date.now()}-${index}.webp`, normalized, "image/webp")).url;
 }
 
 export function registerListingManagementRoutes(app: Express) {
@@ -42,6 +47,12 @@ export function registerListingManagementRoutes(app: Express) {
       const existingImages = await db.select({ id: listingImages.id }).from(listingImages).where(eq(listingImages.listingId, id)).orderBy(asc(listingImages.sortOrder));
       const urls = await Promise.all(imageData.map((value: string, index: number) => storeListingImage(user.id, id, index, value)));
       await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: titleEn })));
+    }
+    const coverImageId = Number(input.coverImageId);
+    if (Number.isInteger(coverImageId) && coverImageId > 0) {
+      const allImages = await db.select({ id: listingImages.id }).from(listingImages).where(eq(listingImages.listingId, id)).orderBy(asc(listingImages.sortOrder));
+      const ordered = [coverImageId, ...allImages.map(image => image.id).filter(imageId => imageId !== coverImageId)];
+      for (let index = 0; index < ordered.length; index += 1) await db.update(listingImages).set({ isCover: index === 0, sortOrder: index }).where(and(eq(listingImages.id, ordered[index]), eq(listingImages.listingId, id)));
     }
     return res.json({ success: true, id, status: "pending_review" });
   });
