@@ -1,6 +1,7 @@
 import {
   boolean,
   decimal,
+  customType,
   index,
   int,
   mysqlEnum,
@@ -10,6 +11,10 @@ import {
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
+
+const mediumBlob = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => "mediumblob",
+});
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -117,6 +122,8 @@ export const messages = mysqlTable("messages", {
   body: text("body").notNull(),
   attachmentPath: text("attachmentPath"),
   attachmentType: varchar("attachmentType", { length: 80 }),
+  attachmentData: mediumBlob("attachmentData"),
+  attachmentExpiresAt: timestamp("attachmentExpiresAt"),
   readAt: timestamp("readAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({ conversationIdx: index("messages_conversation_idx").on(table.conversationId, table.createdAt) }));

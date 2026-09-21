@@ -12,6 +12,7 @@ import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
+import { validateChatUpload } from "./chatUploads";
 import { communityPosts, favorites, listingImages, listings, notifications } from "../drizzle/schema";
 import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createLocalUser, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, getListingSeller, getNotificationPreferences, getProfile, getUserByEmail, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile, upsertUser } from "./db";
 
@@ -43,32 +44,27 @@ const messageAttachmentInput = z.object({
   attachmentType: z.enum(["image/png", "image/jpeg", "image/webp", "audio/webm", "audio/ogg", "audio/mp4"]).optional(),
 });
 
-async function storeMessageAttachment(userId: number, attachmentData?: string, attachmentType?: string) {
+const CHAT_ATTACHMENT_RETENTION_DAYS = Math.max(1, Number(process.env.CHAT_ATTACHMENT_RETENTION_DAYS || 90));
+
+async function storeMessageAttachment(attachmentData?: string, attachmentType?: string) {
   if (!attachmentData) return {};
   if (!attachmentType) throw new TRPCError({ code: "BAD_REQUEST", message: "Attachment type is required" });
   const match = attachmentData.match(/^data:([^;]+)(?:;[^,]*)?;base64,(.+)$/);
   const payloadType = match?.[1]?.toLowerCase().split(",")[0];
   if (!match || payloadType !== attachmentType.toLowerCase()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid attachment payload" });
   const buffer = Buffer.from(match[2], "base64");
-  if (buffer.byteLength > 9_000_000) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Attachments must be under 9MB" });
-  let uploadBuffer = buffer;
-  let uploadType = attachmentType;
-  let extension = attachmentType.split("/")[1] || "bin";
-  if (attachmentType.startsWith("image/")) {
-    try {
-      const pipeline = sharp(buffer, { failOn: "error" });
-      const metadata = await pipeline.metadata();
-      if (!metadata.width || !metadata.height || metadata.width < 160 || metadata.height < 160) throw new Error("Image is too small");
-      uploadBuffer = await pipeline.rotate().resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
-      uploadType = "image/webp";
-      extension = "webp";
-    } catch {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Images must be valid and at least 160×160 pixels" });
-    }
+  try {
+    const normalized = await validateChatUpload({ buffer, contentType: attachmentType, kind: attachmentType.startsWith("image/") ? "image" : "audio" });
+    return {
+      attachmentData: normalized.buffer,
+      attachmentType: normalized.contentType,
+      attachmentExpiresAt: new Date(Date.now() + CHAT_ATTACHMENT_RETENTION_DAYS * 24 * 60 * 60 * 1000),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid attachment";
+    if (message.includes("8MB")) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Attachments must be under 8MB" });
+    throw new TRPCError({ code: "BAD_REQUEST", message });
   }
-  const key = `messages/${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
-  const stored = await storagePut(key, uploadBuffer, uploadType);
-  return { attachmentPath: stored.url, attachmentType: uploadType };
 }
 
 
@@ -160,8 +156,8 @@ export const appRouter = router({
   messages: router({
     conversations: protectedProcedure.query(({ ctx }) => listConversations(ctx.user.id)),
     byConversation: protectedProcedure.input(z.object({ conversationId: z.number().int().positive() })).query(async ({ ctx, input }) => { const conversation = await getConversation(input.conversationId); if (!conversation || (conversation.buyerId !== ctx.user.id && conversation.sellerId !== ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN" }); return listMessages(input.conversationId); }),
-    start: protectedProcedure.input(z.object({ listingId: z.number().int().positive(), body: z.string().max(3000).default(""), ...messageAttachmentInput.shape })).mutation(async ({ ctx, input }) => { const listing = await getListingSeller(input.listingId); if (!listing) throw new TRPCError({ code: "NOT_FOUND" }); if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot message yourself" }); if (!input.body.trim() && !input.attachmentData) throw new TRPCError({ code: "BAD_REQUEST", message: "Write a message or attach a file" }); const attachment = await storeMessageAttachment(ctx.user.id, input.attachmentData, input.attachmentType); const conversation = await createConversationMessage({ listingId: input.listingId, buyerId: ctx.user.id, sellerId: listing.sellerId, body: input.body, ...attachment }); return { conversationId: conversation.id }; }),
-    send: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), body: z.string().max(3000).default(""), ...messageAttachmentInput.shape })).mutation(async ({ ctx, input }) => { const conversation = await getConversation(input.conversationId); if (!conversation || (conversation.buyerId !== ctx.user.id && conversation.sellerId !== ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN" }); if (!input.body.trim() && !input.attachmentData) throw new TRPCError({ code: "BAD_REQUEST", message: "Write a message or attach a file" }); const attachment = await storeMessageAttachment(ctx.user.id, input.attachmentData, input.attachmentType); return addMessage(input.conversationId, ctx.user.id, input.body, attachment.attachmentPath, attachment.attachmentType); }),
+    start: protectedProcedure.input(z.object({ listingId: z.number().int().positive(), body: z.string().max(3000).default(""), ...messageAttachmentInput.shape })).mutation(async ({ ctx, input }) => { const listing = await getListingSeller(input.listingId); if (!listing) throw new TRPCError({ code: "NOT_FOUND" }); if (listing.sellerId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot message yourself" }); if (!input.body.trim() && !input.attachmentData) throw new TRPCError({ code: "BAD_REQUEST", message: "Write a message or attach a file" }); const attachment = await storeMessageAttachment(input.attachmentData, input.attachmentType); const conversation = await createConversationMessage({ listingId: input.listingId, buyerId: ctx.user.id, sellerId: listing.sellerId, body: input.body, ...attachment }); return { conversationId: conversation.id }; }),
+    send: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), body: z.string().max(3000).default(""), ...messageAttachmentInput.shape })).mutation(async ({ ctx, input }) => { const conversation = await getConversation(input.conversationId); if (!conversation || (conversation.buyerId !== ctx.user.id && conversation.sellerId !== ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN" }); if (!input.body.trim() && !input.attachmentData) throw new TRPCError({ code: "BAD_REQUEST", message: "Write a message or attach a file" }); const attachment = await storeMessageAttachment(input.attachmentData, input.attachmentType); return addMessage(input.conversationId, ctx.user.id, input.body, attachment.attachmentData, attachment.attachmentType, attachment.attachmentExpiresAt); }),
   }),
   reports: router({ create: protectedProcedure.input(z.object({ targetType: z.enum(["listing", "user", "post", "conversation"]), targetId: z.number().int().positive(), reason: z.string().min(5).max(180) })).mutation(({ ctx, input }) => createReport({ reporterId: ctx.user.id, ...input })) }),
   reviews: router({ create: protectedProcedure.input(z.object({ sellerId: z.number().int().positive(), listingId: z.number().int().positive(), rating: z.number().int().min(1).max(5), body: z.string().min(10).max(1200) })).mutation(async ({ ctx, input }) => { if (ctx.user.id === input.sellerId) throw new TRPCError({ code: "BAD_REQUEST", message: "You cannot review yourself" }); if (!(await canReviewCompletedListing(ctx.user.id, input.sellerId, input.listingId))) throw new TRPCError({ code: "FORBIDDEN", message: "Reviews unlock after a completed transaction" }); return createReview({ reviewerId: ctx.user.id, ...input }); }) }),

@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerListingManagementRoutes } from "../listingManagementRoutes";
 import { appRouter } from "../routers";
+import { cleanupExpiredMessageAttachments } from "../db";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -22,6 +23,11 @@ async function startServer() {
   if (process.env.NODE_ENV === "development") await setupVite(app, server); else serveStatic(app);
   const preferredPort = parseInt(process.env.PORT || "3000"); const port = await findAvailablePort(preferredPort);
   if (port !== preferredPort) console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  server.listen(port, "0.0.0.0", () => console.log(`Server running on http://0.0.0.0:${port}/`));
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on http://0.0.0.0:${port}/`);
+    cleanupExpiredMessageAttachments().catch(error => console.warn("[Messages] Initial attachment cleanup failed:", error));
+    const cleanupTimer = setInterval(() => cleanupExpiredMessageAttachments().catch(error => console.warn("[Messages] Scheduled attachment cleanup failed:", error)), 24 * 60 * 60 * 1000);
+    cleanupTimer.unref();
+  });
 }
 startServer().catch(console.error);
