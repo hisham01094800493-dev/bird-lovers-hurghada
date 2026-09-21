@@ -3,7 +3,8 @@ import { Link } from "wouter";
 import { useEffect } from "react";
 
 const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID?.trim();
-const ADSENSE_SLOT_ID = import.meta.env.VITE_ADSENSE_SLOT_ID?.trim();
+const ADSENSE_SLOT_1 = import.meta.env.VITE_ADSENSE_SLOT_1?.trim() || import.meta.env.VITE_ADSENSE_SLOT_ID?.trim();
+const ADSENSE_SLOT_2 = import.meta.env.VITE_ADSENSE_SLOT_2?.trim() || ADSENSE_SLOT_1;
 
 declare global {
   interface Window {
@@ -17,10 +18,13 @@ type AdSlotProps = {
   description?: string;
   cta?: string;
   href?: string;
+  image?: string;
+  imageAlt?: string;
 };
 
-export default function AdSlot({ variant = "banner", title, description, cta, href = "/sell" }: AdSlotProps) {
-  const hasAdSense = Boolean(ADSENSE_CLIENT_ID && ADSENSE_SLOT_ID);
+export default function AdSlot({ variant = "banner", title, description, cta, href = "/sell", image, imageAlt }: AdSlotProps) {
+  const slotId = variant === "banner" ? ADSENSE_SLOT_1 : ADSENSE_SLOT_2;
+  const hasAdSense = Boolean(ADSENSE_CLIENT_ID && slotId);
 
   useEffect(() => {
     if (!hasAdSense) return;
@@ -38,17 +42,18 @@ export default function AdSlot({ variant = "banner", title, description, cta, hr
     } catch {
       // Ad blockers and restricted browsers can prevent the ad from loading.
     }
-  }, [hasAdSense]);
+  }, [hasAdSense, slotId]);
 
   return (
     <aside className={`ad-slot ad-slot-${variant}`} aria-label="Advertisement">
       {hasAdSense ? (
-        <ins className="adsbygoogle" style={{ display: "block", minHeight: variant === "compact" ? 70 : 90 }} data-ad-client={ADSENSE_CLIENT_ID} data-ad-slot={ADSENSE_SLOT_ID} data-ad-format="auto" data-full-width-responsive="true" />
+        <ins className="adsbygoogle" style={{ display: "block", minHeight: variant === "compact" ? 70 : 90 }} data-ad-client={ADSENSE_CLIENT_ID} data-ad-slot={slotId} data-ad-format="auto" data-full-width-responsive="true" />
       ) : (
         <div className="ad-promo">
-          <span className="ad-promo-icon">{variant === "compact" ? <Bird size={18} /> : <Sparkles size={20} />}</span>
+          <img className="ad-promo-image" src={image || "/images/hurghada-parrot-hero.jpg"} alt={imageAlt || "Colourful bird"} />
           <div className="ad-promo-copy"><strong>{title || "انضم إلى مجتمع طيور الغردقة"}</strong><span>{description || "شارك، اسأل، واعثر على بيت أفضل لطيرك."}</span></div>
           <Link href={href} className="ad-promo-cta">{cta || "انضم الآن"} <ArrowRight size={15} /></Link>
+          <span className="ad-promo-badge">{variant === "compact" ? <Bird size={15} /> : <Sparkles size={15} />}</span>
         </div>
       )}
     </aside>
