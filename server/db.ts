@@ -185,6 +185,34 @@ export async function listMessages(conversationId: number) {
   }));
 }
 
+export async function listMessageAttachments(limit = 100) {
+  const db = await getDb(); if (!db) return [];
+  const rows = await db.select({
+    id: messages.id,
+    conversationId: messages.conversationId,
+    senderId: messages.senderId,
+    senderName: users.name,
+    senderEmail: users.email,
+    listingTitle: listings.titleEn,
+    body: messages.body,
+    attachmentPath: messages.attachmentPath,
+    attachmentType: messages.attachmentType,
+    attachmentData: messages.attachmentData,
+    attachmentExpiresAt: messages.attachmentExpiresAt,
+    createdAt: messages.createdAt,
+  }).from(messages)
+    .innerJoin(users, eq(messages.senderId, users.id))
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .innerJoin(listings, eq(conversations.listingId, listings.id))
+    .where(sql`${messages.attachmentData} is not null or ${messages.attachmentPath} is not null`)
+    .orderBy(desc(messages.createdAt)).limit(Math.min(Math.max(limit, 1), 200));
+  return rows.map(({ attachmentData, attachmentPath, attachmentType, ...message }) => ({
+    ...message,
+    attachmentPath: attachmentData && attachmentType ? `data:${attachmentType};base64,${Buffer.from(attachmentData).toString("base64")}` : attachmentPath,
+    attachmentType,
+  }));
+}
+
 export async function getListingSeller(listingId: number) {
   const db = await getDb(); if (!db) return undefined;
   const rows = await db.select({ id: listings.id, sellerId: listings.sellerId, title: listings.titleEn }).from(listings).where(eq(listings.id, listingId)).limit(1); return rows[0];
