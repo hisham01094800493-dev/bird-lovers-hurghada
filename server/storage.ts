@@ -1,9 +1,22 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { ENV } from "./_core/env";
 
 function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
+  const key = relKey.replace(/^\/+/, "");
+  if (!key || key.includes("\\") || key.split("/").some(segment => segment === "..")) throw new Error("Invalid storage key");
+  return key;
+}
+
+export function getLocalStorageDir() { return process.env.LOCAL_STORAGE_DIR?.trim() || (ENV.isProduction ? "/data/uploads" : path.resolve(process.cwd(), ".data/uploads")); }
+export function getLocalStoragePath(relKey: string) {
+  const key = normalizeKey(relKey);
+  const root = path.resolve(getLocalStorageDir());
+  const filePath = path.resolve(root, key);
+  if (filePath !== root && !filePath.startsWith(`${root}${path.sep}`)) throw new Error("Invalid storage key");
+  return filePath;
 }
 
 function appendHashSuffix(relKey: string): string {
@@ -14,7 +27,10 @@ function appendHashSuffix(relKey: string): string {
 }
 
 function hasForgeStorage() { return Boolean(ENV.forgeApiUrl && ENV.forgeApiKey); }
-function hasS3Storage() { return Boolean(ENV.s3Bucket && ENV.s3AccessKeyId && ENV.s3SecretAccessKey && ENV.s3Endpoint); }
+function hasS3Storage() {
+  return Boolean(ENV.s3Bucket && ENV.s3AccessKeyId && ENV.s3SecretAccessKey && ENV.s3Endpoint);
+}
+export function hasRemoteStorage() { return hasForgeStorage() || hasS3Storage(); }
 function getS3Client() {
   if (!hasS3Storage()) return null;
   return new S3Client({ region: ENV.s3Region || "auto", endpoint: ENV.s3Endpoint, forcePathStyle: ENV.s3ForcePathStyle, credentials: { accessKeyId: ENV.s3AccessKeyId, secretAccessKey: ENV.s3SecretAccessKey } });
@@ -42,9 +58,15 @@ export async function storagePut(
     return { key, url: `/manus-storage/${key}` };
   }
   const client = getS3Client();
-  if (!client || !ENV.s3Bucket) throw storageConfigError();
-  await client.send(new PutObjectCommand({ Bucket: ENV.s3Bucket, Key: key, Body: data, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }));
-  return { key, url: ENV.s3PublicUrl ? `${ENV.s3PublicUrl.replace(/\/+$/, "")}/${key}` : `/manus-storage/${key}` };
+  if (client && ENV.s3Bucket) {
+    await client.send(new PutObjectCommand({ Bucket: ENV.s3Bucket, Key: key, Body: data, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }));
+    return { key, url: ENV.s3PublicUrl ? `${ENV.s3PublicUrl.replace(/\/+$/, "")}/${key}` : `/manus-storage/${key}` };
+  }
+  const filePath = getLocalStoragePath(key);
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, typeof data === "string" ? Buffer.from(data) : Buffer.from(data));
+  console.warn(`[Storage] Saved ${key} to ${getLocalStorageDir()} (${contentType})`);
+  return { key, url: `/manus-storage/${key}` };
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
@@ -64,6 +86,6 @@ export async function storageGetSignedUrl(relKey: string): Promise<string> {
     return url;
   }
   const client = getS3Client();
-  if (!client || !ENV.s3Bucket) throw storageConfigError();
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: ENV.s3Bucket, Key: key }), { expiresIn: 3600 });
+  if (client && ENV.s3Bucket) return getSignedUrl(client, new GetObjectCommand({ Bucket: ENV.s3Bucket, Key: key }), { expiresIn: 3600 });
+  return `/manus-storage/${key}`;
 }

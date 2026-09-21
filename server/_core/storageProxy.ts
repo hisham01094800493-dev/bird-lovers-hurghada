@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { ENV } from "./env";
-import { storageGetSignedUrl } from "../storage";
+import { getLocalStoragePath, storageGetSignedUrl } from "../storage";
 
 export function registerStorageProxy(app: Express) {
   app.get("/manus-storage/*", async (req, res) => {
@@ -10,13 +10,12 @@ export function registerStorageProxy(app: Express) {
       return;
     }
 
-    if ((!ENV.forgeApiUrl || !ENV.forgeApiKey) && (!ENV.s3Endpoint || !ENV.s3Bucket || !ENV.s3AccessKeyId || !ENV.s3SecretAccessKey)) {
-      res.status(500).send("Storage proxy not configured");
-      return;
-    }
-
     try {
       if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
+        if (!ENV.s3Endpoint || !ENV.s3Bucket || !ENV.s3AccessKeyId || !ENV.s3SecretAccessKey) {
+          res.sendFile(getLocalStoragePath(key), err => { if (err && !res.headersSent) res.status((err as NodeJS.ErrnoException).code === "ENOENT" ? 404 : 500).send("Image not found"); });
+          return;
+        }
         const url = await storageGetSignedUrl(key);
         res.set("Cache-Control", "private, max-age=300");
         res.redirect(307, url);
