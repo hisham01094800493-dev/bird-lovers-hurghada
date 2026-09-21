@@ -9,13 +9,11 @@ import { registerListingManagementRoutes } from "../listingManagementRoutes";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { ensureLocalAuthSchema } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> { return new Promise(resolve => { const server = net.createServer(); server.listen(port, () => server.close(() => resolve(true))); server.on("error", () => resolve(false)); }); }
 async function findAvailablePort(startPort = 3000): Promise<number> { for (let port = startPort; port < startPort + 20; port++) if (await isPortAvailable(port)) return port; throw new Error(`No available port found starting from ${startPort}`); }
 
 async function startServer() {
-  await ensureLocalAuthSchema();
   const app = express(); const server = createServer(app);
   app.use(express.json({ limit: "50mb" })); app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
