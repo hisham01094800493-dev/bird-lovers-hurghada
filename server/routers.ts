@@ -14,7 +14,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { validateChatUpload } from "./chatUploads";
 import { communityPosts, favorites, listingImages, listings, notifications } from "../drizzle/schema";
-import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createLocalUser, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, getListingSeller, getNotificationPreferences, getProfile, getUserByEmail, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessageAttachments, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile, upsertUser } from "./db";
+import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createLocalUser, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, listAdminUsers, getListingSeller, getNotificationPreferences, getProfile, getUserByEmail, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessageAttachments, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile, upsertUser } from "./db";
 
 const scrypt = promisify(nodeScrypt);
 async function hashPassword(password: string) {
@@ -169,6 +169,7 @@ export const appRouter = router({
   }),
   admin: router({
     stats: adminProcedure.query(() => getAdminStats()),
+    users: adminProcedure.input(z.object({ limit: z.number().int().min(1).max(200).default(200) }).optional()).query(({ input }) => listAdminUsers(input?.limit ?? 200)),
     messageAttachments: adminProcedure.input(z.object({ limit: z.number().int().min(1).max(200).default(100) }).optional()).query(({ input }) => listMessageAttachments(input?.limit ?? 100)),
     pendingListings: adminProcedure.query(() => listPendingListings()),
     moderationPosts: adminProcedure.query(() => listModerationPosts()),

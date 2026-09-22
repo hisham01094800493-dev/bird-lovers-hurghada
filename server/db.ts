@@ -293,6 +293,12 @@ export async function getAdminStats() {
   return { users: Number(userRows[0]?.count || 0), listings: Number(listingRows[0]?.count || 0), pendingListings: Number(pendingRows[0]?.count || 0), reports: Number(reportRows[0]?.count || 0), messages: Number(messageRows[0]?.count || 0) };
 }
 
+export async function listAdminUsers(limit = 200) {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email, phone: users.phone, area: users.area, role: users.role, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn })
+    .from(users).orderBy(desc(users.createdAt)).limit(limit);
+}
+
 export async function listPendingListings() {
   const db = await getDb(); if (!db) return [];
   return db.select({ id: listings.id, titleEn: listings.titleEn, price: listings.price, location: listings.location, status: listings.status, moderationStatus: listings.moderationStatus, createdAt: listings.createdAt, sellerName: users.name, sellerEmail: users.email, coverImage: listingImages.storagePath })
