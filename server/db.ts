@@ -299,6 +299,20 @@ export async function listAdminUsers(limit = 200) {
     .from(users).orderBy(desc(users.createdAt)).limit(limit);
 }
 
+export async function updateAdminUser(actorId: number, input: { userId: number; name: string; phone?: string; area?: string; role: "user" | "admin" }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const existing = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, input.userId)).limit(1);
+  if (!existing[0]) throw new Error("Member not found");
+  if (actorId === input.userId && input.role !== existing[0].role) throw new Error("You cannot change your own admin role");
+  if (existing[0].role === "admin" && input.role === "user") {
+    const adminRows = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, "admin"));
+    if (Number(adminRows[0]?.count || 0) <= 1) throw new Error("At least one admin account must remain");
+  }
+  await db.update(users).set({ name: input.name.trim(), phone: input.phone?.trim() || null, area: input.area?.trim() || null, role: input.role }).where(eq(users.id, input.userId));
+  await db.insert(auditLogs).values({ actorId, action: input.role === existing[0].role ? "user_update" : "user_role_change", targetType: "user", targetId: input.userId, metadata: JSON.stringify({ role: input.role }) });
+  return { success: true } as const;
+}
+
 export async function listPendingListings() {
   const db = await getDb(); if (!db) return [];
   return db.select({ id: listings.id, titleEn: listings.titleEn, price: listings.price, location: listings.location, status: listings.status, moderationStatus: listings.moderationStatus, createdAt: listings.createdAt, sellerName: users.name, sellerEmail: users.email, coverImage: listingImages.storagePath })
