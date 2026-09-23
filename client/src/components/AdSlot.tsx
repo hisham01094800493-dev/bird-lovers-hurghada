@@ -26,6 +26,7 @@ type AdSlotProps = {
 export default function AdSlot({ variant = "banner", title, description, cta, href = "/sell", external = false, image, imageAlt }: AdSlotProps) {
   const slotId = variant === "banner" ? ADSENSE_SLOT_1 : ADSENSE_SLOT_2;
   const hasAdSense = Boolean(ADSENSE_CLIENT_ID && slotId);
+  const isGroupPromo = href.includes("facebook.com/groups");
   const adRef = useRef<HTMLModElement>(null);
   const [adReady, setAdReady] = useState(false);
 
@@ -66,7 +67,7 @@ export default function AdSlot({ variant = "banner", title, description, cta, hr
           <img className="ad-promo-image" src={image || "/images/hurghada-parrot-hero.jpg"} alt={imageAlt || "Colourful bird"} />
           <div className="ad-promo-copy"><strong>{title || "انضم إلى مجتمع طيور الغردقة"}</strong><span>{description || "شارك، اسأل، واعثر على بيت أفضل لطيرك."}</span></div>
           {external ? <a href={href} target="_blank" rel="noreferrer" className="ad-promo-cta">{cta || "انضم الآن"} <ArrowRight size={15} /></a> : <Link href={href} className="ad-promo-cta">{cta || "انضم الآن"} <ArrowRight size={15} /></Link>}
-          <span className="ad-promo-badge">{variant === "compact" ? <Bird size={15} /> : <Sparkles size={15} />}</span>
+          <span className="ad-promo-badge">{isGroupPromo ? <img src="/icons/bird-lovers-budgie-icon-64.png" alt="" aria-hidden="true" /> : variant === "compact" ? <Bird size={15} /> : <Sparkles size={15} />}</span>
         </div>
       )}
     </aside>

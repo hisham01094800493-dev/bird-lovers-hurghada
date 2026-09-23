@@ -8,8 +8,8 @@
   "theme_color": "#183b39",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/manus-storage/bird-lovers-group-icon-192_e27a2b60.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/manus-storage/bird-lovers-group-icon-512_da60fa5f.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/manus-storage/bird-lovers-group-icon-1024_1c4d3f70.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/icons/bird-lovers-budgie-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/bird-lovers-budgie-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/bird-lovers-budgie-icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any maskable" }
   ]
 }

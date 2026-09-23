@@ -20,10 +20,10 @@ import {
 import { ADMIN_EMAIL } from "@shared/const";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
-  { match: /lorikeet/i, path: "/manus-storage/rainbow-lorikeet_6273d539.jpg" },
-  { match: /parakeet|budgerigar/i, path: "/manus-storage/green-budgerigar_f47e1082.jpg" },
-  { match: /macaw/i, path: "/manus-storage/blue-gold-macaw_e9110acc.jpg" },
-  { match: /cockatiel/i, path: "/manus-storage/cockatiel_b7203d6a.jpg" },
+  { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
+  { match: /parakeet|budgerigar|budgie/i, path: "/images/listing-green-parakeet.jpg" },
+  { match: /macaw/i, path: "/images/listing-blue-gold-macaw.jpg" },
+  { match: /cockatiel/i, path: "/images/listing-cockatiel.jpg" },
 ];
 
 function promotionalImageFor(title: string | null | undefined, fallback: string | null | undefined) {
@@ -176,8 +176,41 @@ export async function getConversation(conversationId: number) {
 
 export async function listMessages(conversationId: number) {
   const db = await getDb(); if (!db) return [];
-  return db.select({ id: messages.id, conversationId: messages.conversationId, senderId: messages.senderId, senderName: users.name, body: messages.body, attachmentPath: messages.attachmentPath, attachmentType: messages.attachmentType, readAt: messages.readAt, createdAt: messages.createdAt })
+  const rows = await db.select({ id: messages.id, conversationId: messages.conversationId, senderId: messages.senderId, senderName: users.name, body: messages.body, attachmentPath: messages.attachmentPath, attachmentType: messages.attachmentType, attachmentData: messages.attachmentData, readAt: messages.readAt, createdAt: messages.createdAt })
     .from(messages).innerJoin(users, eq(messages.senderId, users.id)).where(eq(messages.conversationId, conversationId)).orderBy(asc(messages.createdAt)).limit(100);
+  return rows.map(({ attachmentData, attachmentPath, attachmentType, ...message }) => ({
+    ...message,
+    attachmentPath: attachmentData && attachmentType ? `data:${attachmentType};base64,${Buffer.from(attachmentData).toString("base64")}` : attachmentPath,
+    attachmentType,
+  }));
+}
+
+export async function listMessageAttachments(limit = 100) {
+  const db = await getDb(); if (!db) return [];
+  const rows = await db.select({
+    id: messages.id,
+    conversationId: messages.conversationId,
+    senderId: messages.senderId,
+    senderName: users.name,
+    senderEmail: users.email,
+    listingTitle: listings.titleEn,
+    body: messages.body,
+    attachmentPath: messages.attachmentPath,
+    attachmentType: messages.attachmentType,
+    attachmentData: messages.attachmentData,
+    attachmentExpiresAt: messages.attachmentExpiresAt,
+    createdAt: messages.createdAt,
+  }).from(messages)
+    .innerJoin(users, eq(messages.senderId, users.id))
+    .innerJoin(conversations, eq(messages.conversationId, conversations.id))
+    .innerJoin(listings, eq(conversations.listingId, listings.id))
+    .where(sql`${messages.attachmentData} is not null or ${messages.attachmentPath} is not null`)
+    .orderBy(desc(messages.createdAt)).limit(Math.min(Math.max(limit, 1), 200));
+  return rows.map(({ attachmentData, attachmentPath, attachmentType, ...message }) => ({
+    ...message,
+    attachmentPath: attachmentData && attachmentType ? `data:${attachmentType};base64,${Buffer.from(attachmentData).toString("base64")}` : attachmentPath,
+    attachmentType,
+  }));
 }
 
 export async function getListingSeller(listingId: number) {
@@ -190,25 +223,33 @@ export async function findConversation(listingId: number, buyerId: number, selle
   const rows = await db.select().from(conversations).where(and(eq(conversations.listingId, listingId), eq(conversations.buyerId, buyerId), eq(conversations.sellerId, sellerId))).limit(1); return rows[0];
 }
 
-export async function createConversationMessage(input: { listingId: number; buyerId: number; sellerId: number; body: string; attachmentPath?: string; attachmentType?: string }) {
+export async function createConversationMessage(input: { listingId: number; buyerId: number; sellerId: number; body: string; attachmentPath?: string; attachmentData?: Buffer; attachmentType?: string; attachmentExpiresAt?: Date }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   let conversation = await findConversation(input.listingId, input.buyerId, input.sellerId);
   if (!conversation) { const [created] = await db.insert(conversations).values({ listingId: input.listingId, buyerId: input.buyerId, sellerId: input.sellerId }); conversation = await getConversation(Number(created.insertId)); }
   if (!conversation) throw new Error("Conversation could not be created");
-  await db.insert(messages).values({ conversationId: conversation.id, senderId: input.buyerId, body: input.body, attachmentPath: input.attachmentPath, attachmentType: input.attachmentType });
+  await db.insert(messages).values({ conversationId: conversation.id, senderId: input.buyerId, body: input.body, attachmentPath: input.attachmentPath, attachmentData: input.attachmentData, attachmentType: input.attachmentType, attachmentExpiresAt: input.attachmentExpiresAt });
   await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversation.id));
   await createNotification(input.sellerId, "new_message", "New message about your listing", input.body.slice(0, 140) || "New attachment", `/messages?conversation=${conversation.id}`);
   return conversation;
 }
 
-export async function addMessage(conversationId: number, senderId: number, body: string, attachmentPath?: string, attachmentType?: string) {
+export async function addMessage(conversationId: number, senderId: number, body: string, attachmentData?: Buffer, attachmentType?: string, attachmentExpiresAt?: Date) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   const conversation = await getConversation(conversationId); if (!conversation) return undefined;
-  await db.insert(messages).values({ conversationId, senderId, body, attachmentPath, attachmentType });
+  await db.insert(messages).values({ conversationId, senderId, body, attachmentData, attachmentType, attachmentExpiresAt });
   await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversationId));
   const recipientId = conversation.buyerId === senderId ? conversation.sellerId : conversation.buyerId;
   await createNotification(recipientId, "new_message", "New message", body.slice(0, 140) || "New attachment", `/messages?conversation=${conversationId}`);
   return { success: true } as const;
+}
+
+export async function cleanupExpiredMessageAttachments() {
+  const db = await getDb(); if (!db) return 0;
+  const result = await db.update(messages)
+    .set({ attachmentData: null, attachmentPath: null, attachmentType: null, attachmentExpiresAt: null })
+    .where(sql`${messages.attachmentExpiresAt} is not null and ${messages.attachmentExpiresAt} < now()`);
+  return Number(result[0]?.affectedRows || 0);
 }
 
 export async function createNotification(userId: number, type: string, title: string, body: string, link?: string) {
@@ -250,6 +291,26 @@ export async function getAdminStats() {
     db.select({ count: sql<number>`count(*)` }).from(messages),
   ]);
   return { users: Number(userRows[0]?.count || 0), listings: Number(listingRows[0]?.count || 0), pendingListings: Number(pendingRows[0]?.count || 0), reports: Number(reportRows[0]?.count || 0), messages: Number(messageRows[0]?.count || 0) };
+}
+
+export async function listAdminUsers(limit = 200) {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email, phone: users.phone, area: users.area, role: users.role, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn })
+    .from(users).orderBy(desc(users.createdAt)).limit(limit);
+}
+
+export async function updateAdminUser(actorId: number, input: { userId: number; name: string; phone?: string; area?: string; role: "user" | "admin" }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const existing = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, input.userId)).limit(1);
+  if (!existing[0]) throw new Error("Member not found");
+  if (actorId === input.userId && input.role !== existing[0].role) throw new Error("You cannot change your own admin role");
+  if (existing[0].role === "admin" && input.role === "user") {
+    const adminRows = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, "admin"));
+    if (Number(adminRows[0]?.count || 0) <= 1) throw new Error("At least one admin account must remain");
+  }
+  await db.update(users).set({ name: input.name.trim(), phone: input.phone?.trim() || null, area: input.area?.trim() || null, role: input.role }).where(eq(users.id, input.userId));
+  await db.insert(auditLogs).values({ actorId, action: input.role === existing[0].role ? "user_update" : "user_role_change", targetType: "user", targetId: input.userId, metadata: JSON.stringify({ role: input.role }) });
+  return { success: true } as const;
 }
 
 export async function listPendingListings() {
