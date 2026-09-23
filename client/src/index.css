@@ -109,3 +109,5 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .ad-promo-cta { display: inline-flex; flex-shrink: 0; align-items: center; gap: 5px; border-radius: 10px; background: #d26246; padding: 9px 12px; color: white; font-size: 11px; font-weight: 800; }
 .ad-promo-cta:hover { background: #b95138; }
 @media (max-width: 640px) { .ad-promo { align-items: flex-start; flex-wrap: wrap; } .ad-promo-image { width: 72px; height: 64px; flex-basis: 72px; } .ad-promo-copy { flex-basis: calc(100% - 85px); } .ad-promo-cta { margin-left: 85px; } }
+
+.price-ticker-window { mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); } .price-ticker-track { display: inline-flex; min-width: max-content; gap: 3rem; animation: price-ticker-scroll 34s linear infinite; } .price-ticker-track span { display: inline-block; } @keyframes price-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } } .price-ticker:hover .price-ticker-track { animation-play-state: paused; } @media (prefers-reduced-motion: reduce) { .price-ticker-track { animation: none; } }
