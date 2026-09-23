@@ -187,7 +187,7 @@ export default function CareTools() {
         <div>
           <p className="eyebrow flex items-center gap-2">
             <span className="eyebrow-dot" />{" "}
-            {isArabic ? "مختبر الرعاية" : "Care lab"}
+            {isArabic ? "أدوات الرعاية" : "Care tools"}
           </p>
           <h1 className="page-title">
             {isArabic ? (
@@ -212,7 +212,7 @@ export default function CareTools() {
         </div>
         <div className="flex items-center gap-2 rounded-2xl border border-[#dce7df] bg-white px-4 py-3 text-sm text-[#52766d]">
           <Zap size={17} className="text-[#c49752]" />
-          {isArabic ? "نظام هجين" : "Hybrid system"}
+          {isArabic ? "محدث باستمرار" : "Always up to date"}
         </div>
       </section>
 
@@ -360,7 +360,7 @@ export default function CareTools() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="eyebrow">
-                    {isArabic ? "رادار الرعاية" : "Care radar"}
+                    {isArabic ? "حالة الجو" : "Weather today"}
                   </span>
                   <span className="rounded-full bg-white/70 px-2 py-1 text-[10px] font-bold text-[#52766d]">
                     {isArabic ? "حي" : "LIVE"}
@@ -440,8 +440,8 @@ export default function CareTools() {
                   </strong>
                   <span className="mt-1 block text-xs leading-5 text-[#718780]">
                     {isArabic
-                      ? "الحالة تتحدث تلقائيًا من مصدر الطقس، والنصيحة الأساسية تأتي من قاعدة بيانات Bird Lovers."
-                      : "Weather updates live; the care guidance comes from the Bird Lovers content library."}
+                      ? "نحدّث الحالة تلقائيًا عشان تعرف تتصرف بسرعة."
+                      : "We keep the status fresh so you know what to do."}
                   </span>
                 </div>
               </div>
@@ -477,13 +477,7 @@ export default function CareTools() {
             </button>
             <div className="mt-4 flex items-center justify-between text-[10px] text-[#82948e]">
               <span>
-                {weather?.source === "Open-Meteo"
-                  ? isArabic
-                    ? "مصدر الطقس: Open-Meteo"
-                    : "Weather source: Open-Meteo"
-                  : isArabic
-                    ? "نعرض آخر حالة متاحة"
-                    : "Showing the latest available state"}
+                {isArabic ? "آخر تحديث متاح الآن" : "Updated just now"}
               </span>
               <button
                 type="button"
@@ -509,20 +503,20 @@ export default function CareTools() {
               </p>
               <h2 className="mt-2 font-display text-3xl font-semibold text-[#183b39]">
                 {isArabic
-                  ? "النصيحة تتغير، والمصدر ثابت."
-                  : "Advice evolves. Trust stays."}
+                  ? "نصائح بسيطة لكل موسم."
+                  : "Simple tips for every season."}
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#718780]">
                 {isArabic
-                  ? "النصوص الأساسية تدار من الخادم ويمكن تحديثها دون إصدار نسخة جديدة، بينما يضيف الطقس طبقة تنبيه فورية."
-                  : "Core guidance is managed on the server and can change without a new app release; live weather adds the immediate layer."}
+                  ? "خطوات صغيرة تساعدك تهتم بطيرك بشكل أفضل كل يوم."
+                  : "Small, practical steps to help you care for your bird every day."}
               </p>
             </div>
             <Link
               href="/notifications"
               className="inline-flex items-center gap-2 text-sm font-semibold text-[#52766d]"
             >
-              {isArabic ? "مركز التنبيهات" : "Notification center"}{" "}
+              {isArabic ? "كل التنبيهات" : "All alerts"}{" "}
               <CalendarClock size={15} />
             </Link>
           </div>
