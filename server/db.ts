@@ -5,6 +5,8 @@ import {
   appUpdates,
   categories,
   communityPosts,
+  communityPostLikes,
+  communityComments,
   conversations,
   favorites,
   InsertUser,
@@ -136,6 +138,30 @@ export async function listCommunityPosts() {
   const db = await getDb(); if (!db) return [];
   return db.select({ id: communityPosts.id, category: communityPosts.category, title: communityPosts.title, body: communityPosts.body, imagePath: communityPosts.imagePath, likesCount: communityPosts.likesCount, commentsCount: communityPosts.commentsCount, createdAt: communityPosts.createdAt, authorName: users.name, authorAvatar: users.avatarUrl })
     .from(communityPosts).leftJoin(users, eq(communityPosts.authorId, users.id)).where(eq(communityPosts.status, "published")).orderBy(desc(communityPosts.createdAt)).limit(12);
+}
+
+export async function listCommunityComments(postId: number) {
+  const db = await getDb(); if (!db) return [];
+  return db.select({ id: communityComments.id, body: communityComments.body, createdAt: communityComments.createdAt, authorName: users.name, authorAvatar: users.avatarUrl }).from(communityComments).leftJoin(users, eq(communityComments.authorId, users.id)).where(eq(communityComments.postId, postId)).orderBy(asc(communityComments.createdAt)).limit(100);
+}
+
+export async function hasCommunityLike(userId: number, postId: number) {
+  const db = await getDb(); if (!db) return false;
+  const row = await db.select({ id: communityPostLikes.id }).from(communityPostLikes).where(and(eq(communityPostLikes.userId, userId), eq(communityPostLikes.postId, postId))).limit(1); return Boolean(row[0]);
+}
+
+export async function toggleCommunityLike(userId: number, postId: number) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const post = await db.select({ id: communityPosts.id, authorId: communityPosts.authorId, status: communityPosts.status }).from(communityPosts).where(eq(communityPosts.id, postId)).limit(1); if (!post[0] || post[0].status !== "published") throw new Error("Post not found");
+  const existing = await db.select({ id: communityPostLikes.id }).from(communityPostLikes).where(and(eq(communityPostLikes.userId, userId), eq(communityPostLikes.postId, postId))).limit(1);
+  if (existing[0]) { await db.delete(communityPostLikes).where(eq(communityPostLikes.id, existing[0].id)); await db.update(communityPosts).set({ likesCount: sql`greatest(${communityPosts.likesCount} - 1, 0)` }).where(eq(communityPosts.id, postId)); return { liked: false } as const; }
+  await db.insert(communityPostLikes).values({ userId, postId }); await db.update(communityPosts).set({ likesCount: sql`${communityPosts.likesCount} + 1` }).where(eq(communityPosts.id, postId)); if (post[0].authorId !== userId) await createNotification(post[0].authorId, "community_like", "إعجاب جديد بمنشورك", "أعجب أحد الأعضاء بمنشورك في المجتمع", "/community"); return { liked: true } as const;
+}
+
+export async function createCommunityComment(userId: number, postId: number, body: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const post = await db.select({ id: communityPosts.id, authorId: communityPosts.authorId, status: communityPosts.status }).from(communityPosts).where(eq(communityPosts.id, postId)).limit(1); if (!post[0] || post[0].status !== "published") throw new Error("Post not found");
+  await db.insert(communityComments).values({ postId, authorId: userId, body }); await db.update(communityPosts).set({ commentsCount: sql`${communityPosts.commentsCount} + 1` }).where(eq(communityPosts.id, postId)); if (post[0].authorId !== userId) await createNotification(post[0].authorId, "community_comment", "تعليق جديد على منشورك", body.slice(0, 140), "/community"); return { success: true } as const;
 }
 
 export async function listNotifications(userId: number) {

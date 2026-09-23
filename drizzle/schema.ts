@@ -106,6 +106,21 @@ export const communityPosts = mysqlTable("communityPosts", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({ feedIdx: index("community_feed_idx").on(table.status, table.createdAt) }));
 
+export const communityPostLikes = mysqlTable("communityPostLikes", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull().references(() => communityPosts.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ uniqueLike: uniqueIndex("community_post_user_like_unique").on(table.postId, table.userId), postIdx: index("community_post_likes_post_idx").on(table.postId) }));
+
+export const communityComments = mysqlTable("communityComments", {
+  id: int("id").autoincrement().primaryKey(),
+  postId: int("postId").notNull().references(() => communityPosts.id, { onDelete: "cascade" }),
+  authorId: int("authorId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ postIdx: index("community_comments_post_idx").on(table.postId, table.createdAt) }));
+
 export const conversations = mysqlTable("conversations", {
   id: int("id").autoincrement().primaryKey(),
   listingId: int("listingId").notNull().references(() => listings.id, { onDelete: "cascade" }),
