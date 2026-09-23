@@ -72,7 +72,7 @@ async function storeMessageAttachment(userId: number, attachmentData?: string, a
 
 
 const listingInput = z.object({
-  categoryId: z.number().int().positive(), titleEn: z.string().min(4).max(180), titleAr: z.string().max(180).optional(), descriptionEn: z.string().min(20).max(5000), descriptionAr: z.string().max(5000).optional(), price: z.number().min(0).max(100000000), negotiable: z.boolean().default(false), exchangeAvailable: z.boolean().default(false), location: z.string().min(2).max(120).default("Hurghada"), imageData: z.array(z.string().max(7000000)).max(6).optional(), imagePath: z.string().max(600).optional(),
+  categoryId: z.number().int().positive(), titleEn: z.string().trim().min(2).max(180), titleAr: z.string().trim().max(180).optional(), descriptionEn: z.string().min(20).max(5000), descriptionAr: z.string().max(5000).optional(), price: z.number().min(0).max(100000000), negotiable: z.boolean().default(false), exchangeAvailable: z.boolean().default(false), location: z.string().min(2).max(120).default("Hurghada"), imageData: z.array(z.string().max(7000000)).max(6).optional(), imagePath: z.string().max(600).optional(),
 });
 
 export const appRouter = router({

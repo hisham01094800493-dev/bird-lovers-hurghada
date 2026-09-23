@@ -46,6 +46,18 @@ export function registerListingManagementRoutes(app: Express) {
     return res.json({ success: true, id, status: "pending_review" });
   });
 
+  app.patch("/api/listings/:id/status", async (req: Request, res: Response) => {
+    const user = await currentUser(req); if (!user) return res.status(401).json({ message: "Authentication required" });
+    const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) return res.status(400).json({ message: "Invalid listing id" });
+    if (bodyValue(req.body?.status) !== "sold") return res.status(400).json({ message: "Only sold status is supported" });
+    const db = await getDb(); if (!db) return res.status(503).json({ message: "Database is not available" });
+    const existing = await db.select({ id: listings.id, status: listings.status }).from(listings).where(and(eq(listings.id, id), eq(listings.sellerId, user.id))).limit(1);
+    if (!existing[0]) return res.status(404).json({ message: "Listing not found" });
+    if (existing[0].status !== "published" && existing[0].status !== "reserved") return res.status(409).json({ message: "Only published or reserved listings can be marked sold" });
+    await db.update(listings).set({ status: "sold" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
+    return res.json({ success: true, id, status: "sold" });
+  });
+
   app.delete("/api/listings/:id/images/:imageId", async (req: Request, res: Response) => {
     const user = await currentUser(req); if (!user) return res.status(401).json({ message: "Authentication required" });
     const listingId = Number(req.params.id); const imageId = Number(req.params.imageId); const db = await getDb(); if (!db) return res.status(503).json({ message: "Database is not available" });
