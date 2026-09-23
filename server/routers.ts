@@ -56,6 +56,7 @@ import {
   listCategories,
   listCommunityComments,
   listCommunityPosts,
+  listCommunityReputations,
   markCommunityCommentHelpful,
   listConversations,
   listFavorites,
@@ -80,6 +81,8 @@ import {
   reorderListingImages,
   requestContactVerification,
   resolveReport,
+  setCommunityPoints,
+  setAccountModeration,
   resolveLostFoundReport,
   toggleCommunityLike,
   unreadNotificationCount,
@@ -969,6 +972,21 @@ export const appRouter = router({
           .optional()
       )
       .query(({ input }) => listAdminUsers(input?.limit ?? 200)),
+    reputation: adminProcedure
+      .input(
+        z
+          .object({ limit: z.number().int().min(1).max(200).default(200) })
+          .optional()
+      )
+      .query(({ input }) => listCommunityReputations(input?.limit ?? 200)),
+    setCommunityPoints: adminProcedure
+      .input(
+        z.object({
+          userId: z.number().int().positive(),
+          points: z.number().int().min(0).max(10000),
+        })
+      )
+      .mutation(({ input }) => setCommunityPoints(input.userId, input.points)),
     updateUser: adminProcedure
       .input(
         z.object({
@@ -980,6 +998,22 @@ export const appRouter = router({
         })
       )
       .mutation(({ ctx, input }) => updateAdminUser(ctx.user.id, input)),
+    moderateUser: adminProcedure
+      .input(
+        z.object({
+          userId: z.number().int().positive(),
+          status: z.enum(["active", "suspended", "banned"]),
+          suspendedUntil: z.string().datetime().nullable().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        setAccountModeration(
+          ctx.user.id,
+          input.userId,
+          input.status,
+          input.suspendedUntil ? new Date(input.suspendedUntil) : null
+        )
+      ),
     priceGuide: adminProcedure.query(() => listPriceGuide()),
     priceDrafts: adminProcedure.query(() => listPendingPriceGuideDrafts()),
     approvePriceDraft: adminProcedure

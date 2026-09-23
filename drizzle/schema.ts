@@ -24,6 +24,10 @@ export const users = mysqlTable("users", {
   passwordHash: text("passwordHash"),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  accountStatus: mysqlEnum("accountStatus", ["active", "suspended", "banned"])
+    .default("active")
+    .notNull(),
+  suspendedUntil: timestamp("suspendedUntil"),
   avatarUrl: text("avatarUrl"),
   phone: varchar("phone", { length: 32 }),
   whatsappOptIn: boolean("whatsappOptIn").notNull().default(false),

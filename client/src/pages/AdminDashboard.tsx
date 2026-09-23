@@ -1,4 +1,20 @@
-import { Check, Clock3, FileWarning, Image as ImageIcon, LayoutDashboard, Loader2, MessageCircle, ShieldAlert, Users, X, Lock, Unlock, Volume2 } from "lucide-react";
+import {
+  Award,
+  Check,
+  Clock3,
+  FileWarning,
+  Image as ImageIcon,
+  LayoutDashboard,
+  Loader2,
+  MessageCircle,
+  Save,
+  ShieldAlert,
+  Users,
+  X,
+  Lock,
+  Unlock,
+  Volume2,
+} from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,39 +32,1060 @@ export default function AdminDashboard() {
   const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const stats = trpc.admin.stats.useQuery(undefined, { enabled: isAdmin });
-  const members = trpc.admin.users.useQuery({ limit: 200 }, { enabled: isAdmin && expandedCard === "users" });
-  const pending = trpc.admin.pendingListings.useQuery(undefined, { enabled: isAdmin });
-  const reports = trpc.admin.openReports.useQuery(undefined, { enabled: isAdmin });
-  const moderationPosts = trpc.admin.moderationPosts.useQuery(undefined, { enabled: isAdmin });
-  const messageAttachments = trpc.admin.messageAttachments.useQuery({ limit: 100 }, { enabled: isAdmin });
+  const members = trpc.admin.users.useQuery(
+    { limit: 200 },
+    { enabled: isAdmin && expandedCard === "users" }
+  );
+  const reputation = trpc.admin.reputation.useQuery(
+    { limit: 200 },
+    { enabled: isAdmin }
+  );
+  const pending = trpc.admin.pendingListings.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+  const reports = trpc.admin.openReports.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+  const moderationPosts = trpc.admin.moderationPosts.useQuery(undefined, {
+    enabled: isAdmin,
+  });
+  const messageAttachments = trpc.admin.messageAttachments.useQuery(
+    { limit: 100 },
+    { enabled: isAdmin }
+  );
   const utils = trpc.useUtils();
-  const moderate = trpc.admin.moderateListing.useMutation({ onSuccess: (_, input) => { toast.success(input.decision === "approved" ? "تم نشر الإعلان" : "تم رفض الإعلان"); utils.admin.stats.invalidate(); utils.admin.pendingListings.invalidate(); }, onError: error => toast.error(error.message) });
-  const resolveReport = trpc.admin.resolveReport.useMutation({ onSuccess: () => { toast.success("تم إغلاق البلاغ"); utils.admin.stats.invalidate(); utils.admin.openReports.invalidate(); }, onError: error => toast.error(error.message) });
-  const moderatePost = trpc.admin.moderatePost.useMutation({ onSuccess: () => { toast.success("تم تحديث حالة مراجعة المنشور"); utils.admin.moderationPosts.invalidate(); }, onError: error => toast.error(error.message) });
-  const cards = [{ key: "users", label: "إجمالي المستخدمين", value: stats.data?.users ?? 0, detail: "الأعضاء المسجلون", icon: Users, color: "mint", target: "admin-users-section" }, { key: "listings", label: "كل الإعلانات", value: stats.data?.listings ?? 0, detail: "إعلانات السوق", icon: LayoutDashboard, color: "sky", target: "admin-listings-section" }, { key: "pending", label: "قيد المراجعة", value: stats.data?.pendingListings ?? 0, detail: "إعلانات تحتاج مراجعة", icon: Clock3, color: "sand", target: "admin-listings-section" }, { key: "reports", label: "البلاغات المفتوحة", value: stats.data?.reports ?? 0, detail: "حالات سلامة المجتمع", icon: FileWarning, color: "coral", target: "admin-safety-section" }, { key: "messages", label: "الرسائل", value: stats.data?.messages ?? 0, detail: "نشاط المحادثات", icon: MessageCircle, color: "mint", target: "admin-actions-section" }];
-  const openAdminCard = (card: typeof cards[number]) => setExpandedCard(card.key);
-  useEffect(() => { if (!expandedCard) return; const card = cards.find(item => item.key === expandedCard); if (card) requestAnimationFrame(() => document.getElementById(card.target)?.scrollIntoView({ behavior: "smooth", block: "start" })); }, [expandedCard, cards]);
-  if (loading) return <SiteShell><div className="shell py-24 text-center"><Loader2 className="mx-auto animate-spin" /></div></SiteShell>;
-  if (!user || !isAdmin) return <SiteShell><div className="shell py-24"><div className="auth-card"><span className="brand-mark mx-auto"><ShieldAlert size={20} /></span><h1 className="mt-5 font-display text-3xl font-semibold">الوصول مخصص للإدارة فقط</h1><p className="mt-3 text-sm leading-6 text-[#718780]">هذه الصفحة محمية بصلاحيات الإدارة من الخادم.</p><Link href="/" className="text-link mt-6 inline-flex">العودة إلى الرئيسية</Link></div></div></SiteShell>;
-  const adminQueryError = stats.error || pending.error || reports.error || moderationPosts.error || messageAttachments.error;
-  if (adminQueryError) return <SiteShell><div className="shell py-24"><div className="auth-card"><span className="brand-mark mx-auto"><ShieldAlert size={20} /></span><h1 className="mt-5 font-display text-3xl font-semibold">بيانات الإدارة غير متاحة مؤقتًا</h1><p className="mt-3 text-sm leading-6 text-[#718780]">حدثت مشكلة مؤقتة في تحميل أحد طلبات الإدارة. جرّب مرة أخرى دون فقدان جلسة الدخول.</p><button type="button" className="cta-primary mt-6" onClick={() => { void Promise.all([stats.refetch(), pending.refetch(), reports.refetch(), moderationPosts.refetch(), messageAttachments.refetch()]); }}>إعادة المحاولة / Try again</button></div></div></SiteShell>;
-  return <SiteShell><section className="shell admin-shell"><div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end"><div><p className="eyebrow">لوحة الإدارة</p><h1 className="page-title mt-3">حافظ على<br /><em>سلامة المجتمع.</em></h1><p className="page-lede">لوحة منظمة لمتابعة الثقة في السوق وقوائم المراجعة.</p></div><span className="admin-badge"><ShieldAlert size={15} /> حساب إداري محمي · {user.email}</span></div><section id="admin-users" aria-labelledby="admin-overview" className="mt-10"><p id="admin-overview" className="eyebrow">نظرة عامة</p><div className="stats-grid mt-4">{cards.map(card => <button type="button" key={card.key} onClick={() => openAdminCard(card)} className={`admin-stat admin-stat-${card.color} text-left`} aria-expanded={expandedCard === card.key}><card.icon size={19} /><p>{card.label}</p><strong>{card.value}</strong><span>{card.detail} · فتح التفاصيل</span></button>)}</div></section>{expandedCard === "users" ? <section id="admin-users-section" aria-labelledby="admin-members" className="mt-8 rounded-2xl border border-[#dce7df] bg-white p-5"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p className="eyebrow">الأعضاء</p><h2 id="admin-members" className="section-title mt-2 text-3xl">تفاصيل الأعضاء<br /><em>المسجلين حاليًا.</em></h2></div><span className="text-xs font-semibold text-[#718780]">{stats.data?.users ?? 0} عضو</span></div>{members.isLoading ? <div className="p-8 text-center"><Loader2 className="mx-auto animate-spin" /></div> : members.data?.length ? <div className="mt-5 overflow-x-auto"><table className="w-full min-w-[760px] text-right text-sm"><thead className="border-b border-[#dce7df] text-xs text-[#718780]"><tr><th className="px-3 py-3">العضو</th><th className="px-3 py-3">البريد الإلكتروني</th><th className="px-3 py-3">الهاتف</th><th className="px-3 py-3">المنطقة</th><th className="px-3 py-3">الصلاحية</th><th className="px-3 py-3">تاريخ التسجيل</th><th className="px-3 py-3">آخر دخول</th></tr></thead><tbody className="divide-y divide-[#edf1ed]">{members.data.map(member => <AdminMemberRow key={member.id} member={member} onSaved={() => { utils.admin.users.invalidate(); utils.admin.stats.invalidate(); }} />)}</tbody></table></div> : <div className="empty-state mt-5"><Users size={24} /><p>لا يوجد أعضاء مسجلون حتى الآن.</p></div>}</section> : null}<AdminPriceGuide /><section id="admin-actions-section" aria-labelledby="admin-actions" className="mt-12"><div><p className="eyebrow">تواصل الأعضاء</p><h2 id="admin-actions" className="section-title mt-2 text-3xl">رسائل مفيدة،<br /><em>بدون إزعاج زائد.</em></h2></div><CustomNotificationComposer /></section><section id="admin-attachments-section" aria-labelledby="admin-attachments" className="mt-12"><div><p className="eyebrow">مراقبة المرفقات</p><h2 id="admin-attachments" className="section-title mt-2 text-3xl">صور وتسجيلات<br /><em>المحادثات.</em></h2><p className="mt-2 max-w-xl text-sm leading-6 text-[#718780]">هذا القسم إداري ومحمي، ويعرض آخر 100 مرفق محفوظ داخل قاعدة البيانات. احترم خصوصية الأعضاء ولا تشارك المرفقات خارج فريق الإدارة.</p></div><div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{messageAttachments.isLoading ? <Loader2 className="animate-spin" /> : messageAttachments.data?.length ? messageAttachments.data.map(item => <article key={item.id} className="overflow-hidden rounded-2xl border border-[#dce7df] bg-white">{item.attachmentType?.startsWith("image/") ? <img src={item.attachmentPath || ""} alt="مرفق من رسالة" className="h-52 w-full object-cover" /> : <div className="flex h-52 items-center justify-center bg-[#eef5ed] text-[#183b39]"><Volume2 size={34} /></div>}<div className="space-y-2 p-4"><div className="flex items-center gap-2 text-xs font-semibold text-[#527169]">{item.attachmentType?.startsWith("image/") ? <ImageIcon size={15} /> : <Volume2 size={15} />} {item.attachmentType}</div>{item.attachmentType?.startsWith("audio/") && <audio controls src={item.attachmentPath || undefined} className="w-full" />}<p className="truncate text-sm font-semibold text-[#183b39]">{item.senderName || item.senderEmail || "عضو"}</p><p className="truncate text-xs text-[#82948e]">{item.listingTitle}</p><p className="text-xs text-[#9aa9a3]">{new Date(item.createdAt).toLocaleString("ar-EG")}</p>{item.attachmentExpiresAt && <p className="text-xs text-[#bd5941]">يحذف في: {new Date(item.attachmentExpiresAt).toLocaleDateString("ar-EG")}</p>}</div></article>) : <div className="empty-state sm:col-span-2 lg:col-span-3"><ImageIcon size={24} /><p>لا توجد مرفقات محفوظة حتى الآن.</p></div>}</div></section><section id="admin-listings-section" aria-labelledby="admin-listings" className="mt-12"><ModerationQueue pending={pending.data || []} loading={pending.isLoading} onModerate={(listingId, decision) => moderate.mutate({ listingId, decision })} busy={moderate.isPending} /></section><section id="admin-safety-section" aria-labelledby="admin-safety" className="admin-two-column mt-12"><section><div className="flex items-end justify-between gap-3"><div><p className="eyebrow">البلاغات</p><h2 id="admin-safety" className="section-title mt-2 text-3xl">اتخذ القرار<br /><em>بعد مراجعة التفاصيل.</em></h2></div></div><div className="mt-5 space-y-3">{reports.isLoading ? <Loader2 className="animate-spin" /> : reports.data?.length ? reports.data.map(report => <article key={report.id} className="report-row"><div className="join-icon"><FileWarning size={16} /></div><div className="min-w-0 flex-1"><p className="font-semibold text-[#183b39]">{report.targetType} #{report.targetId}</p><p className="mt-1 text-sm text-[#718780]">{report.reason}</p><p className="mt-1 text-xs text-[#99a8a2]">أرسل البلاغ: {report.reporterName || report.reporterEmail || "عضو"}</p></div><div className="flex gap-1"><Button variant="outline" size="icon" className="rounded-full text-[#bd5941]" onClick={() => resolveReport.mutate({ reportId: report.id, status: "dismissed", resolution: "تمت المراجعة والإغلاق بواسطة الإدارة" })}><X size={14} /></Button><Button size="icon" className="rounded-full bg-[#183b39] text-white" onClick={() => resolveReport.mutate({ reportId: report.id, status: "resolved", resolution: "تمت المراجعة والمعالجة بواسطة الإدارة" })}><Check size={14} /></Button></div></article>) : <div className="empty-state"><Check size={22} /><p>لا توجد بلاغات مفتوحة.</p></div>}</div></section><section><div><p className="eyebrow">سلامة المجتمع</p><h2 className="section-title mt-2 text-3xl">مراجعة المنشورات<br /><em>with بعد مراجعة التفاصيل.</em></h2></div><div className="mt-5 space-y-3">{moderationPosts.isLoading ? <Loader2 className="animate-spin" /> : moderationPosts.data?.length ? moderationPosts.data.map(post => <article key={post.id} className="report-row"><div className="min-w-0 flex-1"><p className="truncate font-semibold text-[#183b39]">{post.title}</p><p className="mt-1 text-xs text-[#8b9e97]">{post.authorName || "عضو"} · {post.status}</p></div><div className="flex gap-1"><Button variant="outline" size="icon" className="rounded-full" onClick={() => moderatePost.mutate({ postId: post.id, status: "published" })} aria-label="إعادة نشر المنشور"><Unlock size={14} /></Button><Button variant="outline" size="icon" className="rounded-full text-[#bd5941]" onClick={() => moderatePost.mutate({ postId: post.id, status: "hidden" })} aria-label="إخفاء المنشور"><X size={14} /></Button><Button size="icon" className="rounded-full bg-[#183b39] text-white" onClick={() => moderatePost.mutate({ postId: post.id, status: "locked" })} aria-label="قفل المنشور"><Lock size={14} /></Button></div></article>) : <div className="empty-state"><Check size={22} /><p>لا توجد منشورات بانتظار المراجعة.</p></div>}</div></section></section></section></SiteShell>;
+  const moderate = trpc.admin.moderateListing.useMutation({
+    onSuccess: (_, input) => {
+      toast.success(
+        input.decision === "approved" ? "تم نشر الإعلان" : "تم رفض الإعلان"
+      );
+      utils.admin.stats.invalidate();
+      utils.admin.pendingListings.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const resolveReport = trpc.admin.resolveReport.useMutation({
+    onSuccess: () => {
+      toast.success("تم إغلاق البلاغ");
+      utils.admin.stats.invalidate();
+      utils.admin.openReports.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const moderatePost = trpc.admin.moderatePost.useMutation({
+    onSuccess: () => {
+      toast.success("تم تحديث حالة مراجعة المنشور");
+      utils.admin.moderationPosts.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const setCommunityPoints = trpc.admin.setCommunityPoints.useMutation({
+    onSuccess: () => {
+      toast.success("تم حفظ نقاط العضو والشارة تلقائيًا");
+      utils.admin.reputation.invalidate();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const cards = [
+    {
+      key: "users",
+      label: "إجمالي المستخدمين",
+      value: stats.data?.users ?? 0,
+      detail: "الأعضاء المسجلون",
+      icon: Users,
+      color: "mint",
+      target: "admin-users-section",
+    },
+    {
+      key: "listings",
+      label: "كل الإعلانات",
+      value: stats.data?.listings ?? 0,
+      detail: "إعلانات السوق",
+      icon: LayoutDashboard,
+      color: "sky",
+      target: "admin-listings-section",
+    },
+    {
+      key: "pending",
+      label: "قيد المراجعة",
+      value: stats.data?.pendingListings ?? 0,
+      detail: "إعلانات تحتاج مراجعة",
+      icon: Clock3,
+      color: "sand",
+      target: "admin-listings-section",
+    },
+    {
+      key: "reports",
+      label: "البلاغات المفتوحة",
+      value: stats.data?.reports ?? 0,
+      detail: "حالات سلامة المجتمع",
+      icon: FileWarning,
+      color: "coral",
+      target: "admin-safety-section",
+    },
+    {
+      key: "messages",
+      label: "الرسائل",
+      value: stats.data?.messages ?? 0,
+      detail: "نشاط المحادثات",
+      icon: MessageCircle,
+      color: "mint",
+      target: "admin-actions-section",
+    },
+  ];
+  const openAdminCard = (card: (typeof cards)[number]) =>
+    setExpandedCard(card.key);
+  useEffect(() => {
+    if (!expandedCard) return;
+    const card = cards.find(item => item.key === expandedCard);
+    if (card)
+      requestAnimationFrame(() =>
+        document
+          .getElementById(card.target)
+          ?.scrollIntoView({ behavior: "smooth", block: "start" })
+      );
+  }, [expandedCard, cards]);
+  if (loading)
+    return (
+      <SiteShell>
+        <div className="shell py-24 text-center">
+          <Loader2 className="mx-auto animate-spin" />
+        </div>
+      </SiteShell>
+    );
+  if (!user || !isAdmin)
+    return (
+      <SiteShell>
+        <div className="shell py-24">
+          <div className="auth-card">
+            <span className="brand-mark mx-auto">
+              <ShieldAlert size={20} />
+            </span>
+            <h1 className="mt-5 font-display text-3xl font-semibold">
+              الوصول مخصص للإدارة فقط
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-[#718780]">
+              هذه الصفحة محمية بصلاحيات الإدارة من الخادم.
+            </p>
+            <Link href="/" className="text-link mt-6 inline-flex">
+              العودة إلى الرئيسية
+            </Link>
+          </div>
+        </div>
+      </SiteShell>
+    );
+  const adminQueryError =
+    stats.error ||
+    pending.error ||
+    reports.error ||
+    moderationPosts.error ||
+    messageAttachments.error;
+  if (adminQueryError)
+    return (
+      <SiteShell>
+        <div className="shell py-24">
+          <div className="auth-card">
+            <span className="brand-mark mx-auto">
+              <ShieldAlert size={20} />
+            </span>
+            <h1 className="mt-5 font-display text-3xl font-semibold">
+              بيانات الإدارة غير متاحة مؤقتًا
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-[#718780]">
+              حدثت مشكلة مؤقتة في تحميل أحد طلبات الإدارة. جرّب مرة أخرى دون
+              فقدان جلسة الدخول.
+            </p>
+            <button
+              type="button"
+              className="cta-primary mt-6"
+              onClick={() => {
+                void Promise.all([
+                  stats.refetch(),
+                  pending.refetch(),
+                  reports.refetch(),
+                  moderationPosts.refetch(),
+                  messageAttachments.refetch(),
+                ]);
+              }}
+            >
+              إعادة المحاولة / Try again
+            </button>
+          </div>
+        </div>
+      </SiteShell>
+    );
+  return (
+    <SiteShell>
+      <section className="shell admin-shell">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <p className="eyebrow">لوحة الإدارة</p>
+            <h1 className="page-title mt-3">
+              حافظ على
+              <br />
+              <em>سلامة المجتمع.</em>
+            </h1>
+            <p className="page-lede">
+              لوحة منظمة لمتابعة الثقة في السوق وقوائم المراجعة.
+            </p>
+          </div>
+          <span className="admin-badge">
+            <ShieldAlert size={15} /> حساب إداري محمي · {user.email}
+          </span>
+        </div>
+        <section
+          id="admin-users"
+          aria-labelledby="admin-overview"
+          className="mt-10"
+        >
+          <p id="admin-overview" className="eyebrow">
+            نظرة عامة
+          </p>
+          <div className="stats-grid mt-4">
+            {cards.map(card => (
+              <button
+                type="button"
+                key={card.key}
+                onClick={() => openAdminCard(card)}
+                className={`admin-stat admin-stat-${card.color} text-left`}
+                aria-expanded={expandedCard === card.key}
+              >
+                <card.icon size={19} />
+                <p>{card.label}</p>
+                <strong>{card.value}</strong>
+                <span>{card.detail} · فتح التفاصيل</span>
+              </button>
+            ))}
+          </div>
+        </section>
+        {expandedCard === "users" ? (
+          <section
+            id="admin-users-section"
+            aria-labelledby="admin-members"
+            className="mt-8 rounded-2xl border border-[#dce7df] bg-white p-5"
+          >
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+              <div>
+                <p className="eyebrow">الأعضاء</p>
+                <h2 id="admin-members" className="section-title mt-2 text-3xl">
+                  تفاصيل الأعضاء
+                  <br />
+                  <em>المسجلين حاليًا.</em>
+                </h2>
+              </div>
+              <span className="text-xs font-semibold text-[#718780]">
+                {stats.data?.users ?? 0} عضو
+              </span>
+            </div>
+            {members.isLoading ? (
+              <div className="p-8 text-center">
+                <Loader2 className="mx-auto animate-spin" />
+              </div>
+            ) : members.data?.length ? (
+              <div className="mt-5 overflow-x-auto">
+                <table className="w-full min-w-[760px] text-right text-sm">
+                  <thead className="border-b border-[#dce7df] text-xs text-[#718780]">
+                    <tr>
+                      <th className="px-3 py-3">العضو</th>
+                      <th className="px-3 py-3">البريد الإلكتروني</th>
+                      <th className="px-3 py-3">الهاتف</th>
+                      <th className="px-3 py-3">المنطقة</th>
+                      <th className="px-3 py-3">الصلاحية</th>
+                      <th className="px-3 py-3">تاريخ التسجيل</th>
+                      <th className="px-3 py-3">آخر دخول</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#edf1ed]">
+                    {members.data.map(member => (
+                      <AdminMemberRow
+                        key={member.id}
+                        member={member}
+                        onSaved={() => {
+                          utils.admin.users.invalidate();
+                          utils.admin.stats.invalidate();
+                        }}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="empty-state mt-5">
+                <Users size={24} />
+                <p>لا يوجد أعضاء مسجلون حتى الآن.</p>
+              </div>
+            )}
+          </section>
+        ) : null}
+        <AdminPriceGuide />
+        <section id="admin-community-reputation" className="mt-12">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="eyebrow">سرب المساعدة</p>
+              <h2 className="section-title mt-2 text-3xl">
+                تحكم في النقاط
+                <br />
+                <em>والشارات المجتمعية.</em>
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#718780]">
+                راجع نشاط الأعضاء، وصحّح النقاط أو امنح مكافأة يدوية. الشارة
+                تُحسب تلقائيًا حسب النقاط والإجابات المفيدة.
+              </p>
+            </div>
+            <Award className="text-[#c49752]" size={30} />
+          </div>
+          <AdminCommunityReputation
+            data={reputation.data || []}
+            loading={reputation.isLoading}
+            onSave={(userId, points) =>
+              setCommunityPoints.mutate({ userId, points })
+            }
+            busy={setCommunityPoints.isPending}
+          />
+        </section>
+        <section
+          id="admin-actions-section"
+          aria-labelledby="admin-actions"
+          className="mt-12"
+        >
+          <div>
+            <p className="eyebrow">تواصل الأعضاء</p>
+            <h2 id="admin-actions" className="section-title mt-2 text-3xl">
+              رسائل مفيدة،
+              <br />
+              <em>بدون إزعاج زائد.</em>
+            </h2>
+          </div>
+          <CustomNotificationComposer />
+        </section>
+        <section
+          id="admin-attachments-section"
+          aria-labelledby="admin-attachments"
+          className="mt-12"
+        >
+          <div>
+            <p className="eyebrow">مراقبة المرفقات</p>
+            <h2 id="admin-attachments" className="section-title mt-2 text-3xl">
+              صور وتسجيلات
+              <br />
+              <em>المحادثات.</em>
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[#718780]">
+              هذا القسم إداري ومحمي، ويعرض آخر 100 مرفق محفوظ داخل قاعدة
+              البيانات. احترم خصوصية الأعضاء ولا تشارك المرفقات خارج فريق
+              الإدارة.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {messageAttachments.isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : messageAttachments.data?.length ? (
+              messageAttachments.data.map(item => (
+                <article
+                  key={item.id}
+                  className="overflow-hidden rounded-2xl border border-[#dce7df] bg-white"
+                >
+                  {item.attachmentType?.startsWith("image/") ? (
+                    <img
+                      src={item.attachmentPath || ""}
+                      alt="مرفق من رسالة"
+                      className="h-52 w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-52 items-center justify-center bg-[#eef5ed] text-[#183b39]">
+                      <Volume2 size={34} />
+                    </div>
+                  )}
+                  <div className="space-y-2 p-4">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-[#527169]">
+                      {item.attachmentType?.startsWith("image/") ? (
+                        <ImageIcon size={15} />
+                      ) : (
+                        <Volume2 size={15} />
+                      )}{" "}
+                      {item.attachmentType}
+                    </div>
+                    {item.attachmentType?.startsWith("audio/") && (
+                      <audio
+                        controls
+                        src={item.attachmentPath || undefined}
+                        className="w-full"
+                      />
+                    )}
+                    <p className="truncate text-sm font-semibold text-[#183b39]">
+                      {item.senderName || item.senderEmail || "عضو"}
+                    </p>
+                    <p className="truncate text-xs text-[#82948e]">
+                      {item.listingTitle}
+                    </p>
+                    <p className="text-xs text-[#9aa9a3]">
+                      {new Date(item.createdAt).toLocaleString("ar-EG")}
+                    </p>
+                    {item.attachmentExpiresAt && (
+                      <p className="text-xs text-[#bd5941]">
+                        يحذف في:{" "}
+                        {new Date(item.attachmentExpiresAt).toLocaleDateString(
+                          "ar-EG"
+                        )}
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="empty-state sm:col-span-2 lg:col-span-3">
+                <ImageIcon size={24} />
+                <p>لا توجد مرفقات محفوظة حتى الآن.</p>
+              </div>
+            )}
+          </div>
+        </section>
+        <section
+          id="admin-listings-section"
+          aria-labelledby="admin-listings"
+          className="mt-12"
+        >
+          <ModerationQueue
+            pending={pending.data || []}
+            loading={pending.isLoading}
+            onModerate={(listingId, decision) =>
+              moderate.mutate({ listingId, decision })
+            }
+            busy={moderate.isPending}
+          />
+        </section>
+        <section
+          id="admin-safety-section"
+          aria-labelledby="admin-safety"
+          className="admin-two-column mt-12"
+        >
+          <section>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="eyebrow">البلاغات</p>
+                <h2 id="admin-safety" className="section-title mt-2 text-3xl">
+                  اتخذ القرار
+                  <br />
+                  <em>بعد مراجعة التفاصيل.</em>
+                </h2>
+              </div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {reports.isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : reports.data?.length ? (
+                reports.data.map(report => (
+                  <article key={report.id} className="report-row">
+                    <div className="join-icon">
+                      <FileWarning size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-[#183b39]">
+                        {report.targetType} #{report.targetId}
+                      </p>
+                      <p className="mt-1 text-sm text-[#718780]">
+                        {report.reason}
+                      </p>
+                      <p className="mt-1 text-xs text-[#99a8a2]">
+                        أرسل البلاغ:{" "}
+                        {report.reporterName || report.reporterEmail || "عضو"}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full text-[#bd5941]"
+                        onClick={() =>
+                          resolveReport.mutate({
+                            reportId: report.id,
+                            status: "dismissed",
+                            resolution: "تمت المراجعة والإغلاق بواسطة الإدارة",
+                          })
+                        }
+                      >
+                        <X size={14} />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="rounded-full bg-[#183b39] text-white"
+                        onClick={() =>
+                          resolveReport.mutate({
+                            reportId: report.id,
+                            status: "resolved",
+                            resolution: "تمت المراجعة والمعالجة بواسطة الإدارة",
+                          })
+                        }
+                      >
+                        <Check size={14} />
+                      </Button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <Check size={22} />
+                  <p>لا توجد بلاغات مفتوحة.</p>
+                </div>
+              )}
+            </div>
+          </section>
+          <section>
+            <div>
+              <p className="eyebrow">سلامة المجتمع</p>
+              <h2 className="section-title mt-2 text-3xl">
+                مراجعة المنشورات
+                <br />
+                <em>with بعد مراجعة التفاصيل.</em>
+              </h2>
+            </div>
+            <div className="mt-5 space-y-3">
+              {moderationPosts.isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : moderationPosts.data?.length ? (
+                moderationPosts.data.map(post => (
+                  <article key={post.id} className="report-row">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-[#183b39]">
+                        {post.title}
+                      </p>
+                      <p className="mt-1 text-xs text-[#8b9e97]">
+                        {post.authorName || "عضو"} · {post.status}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full"
+                        onClick={() =>
+                          moderatePost.mutate({
+                            postId: post.id,
+                            status: "published",
+                          })
+                        }
+                        aria-label="إعادة نشر المنشور"
+                      >
+                        <Unlock size={14} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full text-[#bd5941]"
+                        onClick={() =>
+                          moderatePost.mutate({
+                            postId: post.id,
+                            status: "hidden",
+                          })
+                        }
+                        aria-label="إخفاء المنشور"
+                      >
+                        <X size={14} />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="rounded-full bg-[#183b39] text-white"
+                        onClick={() =>
+                          moderatePost.mutate({
+                            postId: post.id,
+                            status: "locked",
+                          })
+                        }
+                        aria-label="قفل المنشور"
+                      >
+                        <Lock size={14} />
+                      </Button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <div className="empty-state">
+                  <Check size={22} />
+                  <p>لا توجد منشورات بانتظار المراجعة.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </section>
+      </section>
+    </SiteShell>
+  );
 }
 
-function AdminMemberRow({ member, onSaved }: { member: { id: number; name: string | null; email: string | null; phone: string | null; area: string | null; role: "user" | "admin"; createdAt: Date; lastSignedIn: Date }; onSaved: () => void }) {
-  const [form, setForm] = useState({ name: member.name || "", phone: member.phone || "", area: member.area || "", role: member.role });
-  const update = trpc.admin.updateUser.useMutation({ onSuccess: () => { toast.success("تم حفظ بيانات العضو وصلاحياته"); onSaved(); }, onError: error => toast.error(error.message) });
-  const dirty = form.name !== (member.name || "") || form.phone !== (member.phone || "") || form.area !== (member.area || "") || form.role !== member.role;
-  return <tr className="text-[#183b39] align-top"><td className="px-3 py-3"><Input value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} className="min-w-[150px]" aria-label={`اسم العضو ${member.id}`} /><span className="mt-1 block text-xs text-[#9aa9a3]">#{member.id}</span></td><td className="px-3 py-3"><span className="block min-w-[190px] pt-2">{member.email || "—"}</span></td><td className="px-3 py-3"><Input value={form.phone} onChange={event => setForm({ ...form, phone: event.target.value })} className="min-w-[130px]" aria-label={`هاتف العضو ${member.id}`} /></td><td className="px-3 py-3"><Input value={form.area} onChange={event => setForm({ ...form, area: event.target.value })} className="min-w-[120px]" aria-label={`منطقة العضو ${member.id}`} /></td><td className="px-3 py-3"><select value={form.role} onChange={event => setForm({ ...form, role: event.target.value as "user" | "admin" })} className="h-10 rounded-lg border border-[#dce7df] bg-white px-2 text-sm" aria-label={`صلاحية العضو ${member.id}`}><option value="user">عضو</option><option value="admin">أدمن</option></select></td><td className="px-3 py-3 text-xs">{new Date(member.createdAt).toLocaleDateString("ar-EG")}</td><td className="px-3 py-3 text-xs"><div>{new Date(member.lastSignedIn).toLocaleDateString("ar-EG")}</div><Button type="button" size="sm" className="mt-2 bg-[#183b39] text-white" disabled={!dirty || !form.name.trim() || update.isPending} onClick={() => update.mutate({ userId: member.id, name: form.name, phone: form.phone || undefined, area: form.area || undefined, role: form.role })}>{update.isPending ? <Loader2 size={14} className="animate-spin" /> : "حفظ"}</Button></td></tr>;
+function AdminMemberRow({
+  member,
+  onSaved,
+}: {
+  member: {
+    id: number;
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    area: string | null;
+    role: "user" | "admin";
+    accountStatus: "active" | "suspended" | "banned";
+    suspendedUntil: Date | null;
+    createdAt: Date;
+    lastSignedIn: Date;
+  };
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    name: member.name || "",
+    phone: member.phone || "",
+    area: member.area || "",
+    role: member.role,
+  });
+  const update = trpc.admin.updateUser.useMutation({
+    onSuccess: () => {
+      toast.success("تم حفظ بيانات العضو وصلاحياته");
+      onSaved();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const moderate = trpc.admin.moderateUser.useMutation({
+    onSuccess: () => {
+      toast.success("تم تحديث حالة الحساب");
+      onSaved();
+    },
+    onError: error => toast.error(error.message),
+  });
+  const dirty =
+    form.name !== (member.name || "") ||
+    form.phone !== (member.phone || "") ||
+    form.area !== (member.area || "") ||
+    form.role !== member.role;
+  return (
+    <tr className="text-[#183b39] align-top">
+      <td className="px-3 py-3">
+        <Input
+          value={form.name}
+          onChange={event => setForm({ ...form, name: event.target.value })}
+          className="min-w-[150px]"
+          aria-label={`اسم العضو ${member.id}`}
+        />
+        <span className="mt-1 block text-xs text-[#9aa9a3]">#{member.id}</span>
+      </td>
+      <td className="px-3 py-3">
+        <span className="block min-w-[190px] pt-2">{member.email || "—"}</span>
+      </td>
+      <td className="px-3 py-3">
+        <Input
+          value={form.phone}
+          onChange={event => setForm({ ...form, phone: event.target.value })}
+          className="min-w-[130px]"
+          aria-label={`هاتف العضو ${member.id}`}
+        />
+      </td>
+      <td className="px-3 py-3">
+        <Input
+          value={form.area}
+          onChange={event => setForm({ ...form, area: event.target.value })}
+          className="min-w-[120px]"
+          aria-label={`منطقة العضو ${member.id}`}
+        />
+      </td>
+      <td className="px-3 py-3">
+        <select
+          value={form.role}
+          onChange={event =>
+            setForm({ ...form, role: event.target.value as "user" | "admin" })
+          }
+          className="h-10 rounded-lg border border-[#dce7df] bg-white px-2 text-sm"
+          aria-label={`صلاحية العضو ${member.id}`}
+        >
+          <option value="user">عضو</option>
+          <option value="admin">أدمن</option>
+        </select>
+      </td>
+      <td className="px-3 py-3 text-xs">
+        {new Date(member.createdAt).toLocaleDateString("ar-EG")}
+      </td>
+      <td className="px-3 py-3 text-xs">
+        <div>{new Date(member.lastSignedIn).toLocaleDateString("ar-EG")}</div>
+        <div
+          className={`mt-2 inline-flex rounded-full px-2 py-1 font-semibold ${member.accountStatus === "banned" ? "bg-[#fff0ed] text-[#bd5941]" : member.accountStatus === "suspended" ? "bg-[#fff8e8] text-[#9d733f]" : "bg-[#eef5ed] text-[#52766d]"}`}
+        >
+          {member.accountStatus === "banned"
+            ? "محظور"
+            : member.accountStatus === "suspended"
+              ? `موقوف حتى ${member.suspendedUntil ? new Date(member.suspendedUntil).toLocaleDateString("ar-EG") : "—"}`
+              : "نشط"}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1">
+          <Button
+            type="button"
+            size="sm"
+            className="bg-[#183b39] text-white"
+            disabled={!dirty || !form.name.trim() || update.isPending}
+            onClick={() =>
+              update.mutate({
+                userId: member.id,
+                name: form.name,
+                phone: form.phone || undefined,
+                area: form.area || undefined,
+                role: form.role,
+              })
+            }
+          >
+            {update.isPending ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : (
+              "حفظ"
+            )}
+          </Button>
+          {member.role !== "admin" && member.accountStatus === "active" && (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-[#e8d7ae] text-[#9d733f]"
+                onClick={() =>
+                  moderate.mutate({
+                    userId: member.id,
+                    status: "suspended",
+                    suspendedUntil: new Date(
+                      Date.now() + 7 * 86400000
+                    ).toISOString(),
+                  })
+                }
+              >
+                إيقاف 7 أيام
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="border-[#e6c7c0] text-[#bd5941]"
+                onClick={() =>
+                  moderate.mutate({ userId: member.id, status: "banned" })
+                }
+              >
+                حظر
+              </Button>
+            </>
+          )}
+          {member.accountStatus !== "active" && (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="border-[#b9d8c8] text-[#52766d]"
+              onClick={() =>
+                moderate.mutate({ userId: member.id, status: "active" })
+              }
+            >
+              إلغاء الإيقاف
+            </Button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
 }
 
-function ModerationQueue({ pending, loading, onModerate, busy }: { pending: Array<{ id: number; titleEn: string; price: string; location: string; createdAt: Date; sellerName: string | null; sellerEmail: string | null; coverImage: string | null }>; loading: boolean; onModerate: (listingId: number, decision: "approved" | "rejected") => void; busy: boolean }) {
-  return <><div className="mt-12 flex items-end justify-between gap-4"><div><p className="eyebrow">قائمة مراجعة الإعلانات</p><h2 className="section-title mt-2 text-3xl">إعلانات تنتظر<br /><em>المراجعة اليدوية.</em></h2></div><Link href="/marketplace" className="text-link">عرض السوق العام ←</Link></div><div className="mt-6 overflow-hidden rounded-2xl border border-[#dce7df] bg-white">{loading ? <div className="p-10 text-center"><Loader2 className="mx-auto animate-spin" /></div> : pending.length ? <div className="divide-y divide-[#edf1ed]">{pending.map(item => <article key={item.id} className="admin-row"><div className="admin-row-image">{item.coverImage ? <img src={item.coverImage} alt={item.titleEn} /> : <span>🦜</span>}</div><div className="min-w-0 flex-1"><h3 className="truncate font-display text-lg font-semibold text-[#183b39]">{item.titleEn}</h3><p className="mt-1 text-sm text-[#7f938d]">{item.sellerName || "بائع غير معروف"} · {item.sellerEmail || "لا يوجد بريد"} · {item.location}</p><p className="mt-2 text-xs text-[#9aa9a3]">تاريخ الإرسال: {new Date(item.createdAt).toLocaleString()} · {Number(item.price).toLocaleString("en-EG")} EGP</p></div><div className="flex shrink-0 gap-2"><Button variant="outline" size="icon" className="rounded-full border-[#e6c7c0] text-[#bd5941]" onClick={() => onModerate(item.id, "rejected")} disabled={busy} aria-label="رفض الإعلان"><X size={16} /></Button><Button size="icon" className="rounded-full bg-[#183b39] text-white hover:bg-[#2e5b55]" onClick={() => onModerate(item.id, "approved")} disabled={busy} aria-label="قبول الإعلان"><Check size={16} /></Button></div></article>)}</div> : <div className="empty-state m-5"><Check size={30} /><h3 className="font-display text-lg font-semibold">قائمة المراجعة فارغة.</h3><p>ستظهر الإعلانات الجديدة هنا للمراجعة اليدوية.</p></div>}</div></>;
+function ModerationQueue({
+  pending,
+  loading,
+  onModerate,
+  busy,
+}: {
+  pending: Array<{
+    id: number;
+    titleEn: string;
+    price: string;
+    location: string;
+    createdAt: Date;
+    sellerName: string | null;
+    sellerEmail: string | null;
+    coverImage: string | null;
+  }>;
+  loading: boolean;
+  onModerate: (listingId: number, decision: "approved" | "rejected") => void;
+  busy: boolean;
+}) {
+  return (
+    <>
+      <div className="mt-12 flex items-end justify-between gap-4">
+        <div>
+          <p className="eyebrow">قائمة مراجعة الإعلانات</p>
+          <h2 className="section-title mt-2 text-3xl">
+            إعلانات تنتظر
+            <br />
+            <em>المراجعة اليدوية.</em>
+          </h2>
+        </div>
+        <Link href="/marketplace" className="text-link">
+          عرض السوق العام ←
+        </Link>
+      </div>
+      <div className="mt-6 overflow-hidden rounded-2xl border border-[#dce7df] bg-white">
+        {loading ? (
+          <div className="p-10 text-center">
+            <Loader2 className="mx-auto animate-spin" />
+          </div>
+        ) : pending.length ? (
+          <div className="divide-y divide-[#edf1ed]">
+            {pending.map(item => (
+              <article key={item.id} className="admin-row">
+                <div className="admin-row-image">
+                  {item.coverImage ? (
+                    <img src={item.coverImage} alt={item.titleEn} />
+                  ) : (
+                    <span>🦜</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-display text-lg font-semibold text-[#183b39]">
+                    {item.titleEn}
+                  </h3>
+                  <p className="mt-1 text-sm text-[#7f938d]">
+                    {item.sellerName || "بائع غير معروف"} ·{" "}
+                    {item.sellerEmail || "لا يوجد بريد"} · {item.location}
+                  </p>
+                  <p className="mt-2 text-xs text-[#9aa9a3]">
+                    تاريخ الإرسال: {new Date(item.createdAt).toLocaleString()} ·{" "}
+                    {Number(item.price).toLocaleString("en-EG")} EGP
+                  </p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full border-[#e6c7c0] text-[#bd5941]"
+                    onClick={() => onModerate(item.id, "rejected")}
+                    disabled={busy}
+                    aria-label="رفض الإعلان"
+                  >
+                    <X size={16} />
+                  </Button>
+                  <Button
+                    size="icon"
+                    className="rounded-full bg-[#183b39] text-white hover:bg-[#2e5b55]"
+                    onClick={() => onModerate(item.id, "approved")}
+                    disabled={busy}
+                    aria-label="قبول الإعلان"
+                  >
+                    <Check size={16} />
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state m-5">
+            <Check size={30} />
+            <h3 className="font-display text-lg font-semibold">
+              قائمة المراجعة فارغة.
+            </h3>
+            <p>ستظهر الإعلانات الجديدة هنا للمراجعة اليدوية.</p>
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
 function CustomNotificationComposer() {
-  const [form, setForm] = useState({ title: "", body: "", link: "", recipientId: "" });
-  const send = trpc.admin.sendCustomNotification.useMutation({ onSuccess: result => { toast.success(`تم إرسال الإشعار إلى ${result.delivered} عضو${result.delivered === 1 ? "" : "s"}`); setForm({ title: "", body: "", link: "", recipientId: "" }); }, onError: error => toast.error(error.message) });
-  const submit = (event: React.FormEvent) => { event.preventDefault(); send.mutate({ title: form.title, body: form.body, link: form.link || undefined, recipientId: form.recipientId ? Number(form.recipientId) : undefined }); };
-  return <section className="custom-notification-composer mt-12"><div><p className="eyebrow">Custom notifications / إشعار مخصص</p><h2 className="section-title mt-2 text-3xl">Say the right thing<br /><em>at the right time.</em></h2><p className="mt-2 max-w-xl text-sm leading-6 text-[#718780]">أرسل إعلانًا داخل التطبيق للجميع أو أدخل رقم عضو لإرسال رسالة مخصصة. يمكن للأعضاء التحكم في استقبال التحديثات.</p></div><form onSubmit={submit} className="mt-6 grid gap-3 md:grid-cols-2"><Input required value={form.title} onChange={event => setForm({ ...form, title: event.target.value })} placeholder="عنوان الإشعار" /><Input value={form.recipientId} onChange={event => setForm({ ...form, recipientId: event.target.value.replace(/\D/g, "") })} inputMode="numeric" placeholder="رقم العضو (اتركه فارغًا للإرسال للجميع)" /><Textarea required value={form.body} onChange={event => setForm({ ...form, body: event.target.value })} className="md:col-span-2" placeholder="اكتب تحديثًا قصيرًا ومفيدًا…" /><Input value={form.link} onChange={event => setForm({ ...form, link: event.target.value })} placeholder="رابط اختياري داخل التطبيق، مثل /marketplace" /><Button type="submit" className="cta-primary" disabled={send.isPending}>{send.isPending ? <Loader2 className="animate-spin" size={16} /> : <MessageCircle size={16} />} إرسال إشعار مخصص</Button></form></section>;
+  const [form, setForm] = useState({
+    title: "",
+    body: "",
+    link: "",
+    recipientId: "",
+  });
+  const send = trpc.admin.sendCustomNotification.useMutation({
+    onSuccess: result => {
+      toast.success(
+        `تم إرسال الإشعار إلى ${result.delivered} عضو${result.delivered === 1 ? "" : "s"}`
+      );
+      setForm({ title: "", body: "", link: "", recipientId: "" });
+    },
+    onError: error => toast.error(error.message),
+  });
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    send.mutate({
+      title: form.title,
+      body: form.body,
+      link: form.link || undefined,
+      recipientId: form.recipientId ? Number(form.recipientId) : undefined,
+    });
+  };
+  return (
+    <section className="custom-notification-composer mt-12">
+      <div>
+        <p className="eyebrow">Custom notifications / إشعار مخصص</p>
+        <h2 className="section-title mt-2 text-3xl">
+          Say the right thing
+          <br />
+          <em>at the right time.</em>
+        </h2>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-[#718780]">
+          أرسل إعلانًا داخل التطبيق للجميع أو أدخل رقم عضو لإرسال رسالة مخصصة.
+          يمكن للأعضاء التحكم في استقبال التحديثات.
+        </p>
+      </div>
+      <form onSubmit={submit} className="mt-6 grid gap-3 md:grid-cols-2">
+        <Input
+          required
+          value={form.title}
+          onChange={event => setForm({ ...form, title: event.target.value })}
+          placeholder="عنوان الإشعار"
+        />
+        <Input
+          value={form.recipientId}
+          onChange={event =>
+            setForm({
+              ...form,
+              recipientId: event.target.value.replace(/\D/g, ""),
+            })
+          }
+          inputMode="numeric"
+          placeholder="رقم العضو (اتركه فارغًا للإرسال للجميع)"
+        />
+        <Textarea
+          required
+          value={form.body}
+          onChange={event => setForm({ ...form, body: event.target.value })}
+          className="md:col-span-2"
+          placeholder="اكتب تحديثًا قصيرًا ومفيدًا…"
+        />
+        <Input
+          value={form.link}
+          onChange={event => setForm({ ...form, link: event.target.value })}
+          placeholder="رابط اختياري داخل التطبيق، مثل /marketplace"
+        />
+        <Button type="submit" className="cta-primary" disabled={send.isPending}>
+          {send.isPending ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : (
+            <MessageCircle size={16} />
+          )}{" "}
+          إرسال إشعار مخصص
+        </Button>
+      </form>
+    </section>
+  );
+}
+
+type AdminReputationMember = {
+  id: number;
+  name: string | null;
+  email: string | null;
+  points: number;
+  helpfulAnswers: number;
+  commentsCount: number;
+  badge: { ar: string; en: string; color: string };
+};
+
+function AdminCommunityReputation({
+  data,
+  loading,
+  onSave,
+  busy,
+}: {
+  data: AdminReputationMember[];
+  loading: boolean;
+  onSave: (userId: number, points: number) => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl border border-[#dce7df] bg-white">
+      {loading ? (
+        <div className="p-10 text-center">
+          <Loader2 className="mx-auto animate-spin" />
+        </div>
+      ) : data.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-right text-sm">
+            <thead className="border-b border-[#dce7df] bg-[#f7faf5] text-xs text-[#718780]">
+              <tr>
+                <th className="px-4 py-3">العضو</th>
+                <th className="px-4 py-3">الشارة</th>
+                <th className="px-4 py-3">إجابات مفيدة</th>
+                <th className="px-4 py-3">الردود</th>
+                <th className="px-4 py-3">النقاط</th>
+                <th className="px-4 py-3">تحكم</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#edf1ed]">
+              {data.map(member => (
+                <AdminReputationRow
+                  key={member.id}
+                  member={member}
+                  onSave={onSave}
+                  busy={busy}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="empty-state m-5">
+          <Award size={24} />
+          <p>لا توجد بيانات نقاط حتى الآن.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminReputationRow({
+  member,
+  onSave,
+  busy,
+}: {
+  member: AdminReputationMember;
+  onSave: (userId: number, points: number) => void;
+  busy: boolean;
+}) {
+  const [points, setPoints] = useState(String(member.points));
+  return (
+    <tr className="text-[#183b39]">
+      <td className="px-4 py-3">
+        <strong className="block">{member.name || "عضو"}</strong>
+        <span className="text-xs text-[#9aa9a3]">
+          {member.email || `#${member.id}`}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold"
+          style={{
+            backgroundColor: `${member.badge.color}20`,
+            color: member.badge.color,
+          }}
+        >
+          <Award size={13} />
+          {member.badge.ar}
+        </span>
+      </td>
+      <td className="px-4 py-3 font-semibold">{member.helpfulAnswers}</td>
+      <td className="px-4 py-3 font-semibold">{member.commentsCount}</td>
+      <td className="px-4 py-3">
+        <Input
+          value={points}
+          onChange={event =>
+            setPoints(event.target.value.replace(/[^0-9]/g, ""))
+          }
+          className="w-24"
+          aria-label={`نقاط ${member.name || member.id}`}
+        />
+      </td>
+      <td className="px-4 py-3">
+        <Button
+          type="button"
+          size="sm"
+          className="bg-[#183b39] text-white"
+          disabled={busy || points === String(member.points)}
+          onClick={() =>
+            onSave(member.id, Math.min(10000, Math.max(0, Number(points) || 0)))
+          }
+        >
+          <Save size={14} /> حفظ
+        </Button>
+      </td>
+    </tr>
+  );
 }

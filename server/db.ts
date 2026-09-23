@@ -1073,6 +1073,8 @@ export async function listAdminUsers(limit = 200) {
       phone: users.phone,
       area: users.area,
       role: users.role,
+      accountStatus: users.accountStatus,
+      suspendedUntil: users.suspendedUntil,
       createdAt: users.createdAt,
       lastSignedIn: users.lastSignedIn,
     })
@@ -1765,4 +1767,88 @@ export function communityBadge(reputation: {
     en: "New member",
     color: "#a0afa9",
   };
+}
+
+export async function listCommunityReputations(limit = 200) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      points: communityReputation.points,
+      helpfulAnswers: communityReputation.helpfulAnswers,
+      commentsCount: communityReputation.commentsCount,
+    })
+    .from(users)
+    .leftJoin(communityReputation, eq(communityReputation.userId, users.id))
+    .orderBy(desc(communityReputation.points), asc(users.name))
+    .limit(limit);
+  return rows.map(row => ({
+    ...row,
+    points: row.points ?? 0,
+    helpfulAnswers: row.helpfulAnswers ?? 0,
+    commentsCount: row.commentsCount ?? 0,
+    badge: communityBadge({
+      points: row.points ?? 0,
+      helpfulAnswers: row.helpfulAnswers ?? 0,
+      commentsCount: row.commentsCount ?? 0,
+    }),
+  }));
+}
+
+export async function setCommunityPoints(userId: number, points: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const current = await getCommunityReputation(userId);
+  await db
+    .insert(communityReputation)
+    .values({ userId, points })
+    .onDuplicateKeyUpdate({ set: { points } });
+  return { ...current, points, badge: communityBadge({ ...current, points }) };
+}
+
+export async function setAccountModeration(
+  actorId: number,
+  userId: number,
+  status: "active" | "suspended" | "banned",
+  suspendedUntil?: Date | null
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  if (actorId === userId) throw new Error("لا يمكنك إيقاف أو حظر حسابك");
+  const existing = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!existing[0]) throw new Error("Member not found");
+  if (existing[0].role === "admin")
+    throw new Error("لا يمكن إيقاف حساب إداري من هذه الشاشة");
+  await db
+    .update(users)
+    .set({
+      accountStatus: status,
+      suspendedUntil: status === "suspended" ? (suspendedUntil ?? null) : null,
+    })
+    .where(eq(users.id, userId));
+  await db
+    .insert(auditLogs)
+    .values({
+      actorId,
+      action:
+        status === "active"
+          ? "user_unblocked"
+          : status === "banned"
+            ? "user_banned"
+            : "user_suspended",
+      targetType: "user",
+      targetId: userId,
+      metadata: JSON.stringify({
+        status,
+        suspendedUntil: suspendedUntil?.toISOString() || null,
+      }),
+    });
+  return { success: true, status } as const;
 }
