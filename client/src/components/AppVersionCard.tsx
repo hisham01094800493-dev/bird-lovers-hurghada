@@ -11,7 +11,7 @@ type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Pro
 type InstallWindow = Window & { __birdLoversInstallPrompt?: InstallPromptEvent };
 
 export async function updateBirdLoversApp() {
-  if ("serviceWorker" in navigator) { const registrations = await navigator.serviceWorker.getRegistrations(); await Promise.all(registrations.map(registration => registration.update())); }
+  if ("serviceWorker" in navigator) { const registrations = await navigator.serviceWorker.getRegistrations(); await Promise.all(registrations.map(async registration => { await registration.update(); registration.waiting?.postMessage({ type: "SKIP_WAITING" }); })); }
   if ("caches" in window) { const keys = await caches.keys(); await Promise.all(keys.filter(key => key.startsWith("bird-lovers-shell")).map(key => caches.delete(key))); }
   window.localStorage.setItem(UPDATE_COMPLETED_KEY, "true");
   window.location.reload();
