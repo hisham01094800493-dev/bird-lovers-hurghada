@@ -66,14 +66,32 @@ export default function Home() {
                 ? "اعثر على طيرك المفضل، وتبادل بثقة، وتعلم من جيران يهتمون مثلك."
                 : "Find a feathered friend, trade with confidence, and learn from neighbours who care as much as you do."}
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
               <Link href="/marketplace">
-                <Button className="cta-primary">
+                <Button className="cta-primary h-full">
                   {t("explore")} <ArrowRight size={17} />
                 </Button>
               </Link>
+              <Link href="/community" className="community-quick-card group">
+                <span className="community-quick-icon">
+                  <Users size={19} />
+                </span>
+                <span className="min-w-0 text-right">
+                  <strong>
+                    {isArabic
+                      ? "دليل المبتدئ ومجتمع الهواة"
+                      : "Beginner guide & bird community"}
+                  </strong>
+                  <small>
+                    {isArabic
+                      ? "اسأل عن الرعاية والتغذية قبل ما تشتري"
+                      : "Ask about care and feeding before you buy"}
+                  </small>
+                </span>
+                <ArrowRight size={17} className="community-quick-arrow" />
+              </Link>
               <Link href="/sell">
-                <Button variant="outline" className="cta-secondary">
+                <Button variant="outline" className="cta-secondary h-full">
                   {t("listSell")} <Sparkles size={16} />
                 </Button>
               </Link>

@@ -149,3 +149,13 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .nav-icon-bell { background: #fde8d6; color: #d26246; } .nav-icon-admin { background: #e7e0f8; color: #6856a6; } .nav-icon-share { background: #dceff2; color: #367c9c; } .nav-icon-language { background: #fff0c8; color: #b77b22; } .nav-icon-account { background: #d9f0e4; color: #23806b; }
 
 .nav-icon-marketplace { background: #dff1f7; color: #217a99; } .nav-icon-community { background: #e6e0f8; color: #6856a6; } .nav-icon-favorites { background: #f8dfe7; color: #b34f72; } .nav-icon-messages { background: #dff0e8; color: #2f806c; } .nav-icon-profile { background: #eee2d2; color: #a36a34; } .nav-icon-care-tools { background: #fff0c8; color: #b77b22; } .nav-icon-lost-found { background: #fbe0d7; color: #c35c43; } .nav-icon-my-listings { background: #e5e1f8; color: #6856a6; }
+
+.community-quick-card { display: inline-flex; min-width: 250px; align-items: center; gap: 10px; border: 1px solid #cfe0d4; border-radius: 15px; padding: 9px 12px; background: linear-gradient(135deg, #eef8f0, #f7f2e7); color: #183b39; box-shadow: 0 8px 18px rgba(24,59,57,.06); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.community-quick-card:hover { transform: translateY(-2px); border-color: #76a68f; box-shadow: 0 12px 24px rgba(24,59,57,.12); }
+.community-quick-icon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: #e3dff5; color: #6856a6; }
+.community-quick-card strong, .community-quick-card small { display: block; }
+.community-quick-card strong { font-size: 12px; font-weight: 800; line-height: 1.35; }
+.community-quick-card small { margin-top: 3px; color: #718780; font-size: 10px; line-height: 1.35; }
+.community-quick-arrow { margin-inline-start: auto; color: #d26246; transition: transform .18s ease; }
+.community-quick-card:hover .community-quick-arrow { transform: translateX(-3px); }
+@media (max-width: 640px) { .community-quick-card { width: 100%; min-width: 0; min-height: 54px; } }
