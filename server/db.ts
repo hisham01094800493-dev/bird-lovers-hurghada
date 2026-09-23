@@ -11,6 +11,7 @@ import {
   favorites,
   InsertUser,
   listingImages,
+  lostFoundReports,
   listings,
   messages,
   notificationPreferences,
@@ -287,6 +288,34 @@ export async function createNotification(userId: number, type: string, title: st
   const preferenceRows = await db.select({ enabled: notificationPreferences[preferenceKey] }).from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1);
   if (preferenceRows[0] && preferenceRows[0].enabled === false) return false;
   await db.insert(notifications).values({ userId, type, title, body, link });
+  return true;
+}
+
+export async function listLostFoundReports(area?: string) {
+  const db = await getDb(); if (!db) return [];
+  const filters = [eq(lostFoundReports.status, "open")];
+  if (area?.trim()) filters.push(eq(lostFoundReports.area, area.trim()));
+  return db.select({ id: lostFoundReports.id, kind: lostFoundReports.kind, birdName: lostFoundReports.birdName, description: lostFoundReports.description, area: lostFoundReports.area, photoUrl: lostFoundReports.photoUrl, contactNote: lostFoundReports.contactNote, status: lostFoundReports.status, createdAt: lostFoundReports.createdAt, reporterId: lostFoundReports.reporterId, reporterName: users.name })
+    .from(lostFoundReports).leftJoin(users, eq(lostFoundReports.reporterId, users.id)).where(and(...filters)).orderBy(desc(lostFoundReports.createdAt)).limit(100);
+}
+
+export async function createLostFoundReport(input: { reporterId: number; kind: "lost" | "found"; birdName: string; description: string; area: string; photoUrl?: string; contactNote?: string }) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const [created] = await db.insert(lostFoundReports).values(input);
+  const reportId = Number(created.insertId);
+  const recipients = await db.select({ id: users.id }).from(users).where(eq(users.area, input.area)).limit(5000);
+  const title = input.kind === "lost" ? "طائر تائه في منطقتك" : "تم العثور على طائر في منطقتك";
+  const body = `${input.birdName} — ${input.area}. ${input.description.slice(0, 120)}`;
+  for (const recipient of recipients) if (recipient.id !== input.reporterId) await createNotification(recipient.id, "lost_found", title, body, `/lost-found?report=${reportId}`);
+  await createNotification(input.reporterId, "lost_found", "تم نشر بلاغ مين تايه؟", "سيصل إشعار إلى أعضاء منطقتك.", `/lost-found?report=${reportId}`);
+  return { id: reportId, notified: Math.max(0, recipients.length - 1) };
+}
+
+export async function resolveLostFoundReport(userId: number, reportId: number) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const rows = await db.select({ id: lostFoundReports.id, reporterId: lostFoundReports.reporterId }).from(lostFoundReports).where(eq(lostFoundReports.id, reportId)).limit(1);
+  if (!rows[0] || rows[0].reporterId !== userId) return false;
+  await db.update(lostFoundReports).set({ status: "reunited", updatedAt: new Date() }).where(eq(lostFoundReports.id, reportId));
   return true;
 }
 

@@ -155,6 +155,20 @@ export const notifications = mysqlTable("notifications", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({ inboxIdx: index("notifications_inbox_idx").on(table.userId, table.readAt, table.createdAt) }));
 
+export const lostFoundReports = mysqlTable("lostFoundReports", {
+  id: int("id").autoincrement().primaryKey(),
+  reporterId: int("reporterId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  kind: mysqlEnum("kind", ["lost", "found"]).notNull(),
+  birdName: varchar("birdName", { length: 160 }).notNull(),
+  description: text("description").notNull(),
+  area: varchar("area", { length: 120 }).notNull(),
+  photoUrl: text("photoUrl"),
+  contactNote: varchar("contactNote", { length: 240 }),
+  status: mysqlEnum("status", ["open", "reunited", "closed"]).notNull().default("open"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({ feedIdx: index("lost_found_feed_idx").on(table.status, table.area, table.createdAt), reporterIdx: index("lost_found_reporter_idx").on(table.reporterId, table.status) }));
+
 export const notificationPreferences = mysqlTable("notificationPreferences", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -249,6 +263,7 @@ export type CommunityPost = typeof communityPosts.$inferSelect;
 export type Conversation = typeof conversations.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type LostFoundReport = typeof lostFoundReports.$inferSelect;
 export type AppUpdate = typeof appUpdates.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type Review = typeof reviews.$inferSelect;

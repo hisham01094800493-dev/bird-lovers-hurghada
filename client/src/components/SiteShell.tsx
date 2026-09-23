@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { Bell, Bird, Heart, ImageIcon, Languages, LogIn, Share2, LogOut, Menu, MessageCircle, Plus, Search, ShieldAlert, UserRound, Users, X } from "lucide-react";
+import { Bell, Bird, Heart, ImageIcon, Languages, LogIn, Share2, LogOut, Menu, MessageCircle, Plus, Search, ShieldAlert, Siren, UserRound, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { ADMIN_EMAIL } from "@shared/const";
@@ -36,7 +36,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     { href: "/community", label: isArabic ? "مجتمع الهواة" : "Bird Lovers Community", icon: Users },
     { href: "/favorites", label: t("saved"), icon: Heart },
     { href: "/messages", label: t("messages"), icon: MessageCircle },
-    { href: "/profile", label: t("profile"), icon: UserRound }, { href: "/my-listings", label: isArabic ? "إعلاناتي" : "My listings", icon: ImageIcon },
+    { href: "/profile", label: t("profile"), icon: UserRound }, { href: "/lost-found", label: isArabic ? "مين تايه؟" : "Lost & found", icon: Siren }, { href: "/my-listings", label: isArabic ? "إعلاناتي" : "My listings", icon: ImageIcon },
   ];
   const switchLanguage = () => { toggleLanguage(); setMenuOpen(false); };
   const shareApp = async () => {
