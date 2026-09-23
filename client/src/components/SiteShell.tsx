@@ -179,7 +179,9 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 href={href}
                 className={`nav-link ${location.startsWith(href) ? "nav-link-active" : ""}`}
               >
-                <span className="nav-icon nav-icon-primary">
+                <span
+                  className={`nav-icon nav-icon-${href.slice(1).replace("/", "-")}`}
+                >
                   <Icon size={16} />
                 </span>{" "}
                 <span>{label}</span>
@@ -296,7 +298,9 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                   className="nav-link justify-start"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <span className="nav-icon nav-icon-primary">
+                  <span
+                    className={`nav-icon nav-icon-${href.slice(1).replace("/", "-")}`}
+                  >
                     <Icon size={17} />
                   </span>{" "}
                   {label}

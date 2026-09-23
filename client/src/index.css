@@ -147,3 +147,5 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 @keyframes sidebar-slide-rtl { from { transform: translateX(-100%); opacity: .7; } to { transform: translateX(0); opacity: 1; } }
 
 .nav-icon-bell { background: #fde8d6; color: #d26246; } .nav-icon-admin { background: #e7e0f8; color: #6856a6; } .nav-icon-share { background: #dceff2; color: #367c9c; } .nav-icon-language { background: #fff0c8; color: #b77b22; } .nav-icon-account { background: #d9f0e4; color: #23806b; }
+
+.nav-icon-marketplace { background: #dff1f7; color: #217a99; } .nav-icon-community { background: #e6e0f8; color: #6856a6; } .nav-icon-favorites { background: #f8dfe7; color: #b34f72; } .nav-icon-messages { background: #dff0e8; color: #2f806c; } .nav-icon-profile { background: #eee2d2; color: #a36a34; } .nav-icon-care-tools { background: #fff0c8; color: #b77b22; } .nav-icon-lost-found { background: #fbe0d7; color: #c35c43; } .nav-icon-my-listings { background: #e5e1f8; color: #6856a6; }
