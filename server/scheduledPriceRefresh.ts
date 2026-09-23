@@ -6,9 +6,14 @@ import { collectExternalPriceDraft } from "./priceRefresh";
 export async function scheduledPriceRefresh(req: Request, res: Response) {
   const context = { url: req.originalUrl, taskUid: "unknown" };
   try {
-    const user = await sdk.authenticateRequest(req);
-    context.taskUid = user?.taskUid || "unknown";
-    if (!user?.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
+    const configuredSecret = process.env.PRICE_REFRESH_SECRET;
+    const actionSecret = req.header("x-price-refresh-secret");
+    const secretAuthorized = Boolean(configuredSecret && actionSecret && actionSecret === configuredSecret);
+    if (!secretAuthorized) {
+      const user = await sdk.authenticateRequest(req);
+      context.taskUid = user?.taskUid || "unknown";
+      if (!user?.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
+    }
     const now = new Date();
     const cairoParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo", weekday: "short", hour: "2-digit", hour12: false }).formatToParts(now);
     const cairoWeekday = cairoParts.find(part => part.type === "weekday")?.value;

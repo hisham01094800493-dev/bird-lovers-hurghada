@@ -1,0 +1,34 @@
+name: Weekly bird price drafts
+
+on:
+  # GitHub cron is UTC. The endpoint checks Africa/Cairo and only runs at
+  # Friday 17:00 local time, so both entries cover Egypt daylight-saving time.
+  schedule:
+    - cron: "0 14 * * 5"
+    - cron: "0 15 * * 5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  collect-price-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create a pending price draft
+        env:
+          PRICE_REFRESH_SECRET: ${{ secrets.PRICE_REFRESH_SECRET }}
+          PRICE_REFRESH_BASE_URL: https://bird-lovers-hurghada-production-536a.up.railway.app
+        run: |
+          set -euo pipefail
+          if [ -z "$PRICE_REFRESH_SECRET" ]; then
+            echo "Missing repository secret PRICE_REFRESH_SECRET" >&2
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 5 \
+            -X POST "$PRICE_REFRESH_BASE_URL/api/scheduled/price-guide-refresh" \
+            -H "x-price-refresh-secret: $PRICE_REFRESH_SECRET" \
+            -H "accept: application/json"
+          echo
