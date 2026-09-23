@@ -165,3 +165,18 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .admin-shell .admin-badge { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-shell .overflow-x-auto { max-width: 100%; overscroll-behavior-inline: contain; }
 @media (max-width: 640px) { .admin-shell { width: min(100% - 28px, 1160px); padding-block: 34px 58px; } .admin-shell > div:first-child { min-width: 0; align-items: flex-start; } .admin-shell > div:first-child > div { min-width: 0; } .admin-shell .page-title { font-size: clamp(38px, 12vw, 54px); overflow-wrap: anywhere; } .admin-shell .page-lede { max-width: 100%; } .admin-shell .admin-badge { align-self: flex-start; font-size: 10px; } .admin-shell section { min-width: 0; } .admin-shell .stats-grid { width: 100%; gap: 8px; } .admin-shell .admin-stat { min-width: 0; padding: 13px; } .admin-shell .admin-stat strong { font-size: 24px; } .admin-shell .admin-stat p { margin-top: 12px; line-height: 1.35; } }
+
+/* Compact home layout: keep the first screen focused and bring useful sections upward. */
+.home-hero { padding-block: 38px 42px; }
+.home-category-section { padding-block: 34px 54px; }
+.home-category-section .section-heading { margin-bottom: 22px; }
+.home-category-section .category-grid { gap: 10px; }
+.home-category-section .category-card { min-height: 132px; padding: 14px; border-radius: 16px; }
+.home-category-section .category-card .category-icon { width: 48px; height: 48px; border-radius: 15px; }
+.home-category-section .category-card .category-icon svg { width: 25px; height: 25px; }
+.home-category-section .category-name { margin-top: 14px; font-size: 13px; }
+.home-category-section .category-ar { font-size: 10px; }
+.home-listings-section { padding-block: 48px; }
+.home-tools-section, .home-community-section { padding-block: 52px; }
+.home-join-section { padding-bottom: 34px; }
+@media (max-width: 640px) { .home-hero { padding-block: 28px 26px; } .home-hero .hero-visual { height: 250px; } .home-hero .hero-lede { margin-top: 18px; font-size: 14px; } .home-hero .mt-8 { margin-top: 22px; } .home-hero .mt-10 { margin-top: 24px; gap: 11px; } .home-category-section { padding-block: 28px 38px; } .home-category-section .category-grid { gap: 8px; } .home-category-section .category-card { min-height: 116px; padding: 12px; } .home-category-section .category-card .category-icon { width: 43px; height: 43px; border-radius: 13px; } .home-category-section .category-card .category-icon svg { width: 22px; height: 22px; } .home-category-section .category-name { margin-top: 10px; font-size: 12px; } .home-listings-section { padding-block: 38px; } .home-tools-section, .home-community-section { padding-block: 38px; } }

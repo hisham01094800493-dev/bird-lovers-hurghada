@@ -37,7 +37,7 @@ export default function Home() {
   const posts = trpc.community.list.useQuery();
   return (
     <SiteShell>
-      <section className="shell hero-section">
+      <section className="shell hero-section home-hero">
         <div className="hero-grid">
           <div className="hero-copy">
             <div className="eyebrow flex items-center gap-2">
@@ -144,22 +144,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <AdSlot
-        image="/images/bird-lovers-group.jpg"
-        imageAlt={isArabic ? "طيور بادجي ملونة" : "Colourful budgies"}
-        title={
-          isArabic ? "جروب Bird Lovers Hurghada" : "Bird Lovers Hurghada group"
-        }
-        description={
-          isArabic
-            ? "انضم إلى الجروب المحلي لمحبي الطيور وتبادل الخبرات."
-            : "Join the local bird-lovers group and share useful tips."
-        }
-        cta={isArabic ? "انضم للجروب" : "Join the group"}
-        href="https://www.facebook.com/groups/798363001904219/?ref=share_group_link"
-        external
-      />
-      <section className="shell section-pad pt-0">
+      <section className="shell section-pad home-category-section pt-0">
         <div className="section-heading">
           <div>
             <p className="eyebrow">
@@ -220,7 +205,7 @@ export default function Home() {
               })}
         </div>
       </section>
-      <section className="bg-[#eaf1ea] py-20">
+      <section className="bg-[#eaf1ea] home-listings-section py-20">
         <div className="shell">
           <div className="section-heading">
             <div>
@@ -278,7 +263,7 @@ export default function Home() {
           )}
         </div>
       </section>
-      <section className="shell section-pad">
+      <section className="shell section-pad home-tools-section">
         <div className="grid gap-5 md:grid-cols-2">
           <Link
             href="/care-tools"
@@ -332,7 +317,7 @@ export default function Home() {
           </Link>
         </div>
       </section>
-      <section className="shell section-pad">
+      <section className="shell section-pad home-community-section">
         <div className="community-banner">
           <div>
             <p className="eyebrow text-[#b9d8c8]">
@@ -370,7 +355,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="shell pb-20">
+      <section className="shell home-join-section pb-12">
         <div className="join-strip">
           <div className="flex items-center gap-4">
             <span className="join-icon">
@@ -395,6 +380,21 @@ export default function Home() {
           </Link>
         </div>
       </section>
+      <AdSlot
+        image="/images/bird-lovers-group.jpg"
+        imageAlt={isArabic ? "طيور بادجي ملونة" : "Colourful budgies"}
+        title={
+          isArabic ? "جروب Bird Lovers Hurghada" : "Bird Lovers Hurghada group"
+        }
+        description={
+          isArabic
+            ? "انضم إلى الجروب المحلي لمحبي الطيور وتبادل الخبرات."
+            : "Join the local bird-lovers group and share useful tips."
+        }
+        cta={isArabic ? "انضم للجروب" : "Join the group"}
+        href="https://www.facebook.com/groups/798363001904219/?ref=share_group_link"
+        external
+      />
     </SiteShell>
   );
 }
