@@ -98,6 +98,7 @@ export const communityPosts = mysqlTable("communityPosts", {
   category: mysqlEnum("category", ["care", "nutrition", "health", "breeding", "general", "other"]).notNull().default("general"),
   title: varchar("title", { length: 180 }).notNull(),
   body: text("body").notNull(),
+  imagePath: text("imagePath"),
   status: mysqlEnum("status", ["published", "hidden", "locked"]).notNull().default("published"),
   likesCount: int("likesCount").notNull().default(0),
   commentsCount: int("commentsCount").notNull().default(0),

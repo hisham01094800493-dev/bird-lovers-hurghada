@@ -134,7 +134,7 @@ export async function listFavorites(userId: number) {
 
 export async function listCommunityPosts() {
   const db = await getDb(); if (!db) return [];
-  return db.select({ id: communityPosts.id, category: communityPosts.category, title: communityPosts.title, body: communityPosts.body, likesCount: communityPosts.likesCount, commentsCount: communityPosts.commentsCount, createdAt: communityPosts.createdAt, authorName: users.name, authorAvatar: users.avatarUrl })
+  return db.select({ id: communityPosts.id, category: communityPosts.category, title: communityPosts.title, body: communityPosts.body, imagePath: communityPosts.imagePath, likesCount: communityPosts.likesCount, commentsCount: communityPosts.commentsCount, createdAt: communityPosts.createdAt, authorName: users.name, authorAvatar: users.avatarUrl })
     .from(communityPosts).leftJoin(users, eq(communityPosts.authorId, users.id)).where(eq(communityPosts.status, "published")).orderBy(desc(communityPosts.createdAt)).limit(12);
 }
 
