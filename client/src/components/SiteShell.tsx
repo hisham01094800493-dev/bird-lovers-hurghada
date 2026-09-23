@@ -287,87 +287,76 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {menuOpen && (
-          <div
-            className="mobile-sidebar-overlay"
-            onClick={() => setMenuOpen(false)}
-          >
-            <aside
-              className="mobile-sidebar-panel"
-              onClick={event => event.stopPropagation()}
-            >
-              <div className="mobile-sidebar-heading">
-                <span className="brand-mark">
-                  <img src="/icons/bird-lovers-budgie-icon-64.png" alt="" />
-                </span>
-                <strong>
-                  {isArabic ? "قائمة Bird Lovers" : "Bird Lovers menu"}
-                </strong>
-                <button
-                  type="button"
-                  className="icon-button"
-                  onClick={() => setMenuOpen(false)}
-                  aria-label="Close menu"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <div className="mx-auto flex max-w-6xl flex-col gap-1">
-                {nav.map(({ href, label, icon: Icon }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="nav-link justify-start"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <span className="nav-icon nav-icon-primary">
-                      <Icon size={17} />
-                    </span>{" "}
-                    {label}
-                  </Link>
-                ))}
+          <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 md:hidden">
+            <div className="mx-auto flex max-w-6xl flex-col gap-1">
+              {nav.map(({ href, label, icon: Icon }) => (
                 <Link
-                  href="/notifications"
+                  key={href}
+                  href={href}
                   className="nav-link justify-start"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <Bell size={17} /> {t("notifications")}
+                  <span className="nav-icon nav-icon-primary">
+                    <Icon size={17} />
+                  </span>{" "}
+                  {label}
                 </Link>
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="nav-link justify-start"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <ShieldAlert size={17} /> {t("admin")}
-                  </Link>
-                )}
-                <button
-                  type="button"
+              ))}
+              <Link
+                href="/notifications"
+                className="nav-link justify-start"
+                onClick={() => setMenuOpen(false)}
+              >
+                <span className="nav-icon nav-icon-bell">
+                  <Bell size={17} />
+                </span>{" "}
+                {t("notifications")}
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
                   className="nav-link justify-start"
-                  onClick={shareApp}
+                  onClick={() => setMenuOpen(false)}
                 >
-                  <Share2 size={17} />{" "}
-                  {isArabic ? "مشاركة التطبيق" : "Share app"}
-                </button>
-                <button
-                  type="button"
-                  className="nav-link justify-start"
-                  onClick={switchLanguage}
-                >
-                  <Languages size={17} /> {t("language")}
-                </button>
-                <button
-                  className="nav-link justify-start"
-                  onClick={() => (isAuthenticated ? logout() : startLogin())}
-                >
-                  {isAuthenticated ? <LogOut size={17} /> : <LogIn size={17} />}{" "}
-                  {isAuthenticated ? t("logout") : t("login")}
-                </button>
-                <div className="mobile-version-card mt-3 border-t border-[#dce7df] pt-3">
-                  <AppVersionCard />
-                </div>
+                  <span className="nav-icon nav-icon-admin">
+                    <ShieldAlert size={17} />
+                  </span>{" "}
+                  {t("admin")}
+                </Link>
+              )}
+              <button
+                type="button"
+                className="nav-link justify-start"
+                onClick={shareApp}
+              >
+                <span className="nav-icon nav-icon-share">
+                  <Share2 size={17} />
+                </span>{" "}
+                {isArabic ? "مشاركة التطبيق" : "Share app"}
+              </button>
+              <button
+                type="button"
+                className="nav-link justify-start"
+                onClick={switchLanguage}
+              >
+                <span className="nav-icon nav-icon-language">
+                  <Languages size={17} />
+                </span>{" "}
+                {t("language")}
+              </button>
+              <button
+                className="nav-link justify-start"
+                onClick={() => (isAuthenticated ? logout() : startLogin())}
+              >
+                <span className="nav-icon nav-icon-account">
+                  {isAuthenticated ? <LogOut size={17} /> : <LogIn size={17} />}
+                </span>{" "}
+                {isAuthenticated ? t("logout") : t("login")}
+              </button>
+              <div className="mobile-version-card mt-3 border-t border-[#dce7df] pt-3">
+                <AppVersionCard />
               </div>
-            </aside>
+            </div>
           </div>
         )}
       </header>

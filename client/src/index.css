@@ -133,7 +133,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .category-other .category-icon { background: #e5e1f8; color: #6856a6; }
 .category-card .category-arrow { color: #91aaa0; transition: transform .2s ease, color .2s ease; }
 .category-card:hover .category-arrow { color: #d26246; transform: translateX(-3px); }
-.mobile-sidebar-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(24,59,57,.34); backdrop-filter: blur(3px); animation: sidebar-fade .2s ease; }
+.mobile-sidebar-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; justify-content: flex-start; background: rgba(24,59,57,.34); backdrop-filter: blur(3px); animation: sidebar-fade .2s ease; }
 .mobile-sidebar-panel { width: min(88vw, 360px); height: 100%; overflow-y: auto; padding: 18px 16px 24px; background: #f7f5ef; box-shadow: 12px 0 35px rgba(24,59,57,.18); animation: sidebar-slide .24s ease; }
 .mobile-sidebar-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid #dce7df; color: #183b39; }
 .mobile-sidebar-heading strong { flex: 1; font-family: 'Cairo', sans-serif; font-size: 15px; }
@@ -142,5 +142,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .mobile-sidebar-panel .nav-link:hover, .mobile-sidebar-panel .nav-link-active { border-color: #cfe0d4; background: #eaf4e9; }
 @keyframes sidebar-slide { from { transform: translateX(100%); opacity: .7; } to { transform: translateX(0); opacity: 1; } }
 @keyframes sidebar-fade { from { opacity: 0; } to { opacity: 1; } }
-html[dir="rtl"] .mobile-sidebar-panel { margin-left: auto; margin-right: 0; animation-name: sidebar-slide-rtl; }
+html[dir="rtl"] .mobile-sidebar-overlay { justify-content: flex-end; }
+html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animation-name: sidebar-slide-rtl; }
 @keyframes sidebar-slide-rtl { from { transform: translateX(-100%); opacity: .7; } to { transform: translateX(0); opacity: 1; } }
+
+.nav-icon-bell { background: #fde8d6; color: #d26246; } .nav-icon-admin { background: #e7e0f8; color: #6856a6; } .nav-icon-share { background: #dceff2; color: #367c9c; } .nav-icon-language { background: #fff0c8; color: #b77b22; } .nav-icon-account { background: #d9f0e4; color: #23806b; }
