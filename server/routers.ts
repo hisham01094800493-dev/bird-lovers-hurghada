@@ -954,9 +954,46 @@ export const appRouter = router({
           area: z.string().max(120).optional(),
           bio: z.string().max(600).optional(),
           whatsappOptIn: z.boolean(),
+          avatarUrl: z.string().max(800).optional(),
         })
       )
       .mutation(({ ctx, input }) => updateProfile(ctx.user.id, input)),
+    uploadAvatar: protectedProcedure
+      .input(z.object({ imageData: z.string().max(6_000_000) }))
+      .mutation(async ({ ctx, input }) => {
+        const match = input.imageData.match(
+          /^data:(image\/(?:png|jpeg|jpg|webp));base64,(.+)$/i
+        );
+        if (!match)
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "اختر صورة PNG أو JPG أو WebP",
+          });
+        const buffer = Buffer.from(match[2], "base64");
+        if (buffer.byteLength > 4_000_000)
+          throw new TRPCError({
+            code: "PAYLOAD_TOO_LARGE",
+            message: "الصورة كبيرة جدًا",
+          });
+        try {
+          const normalized = await sharp(buffer, { failOn: "error" })
+            .rotate()
+            .resize({ width: 640, height: 640, fit: "cover" })
+            .webp({ quality: 84 })
+            .toBuffer();
+          const stored = await storagePut(
+            `avatars/${ctx.user.id}/profile-${Date.now()}.webp`,
+            normalized,
+            "image/webp"
+          );
+          return updateProfile(ctx.user.id, { avatarUrl: stored.url });
+        } catch {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "تعذر قراءة الصورة، جرّب صورة أخرى",
+          });
+        }
+      }),
     requestContactVerification: protectedProcedure
       .input(z.object({ phone: z.string().min(7).max(32) }))
       .mutation(({ ctx, input }) =>

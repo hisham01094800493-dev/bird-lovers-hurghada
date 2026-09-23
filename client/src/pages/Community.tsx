@@ -168,7 +168,15 @@ export default function Community() {
                 <article key={post.id} className="post-card">
                   <div className="flex items-start gap-3">
                     <div className="avatar-placeholder">
-                      <Bird size={17} />
+                      {post.authorAvatar ? (
+                        <img
+                          src={post.authorAvatar}
+                          alt=""
+                          className="h-full w-full rounded-[13px] object-cover"
+                        />
+                      ) : (
+                        <Bird size={17} />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">

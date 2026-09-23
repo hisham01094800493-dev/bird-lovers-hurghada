@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowLeft,
@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock3,
   ImageIcon,
+  ImagePlus,
   Loader2,
   Phone,
   ShieldCheck,
@@ -22,6 +23,13 @@ import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
 
+const birdAvatars = [
+  { label: "بادجي", url: "/images/hurghada-budgie-card.jpg" },
+  { label: "ببغاء", url: "/images/hurghada-parrot-hero.jpg" },
+  { label: "كوكاتيل", url: "/images/listing-cockatiel.jpg" },
+  { label: "ماكاو", url: "/images/listing-blue-gold-macaw.jpg" },
+];
+
 export default function Profile() {
   const { isAuthenticated, loading } = useAuth();
   const profile = trpc.profile.me.useQuery(undefined, {
@@ -36,6 +44,7 @@ export default function Profile() {
     area: "",
     bio: "",
     whatsappOptIn: false,
+    avatarUrl: "",
   });
   useEffect(() => {
     if (profile.data)
@@ -45,6 +54,7 @@ export default function Profile() {
         area: profile.data.area || "",
         bio: profile.data.bio || "",
         whatsappOptIn: profile.data.whatsappOptIn,
+        avatarUrl: profile.data.avatarUrl || "",
       });
   }, [profile.data]);
   const update = trpc.profile.update.useMutation({
@@ -59,6 +69,17 @@ export default function Profile() {
       onSuccess: () => toast.success("Verification request sent to admin"),
       onError: error => toast.error(error.message),
     });
+  const uploadAvatar = trpc.profile.uploadAvatar.useMutation({
+    onSuccess: data => {
+      setForm(current => ({
+        ...current,
+        avatarUrl: data?.avatarUrl || current.avatarUrl,
+      }));
+      profile.refetch();
+      toast.success("تم تحديث الصورة الشخصية");
+    },
+    onError: error => toast.error(error.message),
+  });
   if (loading || (isAuthenticated && profile.isLoading))
     return (
       <SiteShell>
@@ -89,6 +110,19 @@ export default function Profile() {
     event.preventDefault();
     update.mutate(form);
   };
+  const chooseAvatar = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 4_000_000)
+      return toast.error("اختار صورة أقل من 4 ميجابايت");
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string")
+        uploadAvatar.mutate({ imageData: reader.result });
+    };
+    reader.readAsDataURL(file);
+  };
   return (
     <SiteShell>
       <section className="shell py-10 sm:py-16">
@@ -106,7 +140,65 @@ export default function Profile() {
             <p className="page-lede">
               Keep your public contact preferences clear and respectful.
             </p>
-            <form onSubmit={submit} className="form-card mt-9 space-y-5">
+            <div className="profile-avatar-card mt-8 rounded-3xl border border-[#dce7df] bg-white p-5 shadow-[0_14px_35px_rgba(24,59,57,.06)]">
+              <div className="flex items-center gap-4">
+                <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-3xl bg-[#eef5ed] text-[#52766d]">
+                  {form.avatarUrl ? (
+                    <img
+                      src={form.avatarUrl}
+                      alt="الصورة الشخصية"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserRound size={30} />
+                  )}
+                </div>
+                <div>
+                  <p className="eyebrow">صورتك في السرب</p>
+                  <h2 className="mt-1 font-display text-xl font-semibold text-[#183b39]">
+                    اختار صورة بتحبها
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-[#718780]">
+                    استخدم صورتك أو اختار طيرًا جاهزًا.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#183b39] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#315a54]">
+                  <ImagePlus size={15} /> رفع صورة
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={chooseAvatar}
+                  />
+                </label>
+                {birdAvatars.map(avatar => (
+                  <button
+                    key={avatar.url}
+                    type="button"
+                    onClick={() =>
+                      setForm(current => ({
+                        ...current,
+                        avatarUrl: avatar.url,
+                      }))
+                    }
+                    className={`size-11 overflow-hidden rounded-xl border-2 transition ${form.avatarUrl === avatar.url ? "border-[#d26246] ring-2 ring-[#d26246]/20" : "border-[#dce7df] hover:border-[#76a68f]"}`}
+                    aria-label={`اختيار صورة ${avatar.label}`}
+                  >
+                    <img
+                      src={avatar.url}
+                      alt={avatar.label}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-[11px] text-[#82948e]">
+                اضغط حفظ الملف الشخصي بعد اختيار صورة جاهزة.
+              </p>
+            </div>
+            <form onSubmit={submit} className="form-card mt-5 space-y-5">
               <label className="field">
                 <span>Display name</span>
                 <Input

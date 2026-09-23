@@ -1449,6 +1449,7 @@ export async function updateProfile(
     area?: string;
     bio?: string;
     whatsappOptIn?: boolean;
+    avatarUrl?: string;
   }
 ) {
   const db = await getDb();
@@ -1461,6 +1462,9 @@ export async function updateProfile(
       area: input.area || null,
       bio: input.bio || null,
       whatsappOptIn: Boolean(input.whatsappOptIn),
+      ...(input.avatarUrl !== undefined
+        ? { avatarUrl: input.avatarUrl || null }
+        : {}),
     })
     .where(eq(users.id, userId));
   return getProfile(userId);
@@ -1833,22 +1837,20 @@ export async function setAccountModeration(
       suspendedUntil: status === "suspended" ? (suspendedUntil ?? null) : null,
     })
     .where(eq(users.id, userId));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action:
-        status === "active"
-          ? "user_unblocked"
-          : status === "banned"
-            ? "user_banned"
-            : "user_suspended",
-      targetType: "user",
-      targetId: userId,
-      metadata: JSON.stringify({
-        status,
-        suspendedUntil: suspendedUntil?.toISOString() || null,
-      }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action:
+      status === "active"
+        ? "user_unblocked"
+        : status === "banned"
+          ? "user_banned"
+          : "user_suspended",
+    targetType: "user",
+    targetId: userId,
+    metadata: JSON.stringify({
+      status,
+      suspendedUntil: suspendedUntil?.toISOString() || null,
+    }),
+  });
   return { success: true, status } as const;
 }
