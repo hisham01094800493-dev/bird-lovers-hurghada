@@ -67,6 +67,20 @@ async function storeMessageAttachment(attachmentData?: string, attachmentType?: 
   }
 }
 
+async function storeLostFoundPhoto(userId: number, photoData?: string, photoType?: string) {
+  if (!photoData) return undefined;
+  if (!photoType || !["image/png", "image/jpeg", "image/webp"].includes(photoType)) throw new TRPCError({ code: "BAD_REQUEST", message: "اختر صورة PNG أو JPG أو WebP" });
+  const match = photoData.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match || match[1] !== photoType) throw new TRPCError({ code: "BAD_REQUEST", message: "ملف الصورة غير صالح" });
+  const buffer = Buffer.from(match[2], "base64");
+  if (buffer.byteLength > 5_000_000) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "حجم الصورة يجب أن يكون أقل من 5 ميجابايت" });
+  try {
+    const normalized = await sharp(buffer, { failOn: "error" }).rotate().resize({ width: 1400, height: 1400, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+    const stored = await storagePut(`lost-found/${userId}/${Date.now()}-${randomBytes(4).toString("hex")}.webp`, normalized, "image/webp");
+    return stored.url;
+  } catch { throw new TRPCError({ code: "BAD_REQUEST", message: "تعذر قراءة الصورة، جرّب صورة أخرى" }); }
+}
+
 
 const listingInput = z.object({
   categoryId: z.number().int().positive(), titleEn: z.string().trim().min(2).max(180), titleAr: z.string().trim().max(180).optional(), descriptionEn: z.string().min(20).max(5000), descriptionAr: z.string().max(5000).optional(), price: z.number().min(0).max(100000000), negotiable: z.boolean().default(false), exchangeAvailable: z.boolean().default(false), location: z.string().min(2).max(120).default("Hurghada"), imageData: z.array(z.string().max(7000000)).max(6).optional(), imagePath: z.string().max(600).optional(),
@@ -111,7 +125,7 @@ export const appRouter = router({
   categories: router({ list: publicProcedure.query(() => listCategories()) }),
   lostFound: router({
     list: publicProcedure.input(z.object({ area: z.string().max(120).optional() }).optional()).query(({ input }) => listLostFoundReports(input?.area)),
-    create: protectedProcedure.input(z.object({ kind: z.enum(["lost", "found"]), birdName: z.string().trim().min(2).max(160), description: z.string().trim().min(10).max(2000), area: z.string().trim().min(2).max(120), photoUrl: z.string().url().max(600).optional(), contactNote: z.string().max(240).optional() })).mutation(({ ctx, input }) => createLostFoundReport({ reporterId: ctx.user.id, ...input })),
+    create: protectedProcedure.input(z.object({ kind: z.enum(["lost", "found"]), birdName: z.string().trim().min(2).max(160), description: z.string().trim().min(10).max(2000), area: z.string().trim().min(2).max(120), photoData: z.string().max(7_000_000).optional(), photoType: z.enum(["image/png", "image/jpeg", "image/webp"]).optional(), contactNote: z.string().max(240).optional() })).mutation(async ({ ctx, input }) => { const photoUrl = await storeLostFoundPhoto(ctx.user.id, input.photoData, input.photoType); return createLostFoundReport({ reporterId: ctx.user.id, kind: input.kind, birdName: input.birdName, description: input.description, area: input.area, photoUrl, contactNote: input.contactNote }); }),
     resolve: protectedProcedure.input(z.object({ reportId: z.number().int().positive() })).mutation(async ({ ctx, input }) => { const success = await resolveLostFoundReport(ctx.user.id, input.reportId); if (!success) throw new TRPCError({ code: "FORBIDDEN", message: "Only the person who posted this report can close it" }); return { success: true as const }; }),
   }),
   prices: router({ list: publicProcedure.query(() => listPriceGuide()) }),
