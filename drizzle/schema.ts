@@ -195,6 +195,21 @@ export const auditLogs = mysqlTable("auditLogs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({ auditIdx: index("audit_logs_idx").on(table.targetType, table.targetId, table.createdAt) }));
 
+export const priceGuide = mysqlTable("priceGuide", {
+  id: varchar("id", { length: 80 }).primaryKey(),
+  birdEn: varchar("birdEn", { length: 120 }).notNull(),
+  birdAr: varchar("birdAr", { length: 120 }).notNull(),
+  range: varchar("range", { length: 80 }).notNull(),
+  sourceEn: varchar("sourceEn", { length: 240 }).notNull(),
+  sourceAr: varchar("sourceAr", { length: 240 }).notNull(),
+  sourceUrl: varchar("sourceUrl", { length: 600 }).notNull(),
+  checkedOn: varchar("checkedOn", { length: 10 }).notNull(),
+  noteEn: text("noteEn").notNull(),
+  noteAr: text("noteAr").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({ checkedIdx: index("price_guide_checked_idx").on(table.checkedOn) }));
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Category = typeof categories.$inferSelect;
@@ -209,3 +224,4 @@ export type AppUpdate = typeof appUpdates.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
+export type PriceGuideItem = typeof priceGuide.$inferSelect;

@@ -14,7 +14,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { validateChatUpload } from "./chatUploads";
 import { communityPosts, favorites, listingImages, listings, notifications } from "../drizzle/schema";
-import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createLocalUser, createNotification, createReport, createReview, getAdminStats, getConversation, getDb, getListingById, listAdminUsers, updateAdminUser, getListingSeller, getNotificationPreferences, getProfile, getUserByEmail, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessageAttachments, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updateProfile, upsertUser } from "./db";
+import { addMessage, canReviewCompletedListing, createConversationMessage, createCustomNotifications, createLocalUser, createNotification, createPriceGuideItem, createReport, createReview, deletePriceGuideItem, getAdminStats, getConversation, getDb, getListingById, listAdminUsers, updateAdminUser, getListingSeller, getNotificationPreferences, getProfile, getUserByEmail, isFavorite, listAppUpdates, listCategories, listCommunityPosts, listConversations, listFavorites, listListingImages, listListings, listMessageAttachments, listMessages, listModerationPosts, listMyListings, listNotifications, listOpenReports, listPendingListings, listPriceGuide, moderateCommunityPost, moderateListing, publishAppUpdate, reorderListingImages, requestContactVerification, resolveReport, unreadNotificationCount, updateNotificationPreferences, updatePriceGuideItem, updateProfile, upsertUser } from "./db";
 
 const scrypt = promisify(nodeScrypt);
 async function hashPassword(password: string) {
@@ -72,6 +72,19 @@ const listingInput = z.object({
   categoryId: z.number().int().positive(), titleEn: z.string().trim().min(2).max(180), titleAr: z.string().trim().max(180).optional(), descriptionEn: z.string().min(20).max(5000), descriptionAr: z.string().max(5000).optional(), price: z.number().min(0).max(100000000), negotiable: z.boolean().default(false), exchangeAvailable: z.boolean().default(false), location: z.string().min(2).max(120).default("Hurghada"), imageData: z.array(z.string().max(7000000)).max(6).optional(), imagePath: z.string().max(600).optional(),
 });
 
+const priceGuideInput = z.object({
+  id: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/),
+  birdAr: z.string().trim().min(2).max(120),
+  birdEn: z.string().trim().min(2).max(120),
+  range: z.string().trim().min(2).max(80),
+  sourceAr: z.string().trim().min(2).max(240),
+  sourceEn: z.string().trim().min(2).max(240),
+  sourceUrl: z.string().trim().url().max(600),
+  checkedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  noteAr: z.string().trim().min(2).max(2000),
+  noteEn: z.string().trim().min(2).max(2000),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -96,6 +109,7 @@ export const appRouter = router({
     logout: publicProcedure.mutation(({ ctx }) => { const cookieOptions = getSessionCookieOptions(ctx.req); ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 }); return { success: true } as const; }),
   }),
   categories: router({ list: publicProcedure.query(() => listCategories()) }),
+  prices: router({ list: publicProcedure.query(() => listPriceGuide()) }),
   listings: router({
     list: publicProcedure.input(z.object({ search: z.string().optional(), categoryId: z.number().int().positive().optional(), limit: z.number().int().min(1).max(48).default(12), offset: z.number().int().min(0).default(0) }).optional()).query(({ input }) => listListings({ search: input?.search, categoryId: input?.categoryId, limit: input?.limit ?? 12, offset: input?.offset ?? 0 })),
     byId: publicProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getListingById(input.id)),
@@ -171,6 +185,10 @@ export const appRouter = router({
     stats: adminProcedure.query(() => getAdminStats()),
     users: adminProcedure.input(z.object({ limit: z.number().int().min(1).max(200).default(200) }).optional()).query(({ input }) => listAdminUsers(input?.limit ?? 200)),
     updateUser: adminProcedure.input(z.object({ userId: z.number().int().positive(), name: z.string().trim().min(2).max(120), phone: z.string().max(32).optional(), area: z.string().max(120).optional(), role: z.enum(["user", "admin"]) })).mutation(({ ctx, input }) => updateAdminUser(ctx.user.id, input)),
+    priceGuide: adminProcedure.query(() => listPriceGuide()),
+    createPriceGuideItem: adminProcedure.input(priceGuideInput).mutation(({ ctx, input }) => createPriceGuideItem(ctx.user.id, input)),
+    updatePriceGuideItem: adminProcedure.input(priceGuideInput).mutation(({ ctx, input }) => updatePriceGuideItem(ctx.user.id, input)),
+    deletePriceGuideItem: adminProcedure.input(z.object({ id: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/) })).mutation(({ ctx, input }) => deletePriceGuideItem(ctx.user.id, input.id)),
     messageAttachments: adminProcedure.input(z.object({ limit: z.number().int().min(1).max(200).default(100) }).optional()).query(({ input }) => listMessageAttachments(input?.limit ?? 100)),
     pendingListings: adminProcedure.query(() => listPendingListings()),
     moderationPosts: adminProcedure.query(() => listModerationPosts()),

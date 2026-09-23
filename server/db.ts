@@ -13,11 +13,13 @@ import {
   messages,
   notificationPreferences,
   notifications,
+  priceGuide,
   reports,
   reviews,
   users,
 } from "../drizzle/schema";
 import { ADMIN_EMAIL } from "@shared/const";
+import { PRICE_REFERENCES, type PriceReference } from "@shared/priceGuide";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
   { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
@@ -297,6 +299,59 @@ export async function listAdminUsers(limit = 200) {
   const db = await getDb(); if (!db) return [];
   return db.select({ id: users.id, name: users.name, email: users.email, phone: users.phone, area: users.area, role: users.role, createdAt: users.createdAt, lastSignedIn: users.lastSignedIn })
     .from(users).orderBy(desc(users.createdAt)).limit(limit);
+}
+
+export type PriceGuideInput = Omit<PriceReference, "id"> & { id: string };
+
+function mapPriceGuideRow(row: typeof priceGuide.$inferSelect): PriceReference {
+  return {
+    id: row.id,
+    birdAr: row.birdAr,
+    birdEn: row.birdEn,
+    range: row.range,
+    sourceAr: row.sourceAr,
+    sourceEn: row.sourceEn,
+    sourceUrl: row.sourceUrl,
+    checkedOn: row.checkedOn,
+    noteAr: row.noteAr,
+    noteEn: row.noteEn,
+  };
+}
+
+export async function listPriceGuide() {
+  const db = await getDb();
+  if (!db) return PRICE_REFERENCES;
+  try {
+    const rows = await db.select().from(priceGuide).orderBy(asc(priceGuide.createdAt));
+    return rows.length ? rows.map(mapPriceGuideRow) : PRICE_REFERENCES;
+  } catch (error) {
+    console.warn("[Database] Price guide is not available yet:", String(error));
+    return PRICE_REFERENCES;
+  }
+}
+
+export async function createPriceGuideItem(actorId: number, input: PriceGuideInput) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.insert(priceGuide).values(input);
+  await db.insert(auditLogs).values({ actorId, action: "price_guide_create", targetType: "price_guide", metadata: JSON.stringify({ id: input.id, range: input.range }) });
+  return true as const;
+}
+
+export async function updatePriceGuideItem(actorId: number, input: PriceGuideInput) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const { id, ...values } = input;
+  const existing = await db.select({ id: priceGuide.id }).from(priceGuide).where(eq(priceGuide.id, id)).limit(1);
+  if (!existing[0]) throw new Error("Price guide item not found");
+  await db.update(priceGuide).set(values).where(eq(priceGuide.id, id));
+  await db.insert(auditLogs).values({ actorId, action: "price_guide_update", targetType: "price_guide", metadata: JSON.stringify({ id, range: input.range }) });
+  return true as const;
+}
+
+export async function deletePriceGuideItem(actorId: number, id: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.delete(priceGuide).where(eq(priceGuide.id, id));
+  await db.insert(auditLogs).values({ actorId, action: "price_guide_delete", targetType: "price_guide", metadata: JSON.stringify({ id }) });
+  return true as const;
 }
 
 export async function updateAdminUser(actorId: number, input: { userId: number; name: string; phone?: string; area?: string; role: "user" | "admin" }) {
