@@ -26,7 +26,10 @@ export default function UpdateNotice() {
         if (!version || version === "development" || !active) return;
         const previous = window.localStorage.getItem(VERSION_KEY);
         if (!previous) window.localStorage.setItem(VERSION_KEY, version);
-        else if (previous !== version) setAvailable(true);
+        else if (previous !== version) {
+          window.localStorage.setItem(VERSION_KEY, version);
+          setAvailable(true);
+        }
       } catch {
         // Update detection is optional; the app remains usable when offline.
       }
