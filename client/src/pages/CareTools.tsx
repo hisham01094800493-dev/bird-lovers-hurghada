@@ -2,11 +2,13 @@ import { useMemo, useState } from "react";
 import {
   BellRing,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
   CloudSun,
   Droplets,
   Feather,
   Info,
+  MapPin,
   RefreshCw,
   ShieldCheck,
   Sun,
@@ -130,6 +132,14 @@ function isInSeason(month: number, startMonth: number, endMonth: number) {
     ? month >= startMonth && month <= endMonth
     : month >= startMonth || month <= endMonth;
 }
+function monthRange(startMonth: number, endMonth: number, isArabic: boolean) {
+  const formatter = new Intl.DateTimeFormat(isArabic ? "ar-EG" : "en-EG", {
+    month: "short",
+  });
+  const start = formatter.format(new Date(2026, startMonth - 1, 1));
+  const end = formatter.format(new Date(2026, endMonth - 1, 1));
+  return startMonth === endMonth ? start : `${start} – ${end}`;
+}
 
 export default function CareTools() {
   const { isArabic, language } = useLanguage();
@@ -146,6 +156,11 @@ export default function CareTools() {
     [count, selected]
   );
   const currentMonth = new Date().getMonth() + 1;
+  const todayLabel = new Intl.DateTimeFormat(isArabic ? "ar-EG" : "en-EG", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
   const tips = care.data?.tips?.length
     ? care.data.tips
     : fallbackTips.filter(tip =>
@@ -394,6 +409,16 @@ export default function CareTools() {
                 )}
               </span>
             </div>
+            <div className="mt-5 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[#52766d]">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/75 px-3 py-1.5">
+                <CalendarDays size={13} />
+                {todayLabel}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/75 px-3 py-1.5">
+                <MapPin size={13} />
+                {isArabic ? "الغردقة" : "Hurghada"}
+              </span>
+            </div>
             <div className="mt-6 grid grid-cols-2 gap-3">
               <Metric
                 icon={<ThermometerSun size={16} />}
@@ -554,8 +579,14 @@ export default function CareTools() {
                     >
                       <Icon size={18} />
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[.14em] text-[#a0afa9]">
-                      {isArabic ? "موسمي" : "Seasonal"}
+                    <span
+                      className={`rounded-full px-2 py-1 text-[10px] font-bold ${isInSeason(currentMonth, tip.startMonth, tip.endMonth) ? "bg-[#eaf4ea] text-[#52766d]" : "bg-[#f1f3f0] text-[#a0afa9]"}`}
+                    >
+                      {isInSeason(currentMonth, tip.startMonth, tip.endMonth)
+                        ? isArabic
+                          ? "هذا الشهر"
+                          : "This month"
+                        : monthRange(tip.startMonth, tip.endMonth, isArabic)}
                     </span>
                   </div>
                   <h3 className="mt-4 font-display text-xl font-semibold text-[#183b39]">
