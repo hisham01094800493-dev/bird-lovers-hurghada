@@ -33,7 +33,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   }, [notifications.data, isArabic]);
   const nav = [
     { href: "/marketplace", label: t("marketplace"), icon: Search },
-    { href: "/community", label: t("community"), icon: Users },
+    { href: "/community", label: isArabic ? "مجتمع الهواة" : "Bird Lovers Community", icon: Users },
     { href: "/favorites", label: t("saved"), icon: Heart },
     { href: "/messages", label: t("messages"), icon: MessageCircle },
     { href: "/profile", label: t("profile"), icon: UserRound }, { href: "/my-listings", label: isArabic ? "إعلاناتي" : "My listings", icon: ImageIcon },
