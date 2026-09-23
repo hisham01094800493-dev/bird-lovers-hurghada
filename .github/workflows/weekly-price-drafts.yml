@@ -1,12 +1,18 @@
 name: Weekly bird price drafts
 
 on:
-  # GitHub cron is UTC. The endpoint checks Africa/Cairo and only runs at
-  # Friday 17:00 local time, so both entries cover Egypt daylight-saving time.
+  # GitHub cron is UTC. These entries cover Cairo UTC+2 and UTC+3.
+  # The endpoint checks Africa/Cairo and only runs at Wednesday 01:00 local time.
   schedule:
-    - cron: "0 14 * * 5"
-    - cron: "0 15 * * 5"
+    - cron: "0 22 * * 2"
+    - cron: "0 23 * * 2"
   workflow_dispatch:
+    inputs:
+      run_now:
+        description: "Create a price draft now (manual, authenticated)"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +26,7 @@ jobs:
         env:
           PRICE_REFRESH_SECRET: ${{ secrets.PRICE_REFRESH_SECRET }}
           PRICE_REFRESH_BASE_URL: https://bird-lovers-hurghada-production-536a.up.railway.app
+          RUN_NOW: ${{ inputs.run_now || false }}
         run: |
           set -euo pipefail
           if [ -z "$PRICE_REFRESH_SECRET" ]; then
@@ -30,5 +37,6 @@ jobs:
             --retry 3 --retry-delay 5 \
             -X POST "$PRICE_REFRESH_BASE_URL/api/scheduled/price-guide-refresh" \
             -H "x-price-refresh-secret: $PRICE_REFRESH_SECRET" \
+            -H "x-price-refresh-run-now: $RUN_NOW" \
             -H "accept: application/json"
           echo
