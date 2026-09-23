@@ -66,6 +66,8 @@ const birdTypes = [
 const fallbackTips = [
   {
     seasonKey: "hurghada_summer_heat",
+    startMonth: 5,
+    endMonth: 8,
     titleAr: "حر الصيف في الغردقة",
     titleEn: "Hurghada summer heat",
     bodyAr:
@@ -77,6 +79,8 @@ const fallbackTips = [
   },
   {
     seasonKey: "moulting_season",
+    startMonth: 8,
+    endMonth: 10,
     titleAr: "موسم تغيير الريش",
     titleEn: "Moulting season",
     bodyAr:
@@ -88,6 +92,8 @@ const fallbackTips = [
   },
   {
     seasonKey: "breeding_season",
+    startMonth: 1,
+    endMonth: 5,
     titleAr: "فترة التزاوج",
     titleEn: "Breeding season",
     bodyAr: "راقب السلوك والتغذية، ولا تبدأ التفريخ إلا مع زوج سليم ومكان آمن.",
@@ -119,6 +125,11 @@ function formatNumber(value: number | null, language: "ar" | "en") {
         maximumFractionDigits: 0,
       });
 }
+function isInSeason(month: number, startMonth: number, endMonth: number) {
+  return startMonth <= endMonth
+    ? month >= startMonth && month <= endMonth
+    : month >= startMonth || month <= endMonth;
+}
 
 export default function CareTools() {
   const { isArabic, language } = useLanguage();
@@ -134,7 +145,12 @@ export default function CareTools() {
     () => Math.max(1, count) * (selected.food + selected.care),
     [count, selected]
   );
-  const tips = care.data?.tips?.length ? care.data.tips : fallbackTips;
+  const currentMonth = new Date().getMonth() + 1;
+  const tips = care.data?.tips?.length
+    ? care.data.tips
+    : fallbackTips.filter(tip =>
+        isInSeason(currentMonth, tip.startMonth, tip.endMonth)
+      );
   const weather = care.data?.weather;
   const heatLevel =
     weather?.level === "critical"
