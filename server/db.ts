@@ -7,6 +7,8 @@ import {
   communityPosts,
   communityPostLikes,
   communityComments,
+  communityCommentHelpfulVotes,
+  communityReputation,
   conversations,
   favorites,
   InsertUser,
@@ -154,16 +156,14 @@ export async function createLocalUser(input: {
 }) {
   const db = await getDb();
   if (!db) return undefined;
-  await db
-    .insert(users)
-    .values({
-      openId: input.openId,
-      name: input.name,
-      email: input.email,
-      passwordHash: input.passwordHash,
-      loginMethod: "password",
-      lastSignedIn: new Date(),
-    });
+  await db.insert(users).values({
+    openId: input.openId,
+    name: input.name,
+    email: input.email,
+    passwordHash: input.passwordHash,
+    loginMethod: "password",
+    lastSignedIn: new Date(),
+  });
   return getUserByOpenId(input.openId);
 }
 
@@ -414,6 +414,7 @@ export async function listCommunityComments(postId: number) {
       createdAt: communityComments.createdAt,
       authorName: users.name,
       authorAvatar: users.avatarUrl,
+      helpfulCount: sql<number>`(select count(*) from communityCommentHelpfulVotes where communityCommentHelpfulVotes.commentId = ${communityComments.id})`,
     })
     .from(communityComments)
     .leftJoin(users, eq(communityComments.authorId, users.id))
@@ -507,6 +508,15 @@ export async function createCommunityComment(
   if (!post[0] || post[0].status !== "published")
     throw new Error("Post not found");
   await db.insert(communityComments).values({ postId, authorId: userId, body });
+  await db
+    .insert(communityReputation)
+    .values({ userId, points: 2, commentsCount: 1 })
+    .onDuplicateKeyUpdate({
+      set: {
+        points: sql`${communityReputation.points} + 2`,
+        commentsCount: sql`${communityReputation.commentsCount} + 1`,
+      },
+    });
   await db
     .update(communityPosts)
     .set({ commentsCount: sql`${communityPosts.commentsCount} + 1` })
@@ -746,27 +756,23 @@ export async function createConversationMessage(input: {
     input.sellerId
   );
   if (!conversation) {
-    const [created] = await db
-      .insert(conversations)
-      .values({
-        listingId: input.listingId,
-        buyerId: input.buyerId,
-        sellerId: input.sellerId,
-      });
+    const [created] = await db.insert(conversations).values({
+      listingId: input.listingId,
+      buyerId: input.buyerId,
+      sellerId: input.sellerId,
+    });
     conversation = await getConversation(Number(created.insertId));
   }
   if (!conversation) throw new Error("Conversation could not be created");
-  await db
-    .insert(messages)
-    .values({
-      conversationId: conversation.id,
-      senderId: input.buyerId,
-      body: input.body,
-      attachmentPath: input.attachmentPath,
-      attachmentData: input.attachmentData,
-      attachmentType: input.attachmentType,
-      attachmentExpiresAt: input.attachmentExpiresAt,
-    });
+  await db.insert(messages).values({
+    conversationId: conversation.id,
+    senderId: input.buyerId,
+    body: input.body,
+    attachmentPath: input.attachmentPath,
+    attachmentData: input.attachmentData,
+    attachmentType: input.attachmentType,
+    attachmentExpiresAt: input.attachmentExpiresAt,
+  });
   await db
     .update(conversations)
     .set({ updatedAt: new Date() })
@@ -793,16 +799,14 @@ export async function addMessage(
   if (!db) throw new Error("Database is not available");
   const conversation = await getConversation(conversationId);
   if (!conversation) return undefined;
-  await db
-    .insert(messages)
-    .values({
-      conversationId,
-      senderId,
-      body,
-      attachmentData,
-      attachmentType,
-      attachmentExpiresAt,
-    });
+  await db.insert(messages).values({
+    conversationId,
+    senderId,
+    body,
+    attachmentData,
+    attachmentType,
+    attachmentExpiresAt,
+  });
   await db
     .update(conversations)
     .set({ updatedAt: new Date() })
@@ -1116,14 +1120,12 @@ export async function createPriceGuideItem(
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.insert(priceGuide).values(input);
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: "price_guide_create",
-      targetType: "price_guide",
-      metadata: JSON.stringify({ id: input.id, range: input.range }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "price_guide_create",
+    targetType: "price_guide",
+    metadata: JSON.stringify({ id: input.id, range: input.range }),
+  });
   return true as const;
 }
 
@@ -1141,14 +1143,12 @@ export async function updatePriceGuideItem(
     .limit(1);
   if (!existing[0]) throw new Error("Price guide item not found");
   await db.update(priceGuide).set(values).where(eq(priceGuide.id, id));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: "price_guide_update",
-      targetType: "price_guide",
-      metadata: JSON.stringify({ id, range: input.range }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "price_guide_update",
+    targetType: "price_guide",
+    metadata: JSON.stringify({ id, range: input.range }),
+  });
   return true as const;
 }
 
@@ -1156,14 +1156,12 @@ export async function deletePriceGuideItem(actorId: number, id: string) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.delete(priceGuide).where(eq(priceGuide.id, id));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: "price_guide_delete",
-      targetType: "price_guide",
-      metadata: JSON.stringify({ id }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "price_guide_delete",
+    targetType: "price_guide",
+    metadata: JSON.stringify({ id }),
+  });
   return true as const;
 }
 
@@ -1194,15 +1192,13 @@ export async function createPriceGuideDraft(input: PriceGuideDraftPayload) {
     .where(eq(priceGuideDrafts.status, "pending"))
     .limit(1);
   if (existing[0]) return Number(existing[0].id);
-  const [created] = await db
-    .insert(priceGuideDrafts)
-    .values({
-      status: "pending",
-      sourceSummary: input.sourceSummary,
-      sourceUrl: input.sourceUrl,
-      collectedOn: input.collectedOn,
-      payload: JSON.stringify(input.items),
-    });
+  const [created] = await db.insert(priceGuideDrafts).values({
+    status: "pending",
+    sourceSummary: input.sourceSummary,
+    sourceUrl: input.sourceUrl,
+    collectedOn: input.collectedOn,
+    payload: JSON.stringify(input.items),
+  });
   return Number(created.insertId);
 }
 
@@ -1238,15 +1234,13 @@ export async function approvePriceGuideDraft(actorId: number, draftId: number) {
     .update(priceGuideDrafts)
     .set({ status: "approved", reviewedBy: actorId, reviewedAt: new Date() })
     .where(eq(priceGuideDrafts.id, draftId));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: "price_guide_draft_approve",
-      targetType: "price_guide_draft",
-      targetId: draftId,
-      metadata: JSON.stringify({ itemCount: items.length }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "price_guide_draft_approve",
+    targetType: "price_guide_draft",
+    targetId: draftId,
+    metadata: JSON.stringify({ itemCount: items.length }),
+  });
   return { approved: items.length } as const;
 }
 
@@ -1271,15 +1265,13 @@ export async function rejectPriceGuideDraft(
         eq(priceGuideDrafts.status, "pending")
       )
     );
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: "price_guide_draft_reject",
-      targetType: "price_guide_draft",
-      targetId: draftId,
-      metadata: JSON.stringify({ reason }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "price_guide_draft_reject",
+    targetType: "price_guide_draft",
+    targetId: draftId,
+    metadata: JSON.stringify({ reason }),
+  });
   return true as const;
 }
 
@@ -1320,16 +1312,14 @@ export async function updateAdminUser(
       role: input.role,
     })
     .where(eq(users.id, input.userId));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action:
-        input.role === existing[0].role ? "user_update" : "user_role_change",
-      targetType: "user",
-      targetId: input.userId,
-      metadata: JSON.stringify({ role: input.role }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action:
+      input.role === existing[0].role ? "user_update" : "user_role_change",
+    targetType: "user",
+    targetId: input.userId,
+    metadata: JSON.stringify({ role: input.role }),
+  });
   return { success: true } as const;
 }
 
@@ -1383,15 +1373,13 @@ export async function moderateListing(
       status: decision === "approved" ? "published" : "archived",
     })
     .where(eq(listings.id, listingId));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: decision === "approved" ? "listing_approve" : "listing_reject",
-      targetType: "listing",
-      targetId: listingId,
-      metadata: JSON.stringify({ title: listing[0].title }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: decision === "approved" ? "listing_approve" : "listing_reject",
+    targetType: "listing",
+    targetId: listingId,
+    metadata: JSON.stringify({ title: listing[0].title }),
+  });
   await createNotification(
     listing[0].sellerId,
     `listing_${decision}`,
@@ -1576,15 +1564,13 @@ export async function resolveReport(
       .update(users)
       .set({ phoneVerifiedAt: new Date() })
       .where(eq(users.id, report[0].targetId));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: `report_${status}`,
-      targetType: "report",
-      targetId: reportId,
-      metadata: JSON.stringify({ resolution }),
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: `report_${status}`,
+    targetType: "report",
+    targetId: reportId,
+    metadata: JSON.stringify({ resolution }),
+  });
   return true;
 }
 
@@ -1611,14 +1597,12 @@ export async function moderateCommunityPost(
     .update(communityPosts)
     .set({ status })
     .where(eq(communityPosts.id, postId));
-  await db
-    .insert(auditLogs)
-    .values({
-      actorId,
-      action: `post_${status}`,
-      targetType: "community_post",
-      targetId: postId,
-    });
+  await db.insert(auditLogs).values({
+    actorId,
+    action: `post_${status}`,
+    targetType: "community_post",
+    targetId: postId,
+  });
   return true;
 }
 
@@ -1690,4 +1674,95 @@ export async function listSeasonalCareTips(month: number) {
     console.warn("[Care] Seasonal tips table is not ready yet:", String(error));
     return [];
   }
+}
+
+export async function getCommunityReputation(userId: number) {
+  const db = await getDb();
+  if (!db) return { points: 0, helpfulAnswers: 0, commentsCount: 0 };
+  const rows = await db
+    .select()
+    .from(communityReputation)
+    .where(eq(communityReputation.userId, userId))
+    .limit(1);
+  return rows[0] ?? { points: 0, helpfulAnswers: 0, commentsCount: 0 };
+}
+
+export async function markCommunityCommentHelpful(
+  userId: number,
+  commentId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const comment = await db
+    .select({
+      id: communityComments.id,
+      authorId: communityComments.authorId,
+      postId: communityComments.postId,
+    })
+    .from(communityComments)
+    .where(eq(communityComments.id, commentId))
+    .limit(1);
+  if (!comment[0]) throw new Error("Comment not found");
+  if (comment[0].authorId === userId)
+    throw new Error("You cannot rate your own answer");
+  const existing = await db
+    .select({ id: communityCommentHelpfulVotes.id })
+    .from(communityCommentHelpfulVotes)
+    .where(
+      and(
+        eq(communityCommentHelpfulVotes.commentId, commentId),
+        eq(communityCommentHelpfulVotes.voterId, userId)
+      )
+    )
+    .limit(1);
+  if (existing[0]) return { helpful: false, alreadyVoted: true } as const;
+  await db
+    .insert(communityCommentHelpfulVotes)
+    .values({ commentId, voterId: userId });
+  await db
+    .insert(communityReputation)
+    .values({ userId: comment[0].authorId, points: 10, helpfulAnswers: 1 })
+    .onDuplicateKeyUpdate({
+      set: {
+        points: sql`${communityReputation.points} + 10`,
+        helpfulAnswers: sql`${communityReputation.helpfulAnswers} + 1`,
+      },
+    });
+  await createNotification(
+    comment[0].authorId,
+    "community_helpful",
+    "إجابة مفيدة",
+    "حصلت إجابتك على تقييم مفيد من أحد أعضاء السرب.",
+    "/community"
+  );
+  return { helpful: true, alreadyVoted: false } as const;
+}
+
+export function communityBadge(reputation: {
+  points: number;
+  helpfulAnswers: number;
+  commentsCount: number;
+}) {
+  if (reputation.helpfulAnswers >= 5 || reputation.points >= 100)
+    return {
+      key: "care_expert",
+      ar: "خبير الرعاية",
+      en: "Care expert",
+      color: "#c49752",
+    };
+  if (reputation.helpfulAnswers >= 2 || reputation.points >= 30)
+    return { key: "helper", ar: "مساعد", en: "Helper", color: "#76a68f" };
+  if (reputation.commentsCount >= 1 || reputation.points >= 2)
+    return {
+      key: "active_member",
+      ar: "عضو نشط",
+      en: "Active member",
+      color: "#4c8a91",
+    };
+  return {
+    key: "new_member",
+    ar: "عضو جديد",
+    en: "New member",
+    color: "#a0afa9",
+  };
 }

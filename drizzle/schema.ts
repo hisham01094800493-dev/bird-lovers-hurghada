@@ -224,6 +224,39 @@ export const communityComments = mysqlTable(
   })
 );
 
+export const communityReputation = mysqlTable("communityReputation", {
+  userId: int("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  points: int("points").notNull().default(0),
+  helpfulAnswers: int("helpfulAnswers").notNull().default(0),
+  commentsCount: int("commentsCount").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const communityCommentHelpfulVotes = mysqlTable(
+  "communityCommentHelpfulVotes",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    commentId: int("commentId")
+      .notNull()
+      .references(() => communityComments.id, { onDelete: "cascade" }),
+    voterId: int("voterId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => ({
+    uniqueVote: uniqueIndex("community_comment_helpful_unique").on(
+      table.commentId,
+      table.voterId
+    ),
+    commentIdx: index("community_comment_helpful_comment_idx").on(
+      table.commentId
+    ),
+  })
+);
+
 export const conversations = mysqlTable(
   "conversations",
   {

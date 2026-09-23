@@ -27,6 +27,7 @@ import {
 } from "../drizzle/schema";
 import {
   addMessage,
+  communityBadge,
   canReviewCompletedListing,
   createCommunityComment,
   createConversationMessage,
@@ -39,6 +40,7 @@ import {
   createReview,
   deletePriceGuideItem,
   getAdminStats,
+  getCommunityReputation,
   getConversation,
   getDb,
   getListingById,
@@ -54,6 +56,7 @@ import {
   listCategories,
   listCommunityComments,
   listCommunityPosts,
+  markCommunityCommentHelpful,
   listConversations,
   listFavorites,
   listListingImages,
@@ -556,34 +559,30 @@ export const appRouter = router({
             ).url
           );
         }
-        const [created] = await db
-          .insert(listings)
-          .values({
-            sellerId: ctx.user.id,
-            categoryId: input.categoryId,
-            titleEn: input.titleEn,
-            titleAr: input.titleAr || null,
-            descriptionEn: input.descriptionEn,
-            descriptionAr: input.descriptionAr || null,
-            price: input.price.toFixed(2),
-            negotiable: input.negotiable,
-            exchangeAvailable: input.exchangeAvailable,
-            location: input.location,
-            status: "pending_review",
-            moderationStatus: "pending",
-          });
+        const [created] = await db.insert(listings).values({
+          sellerId: ctx.user.id,
+          categoryId: input.categoryId,
+          titleEn: input.titleEn,
+          titleAr: input.titleAr || null,
+          descriptionEn: input.descriptionEn,
+          descriptionAr: input.descriptionAr || null,
+          price: input.price.toFixed(2),
+          negotiable: input.negotiable,
+          exchangeAvailable: input.exchangeAvailable,
+          location: input.location,
+          status: "pending_review",
+          moderationStatus: "pending",
+        });
         if (created.insertId && imagePaths.length)
-          await db
-            .insert(listingImages)
-            .values(
-              imagePaths.map((storagePath, index) => ({
-                listingId: Number(created.insertId),
-                storagePath,
-                isCover: index === 0,
-                sortOrder: index,
-                altText: input.titleEn,
-              }))
-            );
+          await db.insert(listingImages).values(
+            imagePaths.map((storagePath, index) => ({
+              listingId: Number(created.insertId),
+              storagePath,
+              isCover: index === 0,
+              sortOrder: index,
+              altText: input.titleEn,
+            }))
+          );
         await createNotification(
           ctx.user.id,
           "listing_submitted",
@@ -674,6 +673,11 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         createCommunityComment(ctx.user.id, input.postId, input.body)
       ),
+    markHelpful: protectedProcedure
+      .input(z.object({ commentId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) =>
+        markCommunityCommentHelpful(ctx.user.id, input.commentId)
+      ),
     create: protectedProcedure
       .input(
         z.object({
@@ -735,15 +739,13 @@ export const appRouter = router({
             });
           }
         }
-        const [created] = await db
-          .insert(communityPosts)
-          .values({
-            authorId: ctx.user.id,
-            category: input.category,
-            title: input.title,
-            body: input.body,
-            imagePath,
-          });
+        const [created] = await db.insert(communityPosts).values({
+          authorId: ctx.user.id,
+          category: input.category,
+          title: input.title,
+          body: input.body,
+          imagePath,
+        });
         return { id: Number(created.insertId) };
       }),
   }),
@@ -926,6 +928,21 @@ export const appRouter = router({
   }),
   profile: router({
     me: protectedProcedure.query(({ ctx }) => getProfile(ctx.user.id)),
+    reputation: protectedProcedure.query(async ({ ctx }) => {
+      const reputation = await getCommunityReputation(ctx.user.id);
+      return {
+        ...reputation,
+        badge: communityBadge(reputation),
+        nextTarget:
+          reputation.points < 30 ? 30 : reputation.points < 100 ? 100 : 100,
+        progress:
+          reputation.points < 30
+            ? Math.min(100, Math.round((reputation.points / 30) * 100))
+            : reputation.points < 100
+              ? Math.min(100, Math.round((reputation.points / 100) * 100))
+              : 100,
+      };
+    }),
     update: protectedProcedure
       .input(
         z.object({
