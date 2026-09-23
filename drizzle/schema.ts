@@ -210,6 +210,19 @@ export const priceGuide = mysqlTable("priceGuide", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({ checkedIdx: index("price_guide_checked_idx").on(table.checkedOn) }));
 
+export const priceGuideDrafts = mysqlTable("priceGuideDrafts", {
+  id: int("id").autoincrement().primaryKey(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).notNull().default("pending"),
+  sourceSummary: text("sourceSummary").notNull(),
+  sourceUrl: text("sourceUrl").notNull(),
+  collectedOn: varchar("collectedOn", { length: 10 }).notNull(),
+  payload: text("payload").notNull(),
+  reviewedBy: int("reviewedBy").references(() => users.id),
+  reviewedAt: timestamp("reviewedAt"),
+  rejectionReason: text("rejectionReason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ statusIdx: index("price_guide_drafts_status_idx").on(table.status, table.createdAt) }));
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Category = typeof categories.$inferSelect;
@@ -225,3 +238,4 @@ export type Report = typeof reports.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type PriceGuideItem = typeof priceGuide.$inferSelect;
+export type PriceGuideDraft = typeof priceGuideDrafts.$inferSelect;

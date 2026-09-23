@@ -34,6 +34,7 @@ const emptyForm = (): PriceGuideForm => ({
 
 export default function AdminPriceGuide() {
   const guide = trpc.admin.priceGuide.useQuery();
+  const drafts = trpc.admin.priceDrafts.useQuery();
   const utils = trpc.useUtils();
   const [form, setForm] = useState<PriceGuideForm>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,6 +68,8 @@ export default function AdminPriceGuide() {
     onError: error => toast.error(error.message),
   });
 
+  const approveDraft = trpc.admin.approvePriceDraft.useMutation({ onSuccess: () => { toast.success("تم اعتماد تحديث الأسعار"); void drafts.refetch(); void guide.refetch(); void utils.prices.list.invalidate(); }, onError: error => toast.error(error.message) });
+  const rejectDraft = trpc.admin.rejectPriceDraft.useMutation({ onSuccess: () => { toast.success("تم رفض مسودة الأسعار"); void drafts.refetch(); }, onError: error => toast.error(error.message) });
   const isSaving = create.isPending || update.isPending;
   const updateField = (field: keyof PriceGuideForm, value: string) => setForm(current => ({ ...current, [field]: value }));
   const startCreate = () => {
@@ -103,6 +106,11 @@ export default function AdminPriceGuide() {
       </div>
       <Button type="button" className="cta-primary shrink-0" onClick={startCreate}><Plus size={16} /> إضافة طائر</Button>
     </div>
+
+    <section className="mt-6 rounded-2xl border border-[#ecd9a8] bg-[#fffaf0] p-5" aria-labelledby="price-review-title">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start"><div><p className="eyebrow">تحديث أسبوعي من مصادر خارجية</p><h3 id="price-review-title" className="mt-1 font-display text-2xl font-semibold text-[#183b39]">مسودات الأسعار للمراجعة</h3><p className="mt-2 text-sm leading-6 text-[#718780]">تُجمع الأسعار يوم الجمعة الساعة 5 مساءً، ولا تظهر في الشريط أو الدليل إلا بعد اعتمادك.</p></div><span className="rounded-full bg-[#f3e5bd] px-3 py-1 text-xs font-bold text-[#765c1d]">{drafts.data?.length ?? 0} قيد المراجعة</span></div>
+      {drafts.isLoading ? <div className="mt-5"><Loader2 className="animate-spin" /></div> : drafts.data?.length ? <div className="mt-5 space-y-3">{drafts.data.map(draft => <article key={draft.id} className="rounded-xl border border-[#eadfbd] bg-white p-4"><p className="text-sm font-semibold text-[#183b39]">مسودة رقم #{draft.id} · جُمعت في {draft.collectedOn}</p><p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-[#718780]">{draft.sourceSummary}</p><a className="mt-2 inline-block text-xs font-semibold text-[#52766d] underline" href={draft.sourceUrl} target="_blank" rel="noreferrer">فتح المصدر الأساسي</a><div className="mt-4 flex flex-wrap gap-2"><Button type="button" className="bg-[#183b39] text-white" disabled={approveDraft.isPending} onClick={() => { if (window.confirm("اعتماد مسودة الأسعار وتحديث الشريط الآن؟")) approveDraft.mutate({ draftId: draft.id }); }}><Check size={14} /> اعتماد التحديث</Button><Button type="button" variant="outline" className="text-[#bd5941]" disabled={rejectDraft.isPending} onClick={() => { if (window.confirm("رفض مسودة الأسعار؟")) rejectDraft.mutate({ draftId: draft.id, reason: "رفضها المسؤول بعد المراجعة" }); }}><X size={14} /> رفض</Button></div></article>)}</div> : <div className="mt-5 rounded-xl border border-dashed border-[#d8c98f] p-4 text-sm text-[#718780]">لا توجد مسودة جديدة حاليًا.</div>}
+    </section>
 
     {isFormOpen && <form onSubmit={submit} className="mt-6 rounded-2xl border border-[#b9d8c8] bg-[#f7fbf7] p-5">
       <div className="flex items-start justify-between gap-3">

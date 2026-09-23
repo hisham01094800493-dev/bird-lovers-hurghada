@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { registerListingManagementRoutes } from "../listingManagementRoutes";
 import { appRouter } from "../routers";
 import { cleanupExpiredMessageAttachments } from "../db";
+import { scheduledPriceRefresh } from "../scheduledPriceRefresh";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -20,6 +21,7 @@ async function startServer() {
   app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
   app.get("/api/version", (_req, res) => res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate").json({ version: process.env.RAILWAY_GIT_COMMIT_SHA || process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || process.env.npm_package_version || "development" }));
   registerStorageProxy(app); registerOAuthRoutes(app); registerListingManagementRoutes(app);
+  app.post("/api/scheduled/price-guide-refresh", scheduledPriceRefresh);
   app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
   if (process.env.NODE_ENV === "development") await setupVite(app, server); else serveStatic(app);
   const preferredPort = parseInt(process.env.PORT || "3000"); const port = await findAvailablePort(preferredPort);

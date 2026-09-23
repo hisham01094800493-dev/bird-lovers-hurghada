@@ -14,6 +14,7 @@ import {
   notificationPreferences,
   notifications,
   priceGuide,
+  priceGuideDrafts,
   reports,
   reviews,
   users,
@@ -351,6 +352,43 @@ export async function deletePriceGuideItem(actorId: number, id: string) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   await db.delete(priceGuide).where(eq(priceGuide.id, id));
   await db.insert(auditLogs).values({ actorId, action: "price_guide_delete", targetType: "price_guide", metadata: JSON.stringify({ id }) });
+  return true as const;
+}
+
+export type PriceGuideDraftPayload = { items: PriceGuideInput[]; sourceSummary: string; sourceUrl: string; collectedOn: string };
+
+export async function listPendingPriceGuideDrafts() {
+  const db = await getDb(); if (!db) return [];
+  return db.select().from(priceGuideDrafts).where(eq(priceGuideDrafts.status, "pending")).orderBy(desc(priceGuideDrafts.createdAt)).limit(10);
+}
+
+export async function createPriceGuideDraft(input: PriceGuideDraftPayload) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const existing = await db.select({ id: priceGuideDrafts.id }).from(priceGuideDrafts).where(eq(priceGuideDrafts.status, "pending")).limit(1);
+  if (existing[0]) return Number(existing[0].id);
+  const [created] = await db.insert(priceGuideDrafts).values({ status: "pending", sourceSummary: input.sourceSummary, sourceUrl: input.sourceUrl, collectedOn: input.collectedOn, payload: JSON.stringify(input.items) });
+  return Number(created.insertId);
+}
+
+export async function approvePriceGuideDraft(actorId: number, draftId: number) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  const draft = (await db.select().from(priceGuideDrafts).where(and(eq(priceGuideDrafts.id, draftId), eq(priceGuideDrafts.status, "pending"))).limit(1))[0];
+  if (!draft) throw new Error("Price update draft not found or already reviewed");
+  const items = JSON.parse(draft.payload) as PriceGuideInput[];
+  for (const item of items) {
+    const existing = await db.select({ id: priceGuide.id }).from(priceGuide).where(eq(priceGuide.id, item.id)).limit(1);
+    if (existing[0]) await db.update(priceGuide).set(item).where(eq(priceGuide.id, item.id));
+    else await db.insert(priceGuide).values(item);
+  }
+  await db.update(priceGuideDrafts).set({ status: "approved", reviewedBy: actorId, reviewedAt: new Date() }).where(eq(priceGuideDrafts.id, draftId));
+  await db.insert(auditLogs).values({ actorId, action: "price_guide_draft_approve", targetType: "price_guide_draft", targetId: draftId, metadata: JSON.stringify({ itemCount: items.length }) });
+  return { approved: items.length } as const;
+}
+
+export async function rejectPriceGuideDraft(actorId: number, draftId: number, reason: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.update(priceGuideDrafts).set({ status: "rejected", reviewedBy: actorId, reviewedAt: new Date(), rejectionReason: reason.trim() || "Rejected by admin" }).where(and(eq(priceGuideDrafts.id, draftId), eq(priceGuideDrafts.status, "pending")));
+  await db.insert(auditLogs).values({ actorId, action: "price_guide_draft_reject", targetType: "price_guide_draft", targetId: draftId, metadata: JSON.stringify({ reason }) });
   return true as const;
 }
 
