@@ -180,3 +180,11 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-tools-section, .home-community-section { padding-block: 52px; }
 .home-join-section { padding-bottom: 34px; }
 @media (max-width: 640px) { .home-hero { padding-block: 28px 26px; } .home-hero .hero-visual { height: 250px; } .home-hero .hero-lede { margin-top: 18px; font-size: 14px; } .home-hero .mt-8 { margin-top: 22px; } .home-hero .mt-10 { margin-top: 24px; gap: 11px; } .home-category-section { padding-block: 28px 38px; } .home-category-section .category-grid { gap: 8px; } .home-category-section .category-card { min-height: 116px; padding: 12px; } .home-category-section .category-card .category-icon { width: 43px; height: 43px; border-radius: 13px; } .home-category-section .category-card .category-icon svg { width: 22px; height: 22px; } .home-category-section .category-name { margin-top: 10px; font-size: 12px; } .home-listings-section { padding-block: 38px; } .home-tools-section, .home-community-section { padding-block: 38px; } }
+
+.home-quick-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.home-tool-card { min-height: 132px !important; }
+.home-tool-calculator .category-icon { background: #fff0c8; color: #b77b22; }
+.home-tool-tips .category-icon { background: #fde8d6; color: #d26246; }
+.home-tool-community .category-icon { background: #e5e1f8; color: #6856a6; }
+.home-tool-card .category-name { max-width: 100%; }
+@media (max-width: 640px) { .home-quick-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; } .home-tool-card { min-height: 116px !important; padding: 10px !important; } .home-tool-card .category-icon { width: 43px !important; height: 43px !important; } .home-tool-card .category-name { margin-top: 9px !important; font-size: 11px !important; } .home-tool-card .category-ar { font-size: 9px !important; } .home-tool-card .category-arrow { right: 8px; bottom: 8px; } }

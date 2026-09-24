@@ -3,11 +3,13 @@ import {
   ArrowRight,
   BadgeCheck,
   Bird,
+  Calculator,
   ChevronRight,
   Heart,
   House,
   MapPin,
   MessageCircle,
+  ThermometerSun,
   Package,
   PawPrint,
   ShieldCheck,
@@ -204,6 +206,56 @@ export default function Home() {
                 );
               })}
         </div>
+        <div
+          className="home-quick-tools"
+          aria-label={isArabic ? "أدوات مفيدة" : "Helpful tools"}
+        >
+          <Link
+            href="/care-tools"
+            className="category-card home-tool-card home-tool-calculator"
+          >
+            <span className="category-icon">
+              <Calculator size={25} strokeWidth={1.8} />
+            </span>
+            <span className="category-name">
+              {isArabic ? "حاسبة التكلفة" : "Cost calculator"}
+            </span>
+            <span className="category-ar">
+              {isArabic ? "اعرف ميزانيتك" : "Plan your budget"}
+            </span>
+            <ChevronRight className="category-arrow" size={17} />
+          </Link>
+          <Link
+            href="/care-tools"
+            className="category-card home-tool-card home-tool-tips"
+          >
+            <span className="category-icon">
+              <ThermometerSun size={25} strokeWidth={1.8} />
+            </span>
+            <span className="category-name">
+              {isArabic ? "نصائح موسمية" : "Seasonal tips"}
+            </span>
+            <span className="category-ar">
+              {isArabic ? "رعاية في وقتها" : "Care in season"}
+            </span>
+            <ChevronRight className="category-arrow" size={17} />
+          </Link>
+          <Link
+            href="/community"
+            className="category-card home-tool-card home-tool-community"
+          >
+            <span className="category-icon">
+              <MessageCircle size={25} strokeWidth={1.8} />
+            </span>
+            <span className="category-name">
+              {isArabic ? "اسأل مجتمع الهواة" : "Ask the community"}
+            </span>
+            <span className="category-ar">
+              {isArabic ? "خبرة تساعدك" : "Helpful local advice"}
+            </span>
+            <ChevronRight className="category-arrow" size={17} />
+          </Link>
+        </div>
       </section>
       <section className="bg-[#eaf1ea] home-listings-section py-20">
         <div className="shell">
@@ -261,98 +313,6 @@ export default function Home() {
               </Link>
             </div>
           )}
-        </div>
-      </section>
-      <section className="shell section-pad home-tools-section">
-        <div className="grid gap-5 md:grid-cols-2">
-          <Link
-            href="/care-tools"
-            className="group rounded-2xl border border-[#dce7df] bg-white p-6 shadow-[0_8px_24px_rgba(24,59,57,.05)] transition hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between">
-              <span className="join-icon">
-                <Wheat size={19} />
-              </span>
-              <ArrowRight
-                size={17}
-                className="text-[#76a68f] transition group-hover:translate-x-1"
-              />
-            </div>
-            <p className="eyebrow mt-5">
-              {isArabic ? "قبل ما تشتري" : "Before you buy"}
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-semibold text-[#183b39]">
-              {isArabic ? "احسب تكلفة التربية" : "Estimate care costs"}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-[#718780]">
-              {isArabic
-                ? "اعرف ميزانية الأكل والرعاية الشهرية حسب نوع وعدد الطيور."
-                : "See a simple monthly food and care estimate by bird type and count."}
-            </p>
-          </Link>
-          <Link
-            href="/care-tools"
-            className="group rounded-2xl border border-[#dce7df] bg-[#eef5ed] p-6 transition hover:-translate-y-1"
-          >
-            <div className="flex items-start justify-between">
-              <span className="join-icon bg-white">
-                <Sparkles size={19} />
-              </span>
-              <ArrowRight
-                size={17}
-                className="text-[#76a68f] transition group-hover:translate-x-1"
-              />
-            </div>
-            <p className="eyebrow mt-5">
-              {isArabic ? "حسب موسم الغردقة" : "For Hurghada seasons"}
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-semibold text-[#183b39]">
-              {isArabic ? "نصائح في وقتها" : "Tips when they matter"}
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-[#718780]">
-              {isArabic
-                ? "تنبيهات عن الحر وتغيير الريش والتزاوج تساعدك تهتم بطيرك أفضل."
-                : "Seasonal notes on heat, moulting and breeding help you care with confidence."}
-            </p>
-          </Link>
-        </div>
-      </section>
-      <section className="shell section-pad home-community-section">
-        <div className="community-banner">
-          <div>
-            <p className="eyebrow text-[#b9d8c8]">
-              {isArabic ? "السرب" : "The flock"}
-            </p>
-            <h2 className="mt-3 max-w-md font-display text-3xl font-semibold leading-tight text-white sm:text-4xl">
-              {isArabic
-                ? "الأسئلة أفضل عندما يساعد المجتمع كله."
-                : "Questions are better when the whole community can help."}
-            </h2>
-            <p className="mt-4 max-w-md text-sm leading-6 text-[#b5cec1]">
-              {isArabic
-                ? "اسأل عن الرعاية أو التغذية أو أي شيء يخص الطيور. النصيحة الجيدة تنتشر."
-                : "Ask about care, nutrition, breeding or anything bird-shaped. Good advice travels."}
-            </p>
-            <Link
-              href="/community"
-              className="mt-7 inline-flex text-sm font-semibold text-[#f1d1a4]"
-            >
-              {isArabic ? "زر المجتمع" : "Visit the community"}{" "}
-              <ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className="community-stats">
-            <div className="stat-orbit">
-              <Users size={28} />
-              <strong>{posts.data?.length || 0}</strong>
-              <span>{isArabic ? "نقاشات جديدة" : "fresh discussions"}</span>
-            </div>
-            <div className="stat-quote">
-              {isArabic
-                ? "أسئلة صغيرة — تصنع بيوتًا أفضل."
-                : "Small questions — make better homes."}
-            </div>
-          </div>
         </div>
       </section>
       <section className="shell home-join-section pb-12">
