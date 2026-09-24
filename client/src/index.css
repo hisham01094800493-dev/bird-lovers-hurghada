@@ -196,3 +196,11 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .ad-slot-compact .ad-promo-copy strong { font-size: 12px; }
 .ad-slot-compact .ad-promo-copy span { font-size: 10px; }
 @media (max-width: 640px) { .ad-slot-compact .ad-promo { gap: 8px; padding-inline: 10px; } .ad-slot-compact .ad-promo-image { width: 58px; height: 48px; flex-basis: 58px; } .ad-slot-compact .ad-promo-cta { padding: 7px 9px; font-size: 10px; } }
+
+.facebook-community-cta { display: flex; align-items: center; gap: 13px; border: 1px solid #d9d2ef; border-radius: 20px; padding: 15px 17px; background: linear-gradient(135deg, #f4f0fb, #eef6ef); box-shadow: 0 10px 24px rgba(24,59,57,.05); }
+.facebook-community-icon { display: grid; width: 43px; height: 43px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: #e5e1f8; color: #6856a6; }
+.facebook-community-cta h2 { color: #183b39; font-size: 14px; font-weight: 800; }
+.facebook-community-cta p { margin-top: 3px; color: #718780; font-size: 11px; line-height: 1.5; }
+.facebook-community-button { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; border-radius: 11px; background: #6856a6; padding: 10px 13px; color: white; font-size: 11px; font-weight: 800; transition: transform .18s ease, background .18s ease; }
+.facebook-community-button:hover { background: #56458e; transform: translateY(-1px); }
+@media (max-width: 640px) { .facebook-community-cta { align-items: flex-start; flex-wrap: wrap; padding: 13px; } .facebook-community-cta > div:nth-child(2) { flex-basis: calc(100% - 58px); } .facebook-community-button { width: 100%; justify-content: center; } }

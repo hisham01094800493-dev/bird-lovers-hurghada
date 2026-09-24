@@ -14,6 +14,7 @@ import {
   MessageCircle,
   Plus,
   Send,
+  Share2,
   ThumbsUp,
   Users,
   X,
@@ -33,6 +34,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const facebookGroup =
   "https://www.facebook.com/groups/798363001904219/?ref=share_group_link";
@@ -54,6 +56,7 @@ const categoryHints: Record<string, string> = {
 };
 
 export default function Community() {
+  const { isArabic } = useLanguage();
   const { isAuthenticated } = useAuth();
   const posts = trpc.community.list.useQuery();
   const utils = trpc.useUtils();
@@ -65,6 +68,11 @@ export default function Community() {
     imagePreview: "",
   });
   const [activeImage, setActiveImage] = useState<string | null>(null);
+  const sharePost = (postId: number, title: string) => {
+    const postUrl = `${window.location.origin}/community#post-${postId}`;
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}&quote=${encodeURIComponent(title)}`;
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  };
   const create = trpc.community.create.useMutation({
     onSuccess: () => {
       setForm({
@@ -165,7 +173,11 @@ export default function Community() {
               ))
             ) : posts.data?.length ? (
               posts.data.map(post => (
-                <article key={post.id} className="post-card">
+                <article
+                  id={`post-${post.id}`}
+                  key={post.id}
+                  className="post-card"
+                >
                   <div className="flex items-start gap-3">
                     <div className="avatar-placeholder">
                       {post.authorAvatar ? (
@@ -217,6 +229,7 @@ export default function Community() {
                         likesCount={post.likesCount}
                         commentsCount={post.commentsCount}
                         isAuthenticated={isAuthenticated}
+                        onShare={() => sharePost(post.id, post.title)}
                       />
                     </div>
                   </div>
@@ -356,24 +369,6 @@ export default function Community() {
                 </div>
               </div>
             </div>
-            <div className="facebook-note">
-              <ExternalLink size={18} className="text-[#d26246]" />
-              <div>
-                <h3>Still part of the same flock</h3>
-                <p>
-                  Keep up with the original group while the marketplace grows
-                  here.
-                </p>
-                <a
-                  href={facebookGroup}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-flex text-sm font-semibold text-[#d26246]"
-                >
-                  Visit Facebook group <ArrowRight size={15} />
-                </a>
-              </div>
-            </div>
           </aside>
           <div>
             {activeImage && (
@@ -403,6 +398,33 @@ export default function Community() {
           </div>
         </div>
       </section>
+      <section className="shell pb-12">
+        <div className="facebook-community-cta">
+          <div className="facebook-community-icon">
+            <Share2 size={21} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2>
+              {isArabic
+                ? "خلي المجتمعين قريبين من بعض"
+                : "Keep both communities connected"}
+            </h2>
+            <p>
+              {isArabic
+                ? "شارك الجروب مع أصحابك، وخلّي خبرات الطيور توصل لأكبر عدد."
+                : "Share the Facebook group with friends and keep useful bird advice moving."}
+            </p>
+          </div>
+          <a
+            href={facebookGroup}
+            target="_blank"
+            rel="noreferrer"
+            className="facebook-community-button"
+          >
+            <Share2 size={16} /> {isArabic ? "شير الجروب" : "Share group"}
+          </a>
+        </div>
+      </section>
     </SiteShell>
   );
 }
@@ -412,11 +434,13 @@ function PostInteractions({
   likesCount,
   commentsCount,
   isAuthenticated,
+  onShare,
 }: {
   postId: number;
   likesCount: number;
   commentsCount: number;
   isAuthenticated: boolean;
+  onShare: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
@@ -474,6 +498,14 @@ function PostInteractions({
           className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-[#718780] hover:bg-[#f3f7f2]"
         >
           <MessageCircle size={16} /> {commentsCount} تعليق
+        </button>
+        <button
+          type="button"
+          onClick={onShare}
+          className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-[#6856a6] hover:bg-[#f0ecfa]"
+          aria-label="مشاركة المنشور على فيسبوك"
+        >
+          <Share2 size={16} /> مشاركة للجروب
         </button>
       </div>
       {open && (
