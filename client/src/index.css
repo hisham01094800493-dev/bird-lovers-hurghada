@@ -188,3 +188,11 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-tool-community .category-icon { background: #e5e1f8; color: #6856a6; }
 .home-tool-card .category-name { max-width: 100%; }
 @media (max-width: 640px) { .home-quick-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; } .home-tool-card { min-height: 116px !important; padding: 10px !important; } .home-tool-card .category-icon { width: 43px !important; height: 43px !important; } .home-tool-card .category-name { margin-top: 9px !important; font-size: 11px !important; } .home-tool-card .category-ar { font-size: 9px !important; } .home-tool-card .category-arrow { right: 8px; bottom: 8px; } }
+
+/* Keep the final group promo compact after removing the redundant join strip. */
+.ad-slot-compact.ad-slot { min-height: 0; }
+.ad-slot-compact .ad-promo { min-height: 70px; padding-block: 7px; }
+.ad-slot-compact .ad-promo-image { width: 64px; height: 54px; flex-basis: 64px; }
+.ad-slot-compact .ad-promo-copy strong { font-size: 12px; }
+.ad-slot-compact .ad-promo-copy span { font-size: 10px; }
+@media (max-width: 640px) { .ad-slot-compact .ad-promo { gap: 8px; padding-inline: 10px; } .ad-slot-compact .ad-promo-image { width: 58px; height: 48px; flex-basis: 58px; } .ad-slot-compact .ad-promo-cta { padding: 7px 9px; font-size: 10px; } }

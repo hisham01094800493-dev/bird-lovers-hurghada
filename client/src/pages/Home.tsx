@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Heart,
   House,
-  MapPin,
   MessageCircle,
   ThermometerSun,
   Package,
@@ -315,32 +314,8 @@ export default function Home() {
           )}
         </div>
       </section>
-      <section className="shell home-join-section pb-12">
-        <div className="join-strip">
-          <div className="flex items-center gap-4">
-            <span className="join-icon">
-              <MapPin size={20} />
-            </span>
-            <div>
-              <p className="font-semibold text-[#183b39]">
-                {isArabic
-                  ? "للغردقة، وللبحر الأحمر."
-                  : "Made for Hurghada, ready for the Red Sea."}
-              </p>
-              <p className="mt-1 text-sm text-[#758a84]">
-                {isArabic
-                  ? "ابدأ محليًا، وتوسع بعناية."
-                  : "Start local. Grow thoughtfully."}
-              </p>
-            </div>
-          </div>
-          <Link href="/sell" className="text-link">
-            {isArabic ? "انضم إلى السرب" : "Join the flock"}{" "}
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
       <AdSlot
+        variant="compact"
         image="/images/bird-lovers-group.jpg"
         imageAlt={isArabic ? "طيور بادجي ملونة" : "Colourful budgies"}
         title={
