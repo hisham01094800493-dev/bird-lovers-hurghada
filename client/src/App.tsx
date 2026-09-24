@@ -23,6 +23,58 @@ import LostFound from "./pages/LostFound";
 import UpdateNotice from "./components/UpdateNotice";
 import PriceGuide from "./pages/PriceGuide";
 import CareTools from "./pages/CareTools";
-function Router() { return <Switch><Route path="/" component={Home} /><Route path="/login" component={Login} /><Route path="/lost-found" component={LostFound} /><Route path="/marketplace" component={Marketplace} /><Route path="/prices" component={PriceGuide} /><Route path="/care-tools" component={CareTools} /><Route path="/listing/:id/edit" component={EditListing} /><Route path="/listing/:id" component={ListingDetails} /><Route path="/sell" component={CreateListing} /><Route path="/community" component={Community} /><Route path="/favorites" component={Favorites} /><Route path="/messages" component={Messages} /><Route path="/notifications" component={Notifications} /><Route path="/admin" component={AdminDashboard} /><Route path="/profile" component={Profile} /><Route path="/my-listings" component={MyListings} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch>; }
-function App() { return <ErrorBoundary><LanguageProvider><ThemeProvider defaultTheme="light"><TooltipProvider><Toaster /><UpdateNotice /><BrandSplash /><Router /></TooltipProvider></ThemeProvider></LanguageProvider></ErrorBoundary>; }
+import { useEffect } from "react";
+import { useLocation } from "wouter";
+
+function ScrollToTop() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+
+  return null;
+}
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/lost-found" component={LostFound} />
+      <Route path="/marketplace" component={Marketplace} />
+      <Route path="/prices" component={PriceGuide} />
+      <Route path="/care-tools" component={CareTools} />
+      <Route path="/listing/:id/edit" component={EditListing} />
+      <Route path="/listing/:id" component={ListingDetails} />
+      <Route path="/sell" component={CreateListing} />
+      <Route path="/community" component={Community} />
+      <Route path="/favorites" component={Favorites} />
+      <Route path="/messages" component={Messages} />
+      <Route path="/notifications" component={Notifications} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/profile" component={Profile} />
+      <Route path="/my-listings" component={MyListings} />
+      <Route path="/404" component={NotFound} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+function App() {
+  return (
+    <ErrorBoundary>
+      <LanguageProvider>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <Toaster />
+            <UpdateNotice />
+            <BrandSplash />
+            <ScrollToTop />
+            <Router />
+          </TooltipProvider>
+        </ThemeProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
+  );
+}
 export default App;
