@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Bird Lovers Hurghada',
   webDir: 'dist/public',
   server: {
-    url: 'https://bird-lovers-hurghada-production-536a.up.railway.app',
+    url: 'https://bird-lovers-hurghada.vercel.app',
     cleartext: false,
   },
   android: {

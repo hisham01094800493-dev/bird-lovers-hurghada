@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
-export const APP_VERSION = "1.2.0";
+export const APP_VERSION = "1.2.1";
 const UPDATE_COMPLETED_KEY = `bird-lovers-update-completed-${APP_VERSION}`;
 
 type InstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };

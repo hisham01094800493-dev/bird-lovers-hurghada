@@ -1,4 +1,4 @@
-const CACHE_NAME = "bird-lovers-shell-v3-20260923";
+const CACHE_NAME = "bird-lovers-shell-v4-20260925";
 const SHELL = ["/manifest.json", "/manus-storage/bird-lovers-group-icon-192_e27a2b60.png"];
 
 self.addEventListener("install", event => {
@@ -25,7 +25,7 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   if (request.method !== "GET" || !request.url.startsWith(self.location.origin)) return;
 
-  // Always ask the server for the document and app bundles. Vite/Railway emits
+  // Always ask the server for the document and app bundles. Vite/Vercel emits
   // hashed asset names, so caching old HTML is the main source of stale builds.
   const isNavigation = request.mode === "navigate" || request.destination === "document";
   const isApi = new URL(request.url).pathname.startsWith("/api/");
