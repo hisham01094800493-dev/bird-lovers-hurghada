@@ -1,9 +1,10 @@
 import express from "express";
+import path from "path";
 import { createApp } from "../server/app";
-import { serveStatic } from "../server/_core/vite";
 
-void express;
 const app = createApp();
-serveStatic(app);
+const publicDir = path.join(process.cwd(), "dist", "public");
+app.use(express.static(publicDir));
+app.use((_req, res) => res.sendFile(path.join(publicDir, "index.html")));
 
 export default app;
