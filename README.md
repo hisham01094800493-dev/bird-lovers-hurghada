@@ -79,3 +79,7 @@ The seed script is repeatable and adds two demo sellers, six categories, four ap
 3. **Phase 4 — Operations:** admin dashboard, audit logs, analytics, backup/restore procedure, rate limiting, abuse detection, and staging/production runbooks.
 
 Buttons for features that are not yet implemented are either absent or explicitly marked with a coming-soon toast; the MVP does not claim that messaging is complete.
+
+## Deployment
+
+Production deploys automatically from the GitHub `main` branch to Vercel.
