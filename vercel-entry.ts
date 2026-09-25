@@ -1,6 +1,6 @@
 import express from "express";
 import path from "path";
-import { createApp } from "../server/app";
+import { createApp } from "./server/app";
 
 const app = createApp();
 const publicDir = path.join(process.cwd(), "dist", "public");
