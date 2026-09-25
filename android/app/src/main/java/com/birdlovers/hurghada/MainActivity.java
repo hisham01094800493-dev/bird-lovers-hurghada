@@ -58,7 +58,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         if (pendingPermissionRequest != null) {
             pendingPermissionRequest.deny();
             pendingPermissionRequest = null;
