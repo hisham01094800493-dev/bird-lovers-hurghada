@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "express",
-  "buildCommand": "pnpm build && mkdir -p api && esbuild index.ts --bundle --platform=node --packages=external --format=esm --outfile=api/index.js",
+  "buildCommand": "pnpm build && mkdir -p api && pnpm exec esbuild index.ts --bundle --platform=node --packages=external --format=esm --outfile=api/index.js",
   "installCommand": "pnpm install --frozen-lockfile"
 }
