@@ -18,6 +18,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { storagePut } from "./storage";
 import { validateChatUpload } from "./chatUploads";
+import { collectExternalPriceDraft } from "./priceRefresh";
 import {
   communityPosts,
   favorites,
@@ -72,6 +73,7 @@ import {
   listPendingListings,
   listPendingPriceGuideDrafts,
   listPriceGuide,
+  createPriceGuideDraft,
   listSeasonalCareTips,
   moderateCommunityPost,
   approvePriceGuideDraft,
@@ -1053,6 +1055,14 @@ export const appRouter = router({
       ),
     priceGuide: adminProcedure.query(() => listPriceGuide()),
     priceDrafts: adminProcedure.query(() => listPendingPriceGuideDrafts()),
+    refreshPriceDraft: adminProcedure.mutation(async () => {
+      const collectedOn = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Africa/Cairo",
+      }).format(new Date());
+      const draft = await collectExternalPriceDraft(collectedOn);
+      const draftId = await createPriceGuideDraft(draft);
+      return { draftId, itemCount: draft.items.length, collectedOn };
+    }),
     approvePriceDraft: adminProcedure
       .input(z.object({ draftId: z.number().int().positive() }))
       .mutation(({ ctx, input }) =>
