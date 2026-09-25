@@ -18,7 +18,12 @@ export async function scheduledPriceRefresh(req: Request, res: Response) {
         (cronSecret && bearerSecret && bearerSecret === cronSecret)
     );
     if (!secretAuthorized) {
-      const user = await sdk.authenticateRequest(req);
+      let user;
+      try {
+        user = await sdk.authenticateRequest(req);
+      } catch {
+        return res.status(403).json({ error: "cron-only", context });
+      }
       context.taskUid = user?.taskUid || "unknown";
       if (!user?.isCron || !user.taskUid) return res.status(403).json({ error: "cron-only" });
     }
