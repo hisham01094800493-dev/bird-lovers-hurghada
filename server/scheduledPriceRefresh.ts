@@ -33,7 +33,12 @@ export async function scheduledPriceRefresh(req: Request, res: Response) {
     const cairoWeekday = cairoParts.find(part => part.type === "weekday")?.value;
     const cairoHour = Number(cairoParts.find(part => part.type === "hour")?.value || "-1");
     if (!runNow && (cairoWeekday !== "Fri" || cairoHour !== 17)) return res.json({ ok: true, skipped: "outside-Friday-5pm-Cairo-window" });
-    const today = now.toISOString().slice(0, 10);
+    const today = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Africa/Cairo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
     const draft = await collectExternalPriceDraft(today);
     const id = await createPriceGuideDraft(draft);
     return res.json({ ok: true, draftId: id, itemCount: draft.items.length, collectedOn: today, manual: runNow });
