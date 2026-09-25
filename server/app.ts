@@ -31,7 +31,7 @@ export function createApp() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerListingManagementRoutes(app);
-  app.post("/api/scheduled/price-guide-refresh", scheduledPriceRefresh);
+  app.all("/api/scheduled/price-guide-refresh", scheduledPriceRefresh);
   app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
 
   return app;

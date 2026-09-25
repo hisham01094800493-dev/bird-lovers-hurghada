@@ -51,7 +51,7 @@ describe("scheduledPriceRefresh", () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-09-22T21:00:00Z"));
+    vi.setSystemTime(new Date("2026-09-26T14:00:00Z"));
     process.env.PRICE_REFRESH_SECRET = "test-secret";
     mocks.authenticateRequest.mockReset();
     mocks.createPriceGuideDraft.mockReset().mockResolvedValue(71);
@@ -69,12 +69,12 @@ describe("scheduledPriceRefresh", () => {
     else process.env.PRICE_REFRESH_SECRET = previousSecret;
   });
 
-  it("accepts the configured secret and skips safely outside the Wednesday window", async () => {
+  it("accepts the configured secret and skips safely outside the Friday window", async () => {
     const res = response();
     await scheduledPriceRefresh(request("test-secret"), res as never);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body).toMatchObject({ ok: true, skipped: "outside-Wednesday-1am-Cairo-window" });
+    expect(res.body).toMatchObject({ ok: true, skipped: "outside-Friday-5pm-Cairo-window" });
     expect(mocks.authenticateRequest).not.toHaveBeenCalled();
     expect(mocks.createPriceGuideDraft).not.toHaveBeenCalled();
   });

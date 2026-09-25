@@ -8,7 +8,15 @@ export async function scheduledPriceRefresh(req: Request, res: Response) {
   try {
     const configuredSecret = process.env.PRICE_REFRESH_SECRET;
     const actionSecret = req.header("x-price-refresh-secret");
-    const secretAuthorized = Boolean(configuredSecret && actionSecret && actionSecret === configuredSecret);
+    const cronSecret = process.env.CRON_SECRET;
+    const authorization = req.header("authorization");
+    const bearerSecret = authorization?.startsWith("Bearer ")
+      ? authorization.slice("Bearer ".length)
+      : undefined;
+    const secretAuthorized = Boolean(
+      (configuredSecret && actionSecret && actionSecret === configuredSecret) ||
+        (cronSecret && bearerSecret && bearerSecret === cronSecret)
+    );
     if (!secretAuthorized) {
       const user = await sdk.authenticateRequest(req);
       context.taskUid = user?.taskUid || "unknown";
@@ -19,7 +27,7 @@ export async function scheduledPriceRefresh(req: Request, res: Response) {
     const cairoParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Cairo", weekday: "short", hour: "2-digit", hour12: false }).formatToParts(now);
     const cairoWeekday = cairoParts.find(part => part.type === "weekday")?.value;
     const cairoHour = Number(cairoParts.find(part => part.type === "hour")?.value || "-1");
-    if (!runNow && (cairoWeekday !== "Wed" || cairoHour !== 1)) return res.json({ ok: true, skipped: "outside-Wednesday-1am-Cairo-window" });
+    if (!runNow && (cairoWeekday !== "Fri" || cairoHour !== 17)) return res.json({ ok: true, skipped: "outside-Friday-5pm-Cairo-window" });
     const today = now.toISOString().slice(0, 10);
     const draft = await collectExternalPriceDraft(today);
     const id = await createPriceGuideDraft(draft);
