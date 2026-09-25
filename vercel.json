@@ -2,11 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "express",
   "buildCommand": "pnpm build && pnpm exec esbuild vercel-entry.ts --bundle --platform=node --packages=external --format=esm --outfile=index.js",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "crons": [
-    {
-      "path": "/api/scheduled/price-guide-refresh",
-      "schedule": "0 14,15 * * 5"
-    }
-  ]
+  "installCommand": "pnpm install --frozen-lockfile"
 }
