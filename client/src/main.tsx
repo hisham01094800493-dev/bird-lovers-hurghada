@@ -9,8 +9,15 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => { navigator.serviceWorker.register("/sw.js").catch(() => undefined); });
+// Remove older app shells that can otherwise keep serving a broken bundle after deploys.
+if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(registration => registration.unregister())))
+      .then(() => "caches" in window ? caches.keys() : [])
+      .then(keys => Promise.all(keys.filter(key => key.startsWith("bird-lovers-shell")).map(key => caches.delete(key))))
+      .catch(() => undefined);
+  });
 }
 if (typeof window !== "undefined") {
   window.addEventListener("beforeinstallprompt", event => {
