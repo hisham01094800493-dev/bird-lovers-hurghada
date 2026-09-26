@@ -8,11 +8,13 @@ import {
   Heart,
   House,
   MessageCircle,
+  MapPinned,
   ThermometerSun,
   Package,
   PawPrint,
   ShieldCheck,
   Sparkles,
+  ShoppingBag,
   Users,
   Wheat,
 } from "lucide-react";
@@ -253,6 +255,22 @@ export default function Home() {
               {isArabic ? "خبرة تساعدك" : "Helpful local advice"}
             </span>
             <ChevronRight className="category-arrow" size={17} />
+          </Link>
+        </div>
+        <div className="mt-5 grid gap-4 md:grid-cols-2" aria-label={isArabic ? "اختيارات ودليل الموقع" : "Recommendations and directory"}>
+          <Link href="/recommended" className="group relative overflow-hidden rounded-[26px] border border-[#ead9a5] bg-gradient-to-br from-[#fff9e8] via-[#fffdf5] to-[#f8edc7] p-6 shadow-[0_12px_30px_rgba(196,151,82,.12)] transition hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(196,151,82,.18)]">
+            <span className="absolute -right-8 -top-10 size-32 rounded-full bg-[#f5c24b]/20 transition group-hover:scale-125" />
+            <span className="relative grid size-14 place-items-center rounded-2xl bg-[#f5c24b] text-[#5d4714] shadow-sm"><ShoppingBag size={28} strokeWidth={1.8} /></span>
+            <span className="relative mt-5 block font-display text-2xl font-semibold text-[#183b39]">{isArabic ? "اختياراتنا" : "Our picks"}</span>
+            <span className="relative mt-1 block text-sm leading-6 text-[#796a3d]">{isArabic ? "منتجات موصى بها مع شراء مباشر من أمازون ونون." : "Recommended products with direct Amazon and Noon shopping."}</span>
+            <span className="relative mt-4 inline-flex items-center gap-2 text-xs font-extrabold text-[#8a6a20]">{isArabic ? "تصفح المنتجات" : "Browse products"} <ArrowRight size={15} /></span>
+          </Link>
+          <Link href="/directory" className="group relative overflow-hidden rounded-[26px] border border-[#c8d9e8] bg-gradient-to-br from-[#edf7fb] via-[#f8fcfd] to-[#dcecf4] p-6 shadow-[0_12px_30px_rgba(77,126,153,.11)] transition hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(77,126,153,.17)]">
+            <span className="absolute -left-8 -top-10 size-32 rounded-full bg-[#76a8c2]/20 transition group-hover:scale-125" />
+            <span className="relative grid size-14 place-items-center rounded-2xl bg-[#76a8c2] text-white shadow-sm"><MapPinned size={28} strokeWidth={1.8} /></span>
+            <span className="relative mt-5 block font-display text-2xl font-semibold text-[#183b39]">{isArabic ? "الدليل" : "The directory"}</span>
+            <span className="relative mt-1 block text-sm leading-6 text-[#527181]">{isArabic ? "عيادات ومحلات وأرقام اتصال ومواقع على الخريطة في الغردقة." : "Hurghada clinics and shops with phone numbers and map links."}</span>
+            <span className="relative mt-4 inline-flex items-center gap-2 text-xs font-extrabold text-[#47758c]">{isArabic ? "افتح الدليل" : "Open directory"} <ArrowRight size={15} /></span>
           </Link>
         </div>
       </section>
