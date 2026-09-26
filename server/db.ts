@@ -1258,15 +1258,24 @@ export type AffiliateProductInput = {
   sortOrder: number;
 };
 
+function mapAffiliateProduct(row: typeof affiliateProducts.$inferSelect) {
+  return {
+    ...row,
+    noonUrl: row.noonUrl || "",
+    noonCoupon: row.noonCoupon || "",
+  };
+}
+
 export async function listAffiliateProducts(activeOnly = true) {
   const db = await getDb();
   if (!db) return [];
   try {
-    return await db
+    const rows = await db
       .select()
       .from(affiliateProducts)
       .where(activeOnly ? eq(affiliateProducts.isActive, true) : undefined)
       .orderBy(asc(affiliateProducts.sortOrder), asc(affiliateProducts.createdAt));
+    return rows.map(mapAffiliateProduct);
   } catch (error) {
     console.warn("[Database] Affiliate products are not available yet:", String(error));
     return [];
