@@ -1,0 +1,60 @@
+name: Android debug build
+
+on:
+  pull_request:
+    paths:
+      - "android/**"
+      - "capacitor.config.ts"
+      - "client/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/android-debug-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 36 platform
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web assets for Capacitor
+        run: pnpm exec vite build
+        env:
+          VITE_SITE_URL: https://bird-lovers-hurghada.vercel.app
+
+      - name: Sync Capacitor Android project
+        run: pnpm exec cap sync android
+
+      - name: Assemble Android debug app
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
