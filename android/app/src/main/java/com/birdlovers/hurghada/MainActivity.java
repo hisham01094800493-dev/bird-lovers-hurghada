@@ -44,6 +44,14 @@ public class MainActivity extends BridgeActivity {
         }
 
         @Override
+        public void onPageCommitVisible(WebView webView, String url) {
+            initialPageLoaded = true;
+            initialPageFailed = false;
+            retryQueued = false;
+            retryHandler.removeCallbacks(retryInitialPage);
+        }
+
+        @Override
         public void onReceivedError(WebView webView) {
             // Capacitor reports network/DNS failures here. Limit retries to the
             // initial navigation; once any page finishes loading, stop retrying.
@@ -100,7 +108,12 @@ public class MainActivity extends BridgeActivity {
         super.onResume();
         // If the app was opened before connectivity returned, retry the initial
         // page automatically instead of requiring the user to press the screen.
-        if (initialPageFailed && !initialPageLoaded) scheduleInitialLoadRetry();
+        if (initialPageFailed && !initialPageLoaded) {
+            if (initialLoadRetryCount >= MAX_INITIAL_LOAD_RETRIES) {
+                initialLoadRetryCount = 0;
+            }
+            scheduleInitialLoadRetry();
+        }
     }
 
     @Override

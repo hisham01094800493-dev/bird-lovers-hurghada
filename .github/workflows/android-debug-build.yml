@@ -1,6 +1,17 @@
 name: Android debug build
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "android/**"
+      - "capacitor.config.ts"
+      - "client/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/android-debug-build.yml"
   pull_request:
     paths:
       - "android/**"
