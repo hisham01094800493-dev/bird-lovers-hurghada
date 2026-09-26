@@ -1,1 +1,1 @@
-ALTER TABLE `notificationPreferences` DROP INDEX `notificationPreferences_userId_unique`;
+ALTER TABLE `notificationPreferences` DROP INDEX IF EXISTS `notificationPreferences_userId_unique`;
