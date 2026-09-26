@@ -6,9 +6,13 @@ import { registerListingManagementRoutes } from "./listingManagementRoutes";
 import { appRouter } from "./routers";
 import { scheduledPriceRefresh } from "./scheduledPriceRefresh";
 import { createContext } from "./_core/context";
-import { ensureAffiliateProductsSchema, getCommunityPostImage } from "./db";
+import {
+  ensureAffiliateProductsSchema,
+  ensureLocalAuthSchema,
+  getCommunityPostImage,
+} from "./db";
 
-let affiliateSchemaReady: Promise<void> | null = null;
+let startupSchemaReady: Promise<void> | null = null;
 
 export function createApp() {
   const app = express();
@@ -16,8 +20,11 @@ export function createApp() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.use(async (_req, _res, next) => {
-    affiliateSchemaReady ??= ensureAffiliateProductsSchema();
-    await affiliateSchemaReady;
+    startupSchemaReady ??= Promise.all([
+      ensureAffiliateProductsSchema(),
+      ensureLocalAuthSchema(),
+    ]).then(() => undefined);
+    await startupSchemaReady;
     next();
   });
 
