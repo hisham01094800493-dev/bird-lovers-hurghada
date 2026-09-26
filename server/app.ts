@@ -6,13 +6,20 @@ import { registerListingManagementRoutes } from "./listingManagementRoutes";
 import { appRouter } from "./routers";
 import { scheduledPriceRefresh } from "./scheduledPriceRefresh";
 import { createContext } from "./_core/context";
-import { getCommunityPostImage } from "./db";
+import { ensureAffiliateProductsSchema, getCommunityPostImage } from "./db";
+
+let affiliateSchemaReady: Promise<void> | null = null;
 
 export function createApp() {
   const app = express();
 
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.use(async (_req, _res, next) => {
+    affiliateSchemaReady ??= ensureAffiliateProductsSchema();
+    await affiliateSchemaReady;
+    next();
+  });
 
   app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
   app.get("/api/community-posts/:id/image", async (req, res) => {
