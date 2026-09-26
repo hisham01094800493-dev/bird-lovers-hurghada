@@ -40,16 +40,36 @@
     </div>
     <script>
       (function () {
+        var retryKey = "bird-lovers-boot-retries";
+        var retryDelays = [1500, 3000, 6000];
+        var retryScheduled = false;
+        function retryBoot() {
+          if (retryScheduled) return;
+          var attempt = 0;
+          try { attempt = Number(sessionStorage.getItem(retryKey) || "0"); } catch (_) {}
+          if (attempt >= retryDelays.length) return;
+          retryScheduled = true;
+          try { sessionStorage.setItem(retryKey, String(attempt + 1)); } catch (_) {}
+          window.setTimeout(function () {
+            var separator = window.location.href.indexOf("?") === -1 ? "?" : "&";
+            window.location.replace(window.location.href + separator + "boot_retry=" + Date.now());
+          }, retryDelays[attempt]);
+        }
         function showRecovery() {
           var root = document.getElementById("root");
           if (!root || !document.getElementById("app-boot-fallback")) return;
           root.innerHTML = '<div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f5ef;color:#183b39;font-family:Arial,sans-serif;text-align:center"><div><strong style="font-size:22px">تعذر فتح الموقع</strong><p style="margin:10px 0;color:#718780">اضغط إعادة المحاولة لتحميل نسخة جديدة.</p><button onclick="location.reload()" style="border:0;border-radius:12px;padding:12px 18px;background:#183b39;color:white;font-weight:700">إعادة المحاولة</button></div></div>';
         }
         window.addEventListener("error", function (event) {
-          if (event.target && event.target.tagName === "SCRIPT") showRecovery();
+          if (event.target && event.target.tagName === "SCRIPT") retryBoot();
         }, true);
-        window.addEventListener("unhandledrejection", showRecovery);
-        window.setTimeout(showRecovery, 12000);
+        window.addEventListener("unhandledrejection", retryBoot);
+        window.setTimeout(function () {
+          if (document.getElementById("app-boot-fallback")) retryBoot();
+        }, 12000);
+        window.setTimeout(function () {
+          if (document.getElementById("app-boot-fallback")) showRecovery();
+        }, 24000);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

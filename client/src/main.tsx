@@ -20,6 +20,11 @@ if (typeof window !== "undefined" && "serviceWorker" in navigator) {
   });
 }
 if (typeof window !== "undefined") {
+  try {
+    sessionStorage.removeItem("bird-lovers-boot-retries");
+  } catch {
+    // sessionStorage unavailable
+  }
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     (window as Window & { __birdLoversInstallPrompt?: Event }).__birdLoversInstallPrompt = event;
