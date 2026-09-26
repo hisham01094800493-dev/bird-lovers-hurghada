@@ -98,9 +98,22 @@ export default function AdminAffiliateProducts() {
   };
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
+    const nameAr = form.nameAr.trim();
+    const generatedId = nameAr.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `affiliate-${Date.now()}`;
     const payload = {
       ...form,
-      id: form.id.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-"),
+      id: form.id.trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-") || generatedId,
+      nameAr,
+      nameEn: form.nameEn.trim() || nameAr,
+      descriptionAr: form.descriptionAr.trim() || nameAr,
+      descriptionEn: form.descriptionEn.trim() || nameAr,
+      imageUrl: form.imageUrl.trim() || "/images/bird-seed.jpg",
+      priceAr: form.priceAr.trim() || "تحقق من السعر الحالي",
+      priceEn: form.priceEn.trim() || "Check current price",
+      tagAr: form.tagAr.trim() || "موصى به",
+      tagEn: form.tagEn.trim() || "Recommended",
+      noonUrl: form.noonUrl.trim(),
+      noonCoupon: form.noonCoupon.trim(),
       sortOrder: Number(form.sortOrder) || 0,
     };
     if (editingId) update.mutate({ ...payload, id: editingId });
@@ -126,23 +139,29 @@ export default function AdminAffiliateProducts() {
             <div><p className="eyebrow">{editingId ? "تعديل المنتج" : "منتج جديد"}</p><h3 className="mt-1 font-display text-2xl font-semibold text-[#183b39]">بيانات المنتج والرابط</h3></div>
             <button type="button" className="icon-button" onClick={cancel} aria-label="إغلاق"><X size={17} /></button>
           </div>
+          <p className="mt-3 rounded-xl bg-[#eaf1ea] px-4 py-3 text-sm leading-6 text-[#52766d]">للإضافة السريعة اكتب <strong>اسم المنتج بالعربي ورابط أمازون</strong> فقط. باقي البيانات اختيارية ويمكن تعديلها لاحقًا.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <label className="field"><span>المعرّف المختصر · slug</span><Input required disabled={Boolean(editingId)} value={form.id} onChange={event => updateField("id", event.target.value)} placeholder="balanced-seed-mix" /></label>
+            <label className="field"><span>المعرّف المختصر · slug <small>(اختياري)</small></span><Input disabled={Boolean(editingId)} value={form.id} onChange={event => updateField("id", event.target.value)} placeholder="يُنشأ تلقائيًا إذا تركته فارغًا" /></label>
             <label className="field"><span>القسم</span><select value={form.category} onChange={event => updateField("category", event.target.value as AffiliateForm["category"])} className="mt-2 h-11 w-full rounded-xl border border-[#dce7df] bg-white px-3 text-sm"><option value="food">غذاء / Food</option><option value="care">رعاية / Care</option><option value="housing">نقل وتجهيز / Housing</option></select></label>
-            <label className="field"><span>الاسم بالعربية</span><Input required value={form.nameAr} onChange={event => updateField("nameAr", event.target.value)} placeholder="خلطة بذور متوازنة" /></label>
-            <label className="field"><span>English name</span><Input required value={form.nameEn} onChange={event => updateField("nameEn", event.target.value)} placeholder="Balanced seed mix" /></label>
+            <label className="field"><span>الاسم بالعربية *</span><Input required value={form.nameAr} onChange={event => updateField("nameAr", event.target.value)} placeholder="خلطة بذور متوازنة" /></label>
+            <label className="field"><span>English name <small>(اختياري)</small></span><Input value={form.nameEn} onChange={event => updateField("nameEn", event.target.value)} placeholder="يُستخدم الاسم العربي تلقائيًا" /></label>
             <label className="field"><span>رابط أمازون / Amazon URL *</span><Input required type="url" value={form.affiliateUrl} onChange={event => updateField("affiliateUrl", event.target.value)} placeholder="https://...amazon-affiliate-link..." /></label>
             <label className="field"><span>رابط نون / Noon URL</span><Input type="url" value={form.noonUrl} onChange={event => updateField("noonUrl", event.target.value)} placeholder="https://...noon-affiliate-link..." /></label>
             <label className="field"><span>كود خصم نون / Noon coupon</span><Input value={form.noonCoupon} onChange={event => updateField("noonCoupon", event.target.value)} placeholder="اختياري" /></label>
-            <label className="field md:col-span-2"><span>رابط الصورة</span><Input required type="url" value={form.imageUrl} onChange={event => updateField("imageUrl", event.target.value)} placeholder="https://... أو /images/bird-seed.jpg" /></label>
-            <label className="field"><span>الوصف بالعربية</span><Textarea required value={form.descriptionAr} onChange={event => updateField("descriptionAr", event.target.value)} placeholder="وصف مختصر للمنتج" /></label>
-            <label className="field"><span>Description in English</span><Textarea required value={form.descriptionEn} onChange={event => updateField("descriptionEn", event.target.value)} placeholder="Short product description" /></label>
-            <label className="field"><span>السعر الظاهر بالعربية</span><Input required value={form.priceAr} onChange={event => updateField("priceAr", event.target.value)} placeholder="تحقق من السعر الحالي" /></label>
-            <label className="field"><span>Displayed price in English</span><Input required value={form.priceEn} onChange={event => updateField("priceEn", event.target.value)} placeholder="Check current price" /></label>
-            <label className="field"><span>التصنيف بالعربية</span><Input required value={form.tagAr} onChange={event => updateField("tagAr", event.target.value)} placeholder="رعاية يومية" /></label>
-            <label className="field"><span>Tag in English</span><Input required value={form.tagEn} onChange={event => updateField("tagEn", event.target.value)} placeholder="Everyday care" /></label>
-            <label className="field"><span>ترتيب الظهور</span><Input type="number" min="0" value={form.sortOrder} onChange={event => updateField("sortOrder", Number(event.target.value))} /></label>
-            <label className="mt-7 flex items-center gap-2 text-sm font-bold text-[#385a53]"><input type="checkbox" checked={form.isActive} onChange={event => updateField("isActive", event.target.checked)} /> ظاهر للزوار الآن</label>
+            <details className="rounded-xl border border-[#dce7df] bg-white p-4 md:col-span-2">
+              <summary className="cursor-pointer text-sm font-bold text-[#385a53]">تفاصيل إضافية اختيارية</summary>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <label className="field md:col-span-2"><span>رابط الصورة</span><Input type="text" value={form.imageUrl} onChange={event => updateField("imageUrl", event.target.value)} placeholder="https://... أو /images/bird-seed.jpg" /></label>
+                <label className="field"><span>الوصف بالعربية</span><Textarea value={form.descriptionAr} onChange={event => updateField("descriptionAr", event.target.value)} placeholder="وصف مختصر للمنتج" /></label>
+                <label className="field"><span>Description in English</span><Textarea value={form.descriptionEn} onChange={event => updateField("descriptionEn", event.target.value)} placeholder="Short product description" /></label>
+                <label className="field"><span>السعر الظاهر بالعربية</span><Input value={form.priceAr} onChange={event => updateField("priceAr", event.target.value)} placeholder="تحقق من السعر الحالي" /></label>
+                <label className="field"><span>Displayed price in English</span><Input value={form.priceEn} onChange={event => updateField("priceEn", event.target.value)} placeholder="Check current price" /></label>
+                <label className="field"><span>التصنيف بالعربية</span><Input value={form.tagAr} onChange={event => updateField("tagAr", event.target.value)} placeholder="رعاية يومية" /></label>
+                <label className="field"><span>Tag in English</span><Input value={form.tagEn} onChange={event => updateField("tagEn", event.target.value)} placeholder="Everyday care" /></label>
+                <label className="field"><span>ترتيب الظهور</span><Input type="number" min="0" value={form.sortOrder} onChange={event => updateField("sortOrder", Number(event.target.value))} /></label>
+                <label className="mt-7 flex items-center gap-2 text-sm font-bold text-[#385a53]"><input type="checkbox" checked={form.isActive} onChange={event => updateField("isActive", event.target.checked)} /> ظاهر للزوار الآن</label>
+              </div>
+            </details>
           </div>
           <div className="mt-5 flex flex-wrap justify-end gap-2"><Button type="button" variant="outline" onClick={cancel}>إلغاء</Button><Button type="submit" className="bg-[#183b39] text-white hover:bg-[#2e5b55]" disabled={create.isPending || update.isPending}>{create.isPending || update.isPending ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} {editingId ? "حفظ التعديل" : "إضافة المنتج"}</Button></div>
         </form>
