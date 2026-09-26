@@ -110,7 +110,7 @@ export async function ensureAffiliateProductsSchema() {
         \`priceAr\` varchar(120) NOT NULL,
         \`imageUrl\` text NOT NULL,
         \`affiliateUrl\` text NOT NULL,
-        \`noonUrl\` text NOT NULL DEFAULT '',
+        \`noonUrl\` varchar(2000) NOT NULL DEFAULT '',
         \`noonCoupon\` varchar(120) NOT NULL DEFAULT '',
         \`tagEn\` varchar(80) NOT NULL,
         \`tagAr\` varchar(80) NOT NULL,
@@ -123,7 +123,7 @@ export async function ensureAffiliateProductsSchema() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`)
     );
     for (const statement of [
-      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonUrl` text NOT NULL DEFAULT ''",
+      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonUrl` varchar(2000) NOT NULL DEFAULT ''",
       "ALTER TABLE `affiliateProducts` ADD COLUMN `noonCoupon` varchar(120) NOT NULL DEFAULT ''",
     ]) {
       try {

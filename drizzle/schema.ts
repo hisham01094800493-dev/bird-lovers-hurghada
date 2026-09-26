@@ -496,7 +496,7 @@ export const affiliateProducts = mysqlTable(
     priceAr: varchar("priceAr", { length: 120 }).notNull(),
     imageUrl: text("imageUrl").notNull(),
     affiliateUrl: text("affiliateUrl").notNull(),
-    noonUrl: text("noonUrl"),
+    noonUrl: varchar("noonUrl", { length: 2000 }),
     noonCoupon: varchar("noonCoupon", { length: 120 }),
     tagEn: varchar("tagEn", { length: 80 }).notNull(),
     tagAr: varchar("tagAr", { length: 80 }).notNull(),
