@@ -26,6 +26,7 @@ import SiteShell from "@/components/SiteShell";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import AdminPriceGuide from "@/components/AdminPriceGuide";
+import AdminAffiliateProducts from "@/components/AdminAffiliateProducts";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -318,6 +319,7 @@ export default function AdminDashboard() {
           </section>
         ) : null}
         <AdminPriceGuide />
+        <AdminAffiliateProducts />
         <section id="admin-community-reputation" className="mt-12">
           <div className="flex items-end justify-between gap-4">
             <div>

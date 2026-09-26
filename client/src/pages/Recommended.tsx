@@ -12,16 +12,25 @@ import { Link } from "wouter";
 import SiteShell from "@/components/SiteShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { RECOMMENDED_PRODUCTS } from "@/data/discovery";
+import { trpc } from "@/lib/trpc";
 
 export default function Recommended() {
   const { isArabic } = useLanguage();
+  const liveProducts = trpc.recommended.list.useQuery();
+  const productSource = liveProducts.data?.length
+    ? liveProducts.data.map(product => ({
+        ...product,
+        image: product.imageUrl,
+        buyUrl: product.affiliateUrl,
+      }))
+    : RECOMMENDED_PRODUCTS;
   const [filter, setFilter] = useState<"all" | "food" | "care" | "housing">("all");
   const products = useMemo(
     () =>
       filter === "all"
-        ? RECOMMENDED_PRODUCTS
-        : RECOMMENDED_PRODUCTS.filter(product => product.category === filter),
-    [filter]
+        ? productSource
+        : productSource.filter(product => product.category === filter),
+    [filter, liveProducts.data]
   );
   const categories = [
     ["all", isArabic ? "الكل" : "All"],

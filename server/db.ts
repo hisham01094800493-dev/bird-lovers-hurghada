@@ -3,6 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   auditLogs,
   appUpdates,
+  affiliateProducts,
   categories,
   communityPosts,
   communityPostLikes,
@@ -90,6 +91,92 @@ export async function ensureLocalAuthSchema() {
     ) {
       console.warn("[Database] Local auth schema check failed:", message);
     }
+  }
+}
+
+export async function ensureAffiliateProductsSchema() {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.execute(
+      sql.raw(`CREATE TABLE IF NOT EXISTS \`affiliateProducts\` (
+        \`id\` varchar(80) NOT NULL,
+        \`category\` enum('food','care','housing') NOT NULL DEFAULT 'food',
+        \`nameEn\` varchar(180) NOT NULL,
+        \`nameAr\` varchar(180) NOT NULL,
+        \`descriptionEn\` text NOT NULL,
+        \`descriptionAr\` text NOT NULL,
+        \`priceEn\` varchar(120) NOT NULL,
+        \`priceAr\` varchar(120) NOT NULL,
+        \`imageUrl\` text NOT NULL,
+        \`affiliateUrl\` text NOT NULL,
+        \`tagEn\` varchar(80) NOT NULL,
+        \`tagAr\` varchar(80) NOT NULL,
+        \`isActive\` boolean NOT NULL DEFAULT true,
+        \`sortOrder\` int NOT NULL DEFAULT 0,
+        \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updatedAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`),
+        KEY \`affiliate_products_active_idx\` (\`isActive\`, \`sortOrder\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`)
+    );
+    const existing = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(affiliateProducts);
+    if (Number(existing[0]?.count || 0) === 0) {
+      await db.insert(affiliateProducts).values([
+        {
+          id: "balanced-seed-mix",
+          category: "food",
+          nameEn: "Balanced seed mix",
+          nameAr: "خلطة بذور متوازنة",
+          descriptionEn: "A practical everyday starting point for small companion birds.",
+          descriptionAr: "اختيار عملي كبداية للتغذية اليومية للطيور الصغيرة.",
+          priceEn: "Check current price",
+          priceAr: "تحقق من السعر الحالي",
+          imageUrl: "/images/bird-seed.jpg",
+          affiliateUrl: "https://www.amazon.eg/s?k=bird+seed+mix",
+          tagEn: "Everyday care",
+          tagAr: "رعاية يومية",
+          isActive: true,
+          sortOrder: 0,
+        },
+        {
+          id: "natural-perch",
+          category: "care",
+          nameEn: "Natural wood perch",
+          nameAr: "مجثم خشبي طبيعي",
+          descriptionEn: "A simple enrichment upgrade that gives feet different textures.",
+          descriptionAr: "إضافة بسيطة للتنويع تمنح أقدام الطائر أسطحًا مختلفة.",
+          priceEn: "Check current price",
+          priceAr: "تحقق من السعر الحالي",
+          imageUrl: "/images/cage-gold.jpg",
+          affiliateUrl: "https://www.amazon.eg/s?k=natural+wood+bird+perch",
+          tagEn: "Enrichment",
+          tagAr: "تنويع ونشاط",
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          id: "travel-carrier",
+          category: "housing",
+          nameEn: "Small bird travel carrier",
+          nameAr: "حقيبة نقل للطيور الصغيرة",
+          descriptionEn: "Useful for safe clinic visits and short trips around Hurghada.",
+          descriptionAr: "مفيدة للذهاب إلى العيادة والتنقلات القصيرة بأمان.",
+          priceEn: "Check current price",
+          priceAr: "تحقق من السعر الحالي",
+          imageUrl: "/images/cage-gold.jpg",
+          affiliateUrl: "https://www.amazon.eg/s?k=small+bird+travel+carrier",
+          tagEn: "Safe transport",
+          tagAr: "نقل آمن",
+          isActive: true,
+          sortOrder: 2,
+        },
+      ]);
+    }
+  } catch (error) {
+    console.warn("[Database] Affiliate products schema check failed:", String(error));
   }
 }
 
@@ -1130,6 +1217,87 @@ export async function listPriceGuide() {
     console.warn("[Database] Price guide is not available yet:", String(error));
     return PRICE_REFERENCES;
   }
+}
+
+export type AffiliateProductInput = {
+  id: string;
+  category: "food" | "care" | "housing";
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  priceEn: string;
+  priceAr: string;
+  imageUrl: string;
+  affiliateUrl: string;
+  tagEn: string;
+  tagAr: string;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+export async function listAffiliateProducts(activeOnly = true) {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    return await db
+      .select()
+      .from(affiliateProducts)
+      .where(activeOnly ? eq(affiliateProducts.isActive, true) : undefined)
+      .orderBy(asc(affiliateProducts.sortOrder), asc(affiliateProducts.createdAt));
+  } catch (error) {
+    console.warn("[Database] Affiliate products are not available yet:", String(error));
+    return [];
+  }
+}
+
+export async function createAffiliateProduct(actorId: number, input: AffiliateProductInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(affiliateProducts).values(input);
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "affiliate_product_create",
+    targetType: "affiliate_product",
+    targetId: null,
+    metadata: JSON.stringify({ id: input.id, affiliateUrl: input.affiliateUrl }),
+  });
+  return true as const;
+}
+
+export async function updateAffiliateProduct(actorId: number, input: AffiliateProductInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const { id, ...values } = input;
+  const existing = await db
+    .select({ id: affiliateProducts.id })
+    .from(affiliateProducts)
+    .where(eq(affiliateProducts.id, id))
+    .limit(1);
+  if (!existing[0]) throw new Error("Affiliate product not found");
+  await db.update(affiliateProducts).set(values).where(eq(affiliateProducts.id, id));
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "affiliate_product_update",
+    targetType: "affiliate_product",
+    targetId: null,
+    metadata: JSON.stringify({ id, affiliateUrl: input.affiliateUrl }),
+  });
+  return true as const;
+}
+
+export async function deleteAffiliateProduct(actorId: number, id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.delete(affiliateProducts).where(eq(affiliateProducts.id, id));
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "affiliate_product_delete",
+    targetType: "affiliate_product",
+    targetId: null,
+    metadata: JSON.stringify({ id }),
+  });
+  return true as const;
 }
 
 export async function createPriceGuideItem(

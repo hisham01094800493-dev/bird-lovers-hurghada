@@ -481,6 +481,36 @@ export const auditLogs = mysqlTable(
   })
 );
 
+export const affiliateProducts = mysqlTable(
+  "affiliateProducts",
+  {
+    id: varchar("id", { length: 80 }).primaryKey(),
+    category: mysqlEnum("category", ["food", "care", "housing"])
+      .notNull()
+      .default("food"),
+    nameEn: varchar("nameEn", { length: 180 }).notNull(),
+    nameAr: varchar("nameAr", { length: 180 }).notNull(),
+    descriptionEn: text("descriptionEn").notNull(),
+    descriptionAr: text("descriptionAr").notNull(),
+    priceEn: varchar("priceEn", { length: 120 }).notNull(),
+    priceAr: varchar("priceAr", { length: 120 }).notNull(),
+    imageUrl: text("imageUrl").notNull(),
+    affiliateUrl: text("affiliateUrl").notNull(),
+    tagEn: varchar("tagEn", { length: 80 }).notNull(),
+    tagAr: varchar("tagAr", { length: 80 }).notNull(),
+    isActive: boolean("isActive").notNull().default(true),
+    sortOrder: int("sortOrder").notNull().default(0),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => ({
+    activeIdx: index("affiliate_products_active_idx").on(
+      table.isActive,
+      table.sortOrder
+    ),
+  })
+);
+
 export const priceGuide = mysqlTable(
   "priceGuide",
   {
@@ -566,5 +596,6 @@ export type AppUpdate = typeof appUpdates.$inferSelect;
 export type Report = typeof reports.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type AuditLog = typeof auditLogs.$inferSelect;
+export type AffiliateProduct = typeof affiliateProducts.$inferSelect;
 export type PriceGuideItem = typeof priceGuide.$inferSelect;
 export type PriceGuideDraft = typeof priceGuideDrafts.$inferSelect;

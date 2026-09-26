@@ -30,7 +30,8 @@ import {
   addMessage,
   communityBadge,
   canReviewCompletedListing,
-          createCommunityComment,
+  createCommunityComment,
+  createAffiliateProduct,
           getCommunityPostImage,
   createConversationMessage,
   createCustomNotifications,
@@ -41,6 +42,7 @@ import {
   createReport,
   createReview,
   deletePriceGuideItem,
+  deleteAffiliateProduct,
   getAdminStats,
   getCommunityReputation,
   getConversation,
@@ -48,6 +50,7 @@ import {
   getListingById,
   hasCommunityLike,
   listAdminUsers,
+  listAffiliateProducts,
   updateAdminUser,
   getListingSeller,
   getNotificationPreferences,
@@ -91,6 +94,7 @@ import {
   unreadNotificationCount,
   updateNotificationPreferences,
   updatePriceGuideItem,
+  updateAffiliateProduct,
   updateProfile,
   upsertUser,
 } from "./db";
@@ -328,6 +332,23 @@ const priceGuideInput = z.object({
   noteEn: z.string().trim().min(2).max(2000),
 });
 
+const affiliateProductInput = z.object({
+  id: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/),
+  category: z.enum(["food", "care", "housing"]),
+  nameEn: z.string().trim().min(2).max(180),
+  nameAr: z.string().trim().min(2).max(180),
+  descriptionEn: z.string().trim().min(2).max(2000),
+  descriptionAr: z.string().trim().min(2).max(2000),
+  priceEn: z.string().trim().min(1).max(120),
+  priceAr: z.string().trim().min(1).max(120),
+  imageUrl: z.string().trim().min(1).max(1000),
+  affiliateUrl: z.string().trim().url().max(2000),
+  tagEn: z.string().trim().min(1).max(80),
+  tagAr: z.string().trim().min(1).max(80),
+  isActive: z.boolean().default(true),
+  sortOrder: z.number().int().min(0).max(10000).default(0),
+});
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -463,6 +484,9 @@ export const appRouter = router({
       }),
   }),
   prices: router({ list: publicProcedure.query(() => listPriceGuide()) }),
+  recommended: router({
+    list: publicProcedure.query(() => listAffiliateProducts(true)),
+  }),
   care: router({
     overview: publicProcedure.query(async () => ({
       month: new Date().getMonth() + 1,
@@ -1204,6 +1228,7 @@ export const appRouter = router({
         )
       ),
     priceGuide: adminProcedure.query(() => listPriceGuide()),
+    affiliateProducts: adminProcedure.query(() => listAffiliateProducts(false)),
     priceDrafts: adminProcedure.query(() => listPendingPriceGuideDrafts()),
     refreshPriceDraft: adminProcedure.mutation(async () => {
       const collectedOn = new Intl.DateTimeFormat("en-CA", {
@@ -1251,6 +1276,15 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         deletePriceGuideItem(ctx.user.id, input.id)
       ),
+    createAffiliateProduct: adminProcedure
+      .input(affiliateProductInput)
+      .mutation(({ ctx, input }) => createAffiliateProduct(ctx.user.id, input)),
+    updateAffiliateProduct: adminProcedure
+      .input(affiliateProductInput)
+      .mutation(({ ctx, input }) => updateAffiliateProduct(ctx.user.id, input)),
+    deleteAffiliateProduct: adminProcedure
+      .input(z.object({ id: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/) }))
+      .mutation(({ ctx, input }) => deleteAffiliateProduct(ctx.user.id, input.id)),
     messageAttachments: adminProcedure
       .input(
         z
