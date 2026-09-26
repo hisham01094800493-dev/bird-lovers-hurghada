@@ -30,7 +30,8 @@ import {
   addMessage,
   communityBadge,
   canReviewCompletedListing,
-  createCommunityComment,
+          createCommunityComment,
+          getCommunityPostImage,
   createConversationMessage,
   createCustomNotifications,
   createLocalUser,
@@ -706,7 +707,7 @@ export const appRouter = router({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database is not available",
           });
-        let imagePath: string | null = null;
+        let normalizedImage: Buffer | null = null;
         if (input.imageData) {
           const match = input.imageData.match(
             /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/
@@ -730,13 +731,7 @@ export const appRouter = router({
               })
               .webp({ quality: 82 })
               .toBuffer();
-            imagePath = (
-              await storagePut(
-                `community/${ctx.user.id}/post-${Date.now()}.webp`,
-                normalized,
-                "image/webp"
-              )
-            ).url;
+            normalizedImage = normalized;
           } catch {
             throw new TRPCError({
               code: "BAD_REQUEST",
@@ -749,9 +744,13 @@ export const appRouter = router({
           category: input.category,
           title: input.title,
           body: input.body,
-          imagePath,
+          imagePath: null,
+          imageMime: normalizedImage ? "image/webp" : null,
+          imageData: normalizedImage,
         });
-        return { id: Number(created.insertId) };
+        const postId = Number(created.insertId);
+        if (normalizedImage) await db.update(communityPosts).set({ imagePath: `/api/community-posts/${postId}/image` }).where(eq(communityPosts.id, postId));
+        return { id: postId };
       }),
   }),
   notifications: router({

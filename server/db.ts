@@ -403,7 +403,11 @@ export async function listCommunityPosts() {
     .orderBy(desc(communityPosts.createdAt))
     .limit(12);
 }
-
+export async function getCommunityPostImage(postId: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const rows = await db.select({ imageData: communityPosts.imageData, imageMime: communityPosts.imageMime }).from(communityPosts).where(and(eq(communityPosts.id, postId), eq(communityPosts.status, "published"))).limit(1);
+  return rows[0];
+}
 export async function listCommunityComments(postId: number) {
   const db = await getDb();
   if (!db) return [];

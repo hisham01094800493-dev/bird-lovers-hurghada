@@ -173,6 +173,8 @@ export const communityPosts = mysqlTable(
     title: varchar("title", { length: 180 }).notNull(),
     body: text("body").notNull(),
     imagePath: text("imagePath"),
+    imageMime: varchar("imageMime", { length: 40 }),
+    imageData: mediumBlob("imageData"),
     status: mysqlEnum("status", ["published", "hidden", "locked"])
       .notNull()
       .default("published"),
