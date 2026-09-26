@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ExternalLink,
-  HeartHandshake,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
@@ -123,13 +122,6 @@ export default function Recommended() {
             <div>
               <h2 className="font-display text-lg font-semibold text-[#183b39]">{isArabic ? "اختيار مسؤول" : "Responsible picks"}</h2>
               <p className="mt-1 text-sm leading-6 text-[#69807b]">{isArabic ? "لا نضمن جودة أو توافر أي منتج. افحص المكونات والمقاس وملاءمته لنوع طائرك." : "We do not guarantee product quality or stock. Check ingredients, size and suitability for your bird."}</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 rounded-2xl border border-[#ead9a5] bg-[#fff9e9] p-5">
-            <HeartHandshake size={21} className="mt-0.5 shrink-0 text-[#c49752]" />
-            <div>
-              <h2 className="font-display text-lg font-semibold text-[#183b39]">{isArabic ? "إفصاح الروابط" : "Link disclosure"}</h2>
-              <p className="mt-1 text-sm leading-6 text-[#68572d]">{isArabic ? "بعض الروابط قد تصبح روابط أفلييت لاحقًا. لن يتغير السعر عليك، وقد يحصل الموقع على عمولة صغيرة." : "Some links may become affiliate links. Your price does not change, and the site may receive a small commission."}</p>
             </div>
           </div>
         </div>
