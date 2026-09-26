@@ -13,6 +13,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { RECOMMENDED_PRODUCTS } from "@/data/discovery";
 import { trpc } from "@/lib/trpc";
 
+const handleNoonPurchase = (coupon = "helz", destination = "https://www.noon.com/egypt-ar/") => {
+  navigator.clipboard?.writeText(coupon);
+  alert(`تم نسخ كود الخصم (${coupon}) بنجاح! استخدمه عند الدفع على نون للاستفادة من الخصم.`);
+  window.open(destination, "_blank", "noopener,noreferrer");
+};
+
 export default function Recommended() {
   const { isArabic } = useLanguage();
   const liveProducts = trpc.recommended.list.useQuery();
@@ -86,7 +92,7 @@ export default function Recommended() {
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {products.map(product => {
-            const noonHref = product.noonUrl || (product.noonCoupon ? "https://www.noon.com/egypt-en/" : "");
+            const noonHref = product.noonUrl || "https://www.noon.com/egypt-ar/";
             return (
             <article key={product.id} className="group overflow-hidden rounded-[24px] border border-[#dce7df] bg-white shadow-[0_10px_30px_rgba(24,59,57,.06)] transition hover:-translate-y-1 hover:shadow-[0_16px_38px_rgba(24,59,57,.10)]">
               <div className="relative aspect-[4/3] overflow-hidden bg-[#eef5ed]">
@@ -104,11 +110,11 @@ export default function Recommended() {
                     <a href={product.buyUrl} target="_blank" rel="sponsored nofollow noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d26246] px-3 py-2.5 text-xs font-extrabold text-white transition hover:bg-[#b95138]">
                       {isArabic ? "شراء من أمازون" : "Buy from Amazon"} <ExternalLink size={14} />
                     </a>
-                    <a href={noonHref || undefined} aria-disabled={!noonHref} onClick={event => { if (!noonHref) event.preventDefault(); }} target={noonHref ? "_blank" : undefined} rel="sponsored nofollow noreferrer" className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-extrabold transition ${noonHref ? "bg-[#f5c24b] text-[#3d3214] hover:bg-[#e8b536]" : "cursor-not-allowed bg-[#f0f1ed] text-[#9aa6a0]"}`}>
+                    <button type="button" onClick={() => handleNoonPurchase(product.noonCoupon || "helz", noonHref)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#f5c24b] px-3 py-2.5 text-xs font-extrabold text-[#3d3214] transition hover:bg-[#e8b536]">
                       {isArabic ? "شراء من نون" : "Buy from Noon"} <ExternalLink size={14} />
-                    </a>
+                    </button>
                   </div>
-                  {product.noonCoupon && <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "كود خصم نون:" : "Noon coupon:"} <span dir="ltr">{product.noonCoupon}</span></p>}
+                  <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "كود خصم نون:" : "Noon coupon:"} <span dir="ltr">{product.noonCoupon || "helz"}</span></p>
                 </div>
               </div>
             </article>
