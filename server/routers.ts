@@ -333,22 +333,25 @@ const priceGuideInput = z.object({
 });
 
 const affiliateProductInput = z.object({
-  id: z.string().trim().min(2).max(80).regex(/^[a-z0-9-]+$/),
+  id: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/),
   category: z.enum(["food", "care", "housing"]),
-  nameEn: z.string().trim().min(2).max(180),
-  nameAr: z.string().trim().min(2).max(180),
-  descriptionEn: z.string().trim().min(2).max(2000),
-  descriptionAr: z.string().trim().min(2).max(2000),
+  nameEn: z.string().trim().min(1).max(180),
+  nameAr: z.string().trim().min(1).max(180),
+  descriptionEn: z.string().trim().min(1).max(2000),
+  descriptionAr: z.string().trim().min(1).max(2000),
   priceEn: z.string().trim().min(1).max(120),
   priceAr: z.string().trim().min(1).max(120),
   imageUrl: z.string().trim().min(1).max(1000),
-  affiliateUrl: z.string().trim().url().max(2000),
+  affiliateUrl: z.string().trim().url().max(2000).or(z.literal("")),
   noonUrl: z.string().trim().url().max(2000).or(z.literal("")),
   noonCoupon: z.string().trim().max(120).default(""),
   tagEn: z.string().trim().min(1).max(80),
   tagAr: z.string().trim().min(1).max(80),
   isActive: z.boolean().default(true),
   sortOrder: z.number().int().min(0).max(10000).default(0),
+}).refine(product => Boolean(product.affiliateUrl || product.noonUrl), {
+  path: ["affiliateUrl"],
+  message: "أضف رابط أمازون أو رابط نون على الأقل",
 });
 
 export const appRouter = router({

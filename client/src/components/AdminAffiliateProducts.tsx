@@ -98,6 +98,10 @@ export default function AdminAffiliateProducts() {
   };
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
+    if (!form.affiliateUrl.trim() && !form.noonUrl.trim()) {
+      toast.error("أضف رابط أمازون أو رابط نون على الأقل");
+      return;
+    }
     const nameAr = form.nameAr.trim();
     const generatedId = nameAr.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || `affiliate-${Date.now()}`;
     const payload = {
@@ -145,7 +149,7 @@ export default function AdminAffiliateProducts() {
             <label className="field"><span>القسم</span><select value={form.category} onChange={event => updateField("category", event.target.value as AffiliateForm["category"])} className="mt-2 h-11 w-full rounded-xl border border-[#dce7df] bg-white px-3 text-sm"><option value="food">غذاء / Food</option><option value="care">رعاية / Care</option><option value="housing">نقل وتجهيز / Housing</option></select></label>
             <label className="field"><span>الاسم بالعربية *</span><Input required value={form.nameAr} onChange={event => updateField("nameAr", event.target.value)} placeholder="خلطة بذور متوازنة" /></label>
             <label className="field"><span>English name <small>(اختياري)</small></span><Input value={form.nameEn} onChange={event => updateField("nameEn", event.target.value)} placeholder="يُستخدم الاسم العربي تلقائيًا" /></label>
-            <label className="field"><span>رابط أمازون / Amazon URL *</span><Input required type="url" value={form.affiliateUrl} onChange={event => updateField("affiliateUrl", event.target.value)} placeholder="https://...amazon-affiliate-link..." /></label>
+            <label className="field"><span>رابط أمازون / Amazon URL <small>(اختياري إذا أضفت رابط نون)</small></span><Input type="url" value={form.affiliateUrl} onChange={event => updateField("affiliateUrl", event.target.value)} placeholder="https://...amazon-affiliate-link..." /></label>
             <label className="field"><span>رابط نون / Noon URL</span><Input type="url" value={form.noonUrl} onChange={event => updateField("noonUrl", event.target.value)} placeholder="https://...noon-affiliate-link..." /></label>
             <label className="field"><span>كود خصم نون / Noon coupon</span><Input value={form.noonCoupon} onChange={event => updateField("noonCoupon", event.target.value)} placeholder="اختياري" /></label>
             <details className="rounded-xl border border-[#dce7df] bg-white p-4 md:col-span-2">
