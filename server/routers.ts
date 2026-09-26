@@ -714,11 +714,16 @@ export const appRouter = router({
               code: "BAD_REQUEST",
               message: "استخدم صورة JPG أو PNG أو WebP",
             });
+          const buffer = Buffer.from(match[2], "base64");
+          if (buffer.length > 20_000_000)
+            throw new TRPCError({
+              code: "PAYLOAD_TOO_LARGE",
+              message: "حجم الصورة كبير جدًا، اختر صورة أصغر",
+            });
+          let normalized: Buffer;
           try {
-            const buffer = Buffer.from(match[2], "base64");
-            if (buffer.length > 20_000_000) throw new Error("large");
             await sharp(buffer, { failOn: "error" }).metadata();
-            const normalized = await sharp(buffer)
+            normalized = await sharp(buffer)
               .rotate()
               .resize({
                 width: 1800,
@@ -728,6 +733,13 @@ export const appRouter = router({
               })
               .webp({ quality: 82 })
               .toBuffer();
+          } catch {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "تعذر قراءة الصورة، جرّب صورة JPG أو PNG عادية",
+            });
+          }
+          try {
             imagePath = (
               await storagePut(
                 `community/${ctx.user.id}/post-${Date.now()}.webp`,
@@ -735,10 +747,11 @@ export const appRouter = router({
                 "image/webp"
               )
             ).url;
-          } catch {
+          } catch (error) {
+            console.error("[Community] Image storage failed", error);
             throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "تعذر قراءة الصورة، جرّب صورة JPG أو PNG عادية",
+              code: "INTERNAL_SERVER_ERROR",
+              message: "تعذر حفظ الصورة في التخزين. جرّب مرة أخرى أو انشر بدون صورة",
             });
           }
         }

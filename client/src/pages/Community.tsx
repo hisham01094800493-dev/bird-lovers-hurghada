@@ -67,6 +67,7 @@ export default function Community() {
     imageData: "",
     imagePreview: "",
   });
+  const [isImageProcessing, setIsImageProcessing] = useState(false);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const sharePost = (postId: number, title: string) => {
     const postUrl = `${window.location.origin}/community#post-${postId}`;
@@ -95,14 +96,35 @@ export default function Community() {
       const image = new Image();
       image.onload = () => {
         URL.revokeObjectURL(source);
-        const scale = Math.min(1, 1800 / image.width, 1800 / image.height);
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.width * scale));
-        canvas.height = Math.max(1, Math.round(image.height * scale));
-        const context = canvas.getContext("2d");
-        if (!context) return reject(new Error("canvas"));
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.78));
+        if (!image.naturalWidth || !image.naturalHeight)
+          return reject(new Error("decode"));
+        let width = Math.max(1, Math.round(Math.min(image.naturalWidth, 1800)));
+        let height = Math.max(1, Math.round(Math.min(image.naturalHeight, 1800)));
+        const scale = Math.min(1, 1800 / image.naturalWidth, 1800 / image.naturalHeight);
+        width = Math.max(1, Math.round(image.naturalWidth * scale));
+        height = Math.max(1, Math.round(image.naturalHeight * scale));
+        let quality = 0.78;
+        try {
+          for (let attempt = 0; attempt < 8; attempt += 1) {
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext("2d");
+            if (!context) return reject(new Error("canvas"));
+            context.drawImage(image, 0, 0, width, height);
+            const imageData = canvas.toDataURL("image/jpeg", quality);
+            // Leave room for the tRPC JSON envelope under the 4 MB serverless body limit.
+            if (imageData.length <= 3_500_000) return resolve(imageData);
+            if (attempt % 2 === 0) quality = Math.max(0.35, quality * 0.8);
+            else {
+              width = Math.max(1, Math.round(width * 0.8));
+              height = Math.max(1, Math.round(height * 0.8));
+            }
+          }
+          reject(new Error("too-large"));
+        } catch {
+          reject(new Error("decode"));
+        }
       };
       image.onerror = () => {
         URL.revokeObjectURL(source);
@@ -114,11 +136,17 @@ export default function Community() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+    setIsImageProcessing(true);
     try {
       const imageData = await optimizeImage(file);
       setForm(current => ({ ...current, imageData, imagePreview: imageData }));
-    } catch {
-      toast.error("اختار صورة عادية من الهاتف بحجم أقل من 25MB");
+    } catch (error) {
+      if (error instanceof Error && error.message === "too-large")
+        toast.error("تعذر ضغط الصورة إلى الحجم المناسب. جرّب صورة أصغر");
+      else
+        toast.error("تعذر فتح الصورة. جرّب ملف JPG أو PNG أو WebP بحجم أقل من 25MB");
+    } finally {
+      setIsImageProcessing(false);
     }
   };
   const submit = (event: FormEvent) => {
@@ -328,9 +356,9 @@ export default function Community() {
                   <Button
                     type="submit"
                     className="cta-primary w-full"
-                    disabled={create.isPending}
+                    disabled={create.isPending || isImageProcessing}
                   >
-                    {create.isPending ? (
+                    {create.isPending || isImageProcessing ? (
                       <Loader2 className="animate-spin" size={16} />
                     ) : (
                       <Send size={16} />
