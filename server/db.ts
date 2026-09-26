@@ -27,6 +27,7 @@ import {
 } from "../drizzle/schema";
 import { ADMIN_EMAIL } from "@shared/const";
 import { PRICE_REFERENCES, type PriceReference } from "@shared/priceGuide";
+import { createMySqlPoolOptions } from "./mysqlConnection";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
   { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
@@ -54,7 +55,9 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle({
+        connection: createMySqlPoolOptions(process.env.DATABASE_URL),
+      });
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;

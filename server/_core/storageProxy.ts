@@ -13,6 +13,10 @@ export function registerStorageProxy(app: Express) {
     try {
       if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
         if (!ENV.s3Endpoint || !ENV.s3Bucket || !ENV.s3AccessKeyId || !ENV.s3SecretAccessKey) {
+          if (process.env.VERCEL) {
+            res.status(503).send("Persistent object storage is not configured");
+            return;
+          }
           res.sendFile(getLocalStoragePath(key), err => { if (err && !res.headersSent) res.status((err as NodeJS.ErrnoException).code === "ENOENT" ? 404 : 500).send("Image not found"); });
           return;
         }

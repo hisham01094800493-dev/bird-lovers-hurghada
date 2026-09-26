@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "express",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build:vercel",
+  "crons": [
+    {
+      "path": "/api/cron/cleanup-expired-attachments",
+      "schedule": "0 4 * * *"
+    }
+  ]
+}

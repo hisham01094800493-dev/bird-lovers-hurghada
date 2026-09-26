@@ -36,7 +36,7 @@ function getS3Client() {
   return new S3Client({ region: ENV.s3Region || "auto", endpoint: ENV.s3Endpoint, forcePathStyle: ENV.s3ForcePathStyle, credentials: { accessKeyId: ENV.s3AccessKeyId, secretAccessKey: ENV.s3SecretAccessKey } });
 }
 function storageConfigError() {
-  return new Error("Storage is not configured. On Railway set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY and optionally S3_PUBLIC_URL.");
+  return new Error("Persistent storage is not configured. Set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY and optionally S3_PUBLIC_URL.");
 }
 
 export async function storagePut(
@@ -62,6 +62,7 @@ export async function storagePut(
     await client.send(new PutObjectCommand({ Bucket: ENV.s3Bucket, Key: key, Body: data, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }));
     return { key, url: ENV.s3PublicUrl ? `${ENV.s3PublicUrl.replace(/\/+$/, "")}/${key}` : `/manus-storage/${key}` };
   }
+  if (process.env.VERCEL) throw storageConfigError();
   const filePath = getLocalStoragePath(key);
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, typeof data === "string" ? Buffer.from(data) : Buffer.from(data));
