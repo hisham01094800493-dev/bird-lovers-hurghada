@@ -9,12 +9,14 @@ import {
   ImageIcon,
   Languages,
   LogIn,
+  MapPinned,
   Share2,
   LogOut,
   Menu,
   MessageCircle,
   Plus,
   Search,
+  ShoppingBag,
   ShieldAlert,
   Siren,
   UserRound,
@@ -111,6 +113,16 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       href: "/care-tools",
       label: isArabic ? "حاسبة ورعاية" : "Care tools",
       icon: Calculator,
+    },
+    {
+      href: "/directory",
+      label: isArabic ? "الدليل" : "Directory",
+      icon: MapPinned,
+    },
+    {
+      href: "/recommended",
+      label: isArabic ? "اختياراتنا" : "Recommended",
+      icon: ShoppingBag,
     },
     {
       href: "/lost-found",
@@ -389,6 +401,15 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               </Link>
               <Link href="/community" className="footer-link">
                 {t("community")}
+              </Link>
+              <Link href="/directory" className="footer-link">
+                {isArabic ? "دليل العيادات والمحلات" : "Clinics & shops directory"}
+              </Link>
+              <Link href="/recommended" className="footer-link">
+                {isArabic ? "المنتجات الموصى بها" : "Recommended products"}
+              </Link>
+              <Link href="/contact" className="footer-link">
+                {isArabic ? "أضف إعلانك أو بياناتك" : "Add your advert or business"}
               </Link>
               <Link href="/sell" className="footer-link">
                 {t("postFooter")}
