@@ -94,7 +94,9 @@ export default function Recommended() {
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {products.map(product => {
-            const noonHref = product.noonUrl || "https://www.noon.com/egypt-ar/";
+            const noonHref = product.noonUrl || "";
+            const hasAmazonLink = Boolean(product.buyUrl);
+            const hasNoonLink = Boolean(noonHref);
             return (
             <article key={product.id} className="group overflow-hidden rounded-[24px] border border-[#dce7df] bg-white shadow-[0_10px_30px_rgba(24,59,57,.06)] transition hover:-translate-y-1 hover:shadow-[0_16px_38px_rgba(24,59,57,.10)]">
               <div className="relative aspect-[4/3] overflow-hidden bg-[#eef5ed]">
@@ -109,14 +111,14 @@ export default function Recommended() {
                 <div className="mt-5 space-y-3 border-t border-[#eef2ed] pt-4">
                   <span className="text-xs font-bold text-[#82958e]">{isArabic ? product.priceAr : product.priceEn}</span>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    <a href={product.buyUrl} target="_blank" rel="sponsored nofollow noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d26246] px-3 py-2.5 text-xs font-extrabold text-white transition hover:bg-[#b95138]">
+                    <a href={hasAmazonLink ? product.buyUrl : undefined} aria-disabled={!hasAmazonLink} onClick={event => { if (!hasAmazonLink) event.preventDefault(); }} target={hasAmazonLink ? "_blank" : undefined} rel="sponsored nofollow noreferrer" className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-extrabold transition ${hasAmazonLink ? "bg-[#d26246] text-white hover:bg-[#b95138]" : "cursor-not-allowed bg-[#f0f1ed] text-[#9aa6a0]"}`}>
                       {isArabic ? "شراء من أمازون" : "Buy from Amazon"} <ExternalLink size={14} />
                     </a>
-                    <button type="button" onClick={() => handleNoonPurchase(product.noonCoupon, noonHref)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#f5c24b] px-3 py-2.5 text-xs font-extrabold text-[#3d3214] transition hover:bg-[#e8b536]">
+                    <button type="button" disabled={!hasNoonLink} onClick={() => handleNoonPurchase(product.noonCoupon, noonHref)} className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-extrabold transition ${hasNoonLink ? "bg-[#f5c24b] text-[#3d3214] hover:bg-[#e8b536]" : "cursor-not-allowed bg-[#f0f1ed] text-[#9aa6a0]"}`}>
                       {isArabic ? "شراء من نون" : "Buy from Noon"} <ExternalLink size={14} />
                     </button>
                   </div>
-                  {product.noonCoupon && <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "كود خصم نون:" : "Noon coupon:"} <span dir="ltr">{product.noonCoupon}</span></p>}
+                  {product.noonCoupon && <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "خصم خاص عند استخدام كود الخصم:" : "Special discount with coupon code:"} <span dir="ltr">{product.noonCoupon}</span></p>}
                 </div>
               </div>
             </article>
