@@ -110,6 +110,8 @@ export async function ensureAffiliateProductsSchema() {
         \`priceAr\` varchar(120) NOT NULL,
         \`imageUrl\` text NOT NULL,
         \`affiliateUrl\` text NOT NULL,
+        \`noonUrl\` text NOT NULL DEFAULT '',
+        \`noonCoupon\` varchar(120) NOT NULL DEFAULT '',
         \`tagEn\` varchar(80) NOT NULL,
         \`tagAr\` varchar(80) NOT NULL,
         \`isActive\` boolean NOT NULL DEFAULT true,
@@ -120,6 +122,18 @@ export async function ensureAffiliateProductsSchema() {
         KEY \`affiliate_products_active_idx\` (\`isActive\`, \`sortOrder\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`)
     );
+    for (const statement of [
+      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonUrl` text NOT NULL DEFAULT ''",
+      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonCoupon` varchar(120) NOT NULL DEFAULT ''",
+    ]) {
+      try {
+        await db.execute(sql.raw(statement));
+      } catch (error) {
+        const message = String(error).toLowerCase();
+        if (!message.includes("duplicate column") && !message.includes("already exists"))
+          console.warn("[Database] Noon affiliate column check failed:", String(error));
+      }
+    }
     const existing = await db
       .select({ count: sql<number>`count(*)` })
       .from(affiliateProducts);
@@ -136,6 +150,8 @@ export async function ensureAffiliateProductsSchema() {
           priceAr: "تحقق من السعر الحالي",
           imageUrl: "/images/bird-seed.jpg",
           affiliateUrl: "https://www.amazon.eg/s?k=bird+seed+mix",
+          noonUrl: "",
+          noonCoupon: "",
           tagEn: "Everyday care",
           tagAr: "رعاية يومية",
           isActive: true,
@@ -152,6 +168,8 @@ export async function ensureAffiliateProductsSchema() {
           priceAr: "تحقق من السعر الحالي",
           imageUrl: "/images/cage-gold.jpg",
           affiliateUrl: "https://www.amazon.eg/s?k=natural+wood+bird+perch",
+          noonUrl: "",
+          noonCoupon: "",
           tagEn: "Enrichment",
           tagAr: "تنويع ونشاط",
           isActive: true,
@@ -168,6 +186,8 @@ export async function ensureAffiliateProductsSchema() {
           priceAr: "تحقق من السعر الحالي",
           imageUrl: "/images/cage-gold.jpg",
           affiliateUrl: "https://www.amazon.eg/s?k=small+bird+travel+carrier",
+          noonUrl: "",
+          noonCoupon: "",
           tagEn: "Safe transport",
           tagAr: "نقل آمن",
           isActive: true,
@@ -1230,6 +1250,8 @@ export type AffiliateProductInput = {
   priceAr: string;
   imageUrl: string;
   affiliateUrl: string;
+  noonUrl: string;
+  noonCoupon: string;
   tagEn: string;
   tagAr: string;
   isActive: boolean;

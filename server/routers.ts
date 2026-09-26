@@ -343,6 +343,8 @@ const affiliateProductInput = z.object({
   priceAr: z.string().trim().min(1).max(120),
   imageUrl: z.string().trim().min(1).max(1000),
   affiliateUrl: z.string().trim().url().max(2000),
+  noonUrl: z.string().trim().url().max(2000).or(z.literal("")),
+  noonCoupon: z.string().trim().max(120).default(""),
   tagEn: z.string().trim().min(1).max(80),
   tagAr: z.string().trim().min(1).max(80),
   isActive: z.boolean().default(true),

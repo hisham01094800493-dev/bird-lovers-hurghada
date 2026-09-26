@@ -17,6 +17,8 @@ type AffiliateForm = {
   priceAr: string;
   imageUrl: string;
   affiliateUrl: string;
+  noonUrl: string;
+  noonCoupon: string;
   tagEn: string;
   tagAr: string;
   isActive: boolean;
@@ -34,6 +36,8 @@ const emptyForm = (): AffiliateForm => ({
   priceAr: "تحقق من السعر الحالي",
   imageUrl: "/images/bird-seed.jpg",
   affiliateUrl: "",
+  noonUrl: "",
+  noonCoupon: "",
   tagEn: "Recommended",
   tagAr: "موصى به",
   isActive: true,
@@ -127,7 +131,9 @@ export default function AdminAffiliateProducts() {
             <label className="field"><span>القسم</span><select value={form.category} onChange={event => updateField("category", event.target.value as AffiliateForm["category"])} className="mt-2 h-11 w-full rounded-xl border border-[#dce7df] bg-white px-3 text-sm"><option value="food">غذاء / Food</option><option value="care">رعاية / Care</option><option value="housing">نقل وتجهيز / Housing</option></select></label>
             <label className="field"><span>الاسم بالعربية</span><Input required value={form.nameAr} onChange={event => updateField("nameAr", event.target.value)} placeholder="خلطة بذور متوازنة" /></label>
             <label className="field"><span>English name</span><Input required value={form.nameEn} onChange={event => updateField("nameEn", event.target.value)} placeholder="Balanced seed mix" /></label>
-            <label className="field md:col-span-2"><span>رابط الأفلييت / Affiliate URL *</span><Input required type="url" value={form.affiliateUrl} onChange={event => updateField("affiliateUrl", event.target.value)} placeholder="https://...your-affiliate-link..." /></label>
+            <label className="field"><span>رابط أمازون / Amazon URL *</span><Input required type="url" value={form.affiliateUrl} onChange={event => updateField("affiliateUrl", event.target.value)} placeholder="https://...amazon-affiliate-link..." /></label>
+            <label className="field"><span>رابط نون / Noon URL</span><Input type="url" value={form.noonUrl} onChange={event => updateField("noonUrl", event.target.value)} placeholder="https://...noon-affiliate-link..." /></label>
+            <label className="field"><span>كود خصم نون / Noon coupon</span><Input value={form.noonCoupon} onChange={event => updateField("noonCoupon", event.target.value)} placeholder="اختياري" /></label>
             <label className="field md:col-span-2"><span>رابط الصورة</span><Input required type="url" value={form.imageUrl} onChange={event => updateField("imageUrl", event.target.value)} placeholder="https://... أو /images/bird-seed.jpg" /></label>
             <label className="field"><span>الوصف بالعربية</span><Textarea required value={form.descriptionAr} onChange={event => updateField("descriptionAr", event.target.value)} placeholder="وصف مختصر للمنتج" /></label>
             <label className="field"><span>Description in English</span><Textarea required value={form.descriptionEn} onChange={event => updateField("descriptionEn", event.target.value)} placeholder="Short product description" /></label>
@@ -143,7 +149,7 @@ export default function AdminAffiliateProducts() {
       )}
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-[#dce7df] bg-white">
-        {products.isLoading ? <div className="p-10 text-center"><Loader2 className="mx-auto animate-spin text-[#52766d]" /></div> : products.error ? <div className="p-8 text-center text-sm text-[#bd5941]">تعذر تحميل روابط الأفلييت. جرّب تحديث الصفحة.</div> : products.data?.length ? <div className="divide-y divide-[#edf1ed]">{products.data.map(product => <article key={product.id} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"><div className="flex min-w-0 items-start gap-4"><img src={product.imageUrl} alt={product.nameAr} className="size-20 shrink-0 rounded-xl object-cover" /><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-display text-xl font-semibold text-[#183b39]">{product.nameAr} <span className="font-sans text-sm text-[#718780]">· {product.nameEn}</span></h3><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${product.isActive ? "bg-[#e3f1e5] text-[#38704d]" : "bg-[#f2e7e4] text-[#9d5545]"}`}>{product.isActive ? "ظاهر" : "متوقف"}</span></div><p className="mt-1 break-all text-xs text-[#52766d]">{product.affiliateUrl}</p><a className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#52766d] underline" href={product.affiliateUrl} target="_blank" rel="sponsored nofollow noreferrer">فتح الرابط <ExternalLink size={12} /></a></div></div><div className="flex shrink-0 gap-2"><Button type="button" variant="outline" size="sm" onClick={() => startEdit(product)}><Edit3 size={14} /> تعديل</Button><Button type="button" variant="outline" size="sm" className="border-[#e6c7c0] text-[#bd5941] hover:bg-[#fff0eb]" disabled={remove.isPending} onClick={() => { if (window.confirm(`حذف ${product.nameAr}؟`)) remove.mutate({ id: product.id }); }}><Trash2 size={14} /> حذف</Button></div></article>)}</div> : <div className="empty-state m-5"><p>لا توجد منتجات محفوظة في قاعدة البيانات بعد. ابدأ بإضافة أول رابط أفلييت.</p></div>}
+        {products.isLoading ? <div className="p-10 text-center"><Loader2 className="mx-auto animate-spin text-[#52766d]" /></div> : products.error ? <div className="p-8 text-center text-sm text-[#bd5941]">تعذر تحميل روابط الأفلييت. جرّب تحديث الصفحة.</div> : products.data?.length ? <div className="divide-y divide-[#edf1ed]">{products.data.map(product => <article key={product.id} className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"><div className="flex min-w-0 items-start gap-4"><img src={product.imageUrl} alt={product.nameAr} className="size-20 shrink-0 rounded-xl object-cover" /><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-display text-xl font-semibold text-[#183b39]">{product.nameAr} <span className="font-sans text-sm text-[#718780]">· {product.nameEn}</span></h3><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${product.isActive ? "bg-[#e3f1e5] text-[#38704d]" : "bg-[#f2e7e4] text-[#9d5545]"}`}>{product.isActive ? "ظاهر" : "متوقف"}</span></div><p className="mt-1 break-all text-xs text-[#52766d]">Amazon: {product.affiliateUrl}</p><p className="mt-1 break-all text-xs text-[#f0a52b]">Noon: {product.noonUrl || "لم تتم إضافته بعد"}{product.noonCoupon ? ` · كود: ${product.noonCoupon}` : ""}</p><a className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-[#52766d] underline" href={product.affiliateUrl} target="_blank" rel="sponsored nofollow noreferrer">فتح رابط أمازون <ExternalLink size={12} /></a></div></div><div className="flex shrink-0 gap-2"><Button type="button" variant="outline" size="sm" onClick={() => startEdit(product)}><Edit3 size={14} /> تعديل</Button><Button type="button" variant="outline" size="sm" className="border-[#e6c7c0] text-[#bd5941] hover:bg-[#fff0eb]" disabled={remove.isPending} onClick={() => { if (window.confirm(`حذف ${product.nameAr}؟`)) remove.mutate({ id: product.id }); }}><Trash2 size={14} /> حذف</Button></div></article>)}</div> : <div className="empty-state m-5"><p>لا توجد منتجات محفوظة في قاعدة البيانات بعد. ابدأ بإضافة أول رابط أفلييت.</p></div>}
       </div>
     </section>
   );

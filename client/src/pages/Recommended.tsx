@@ -86,7 +86,9 @@ export default function Recommended() {
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map(product => (
+          {products.map(product => {
+            const noonHref = product.noonUrl || (product.noonCoupon ? "https://www.noon.com/egypt-en/" : "");
+            return (
             <article key={product.id} className="group overflow-hidden rounded-[24px] border border-[#dce7df] bg-white shadow-[0_10px_30px_rgba(24,59,57,.06)] transition hover:-translate-y-1 hover:shadow-[0_16px_38px_rgba(24,59,57,.10)]">
               <div className="relative aspect-[4/3] overflow-hidden bg-[#eef5ed]">
                 <img src={product.image} alt={isArabic ? product.nameAr : product.nameEn} className="size-full object-cover transition duration-300 group-hover:scale-105" />
@@ -97,15 +99,22 @@ export default function Recommended() {
               <div className="p-5">
                 <h2 className="font-display text-2xl font-semibold text-[#183b39]">{isArabic ? product.nameAr : product.nameEn}</h2>
                 <p className="mt-2 min-h-12 text-sm leading-6 text-[#69807b]">{isArabic ? product.descriptionAr : product.descriptionEn}</p>
-                <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#eef2ed] pt-4">
+                <div className="mt-5 space-y-3 border-t border-[#eef2ed] pt-4">
                   <span className="text-xs font-bold text-[#82958e]">{isArabic ? product.priceAr : product.priceEn}</span>
-                  <a href={product.buyUrl} target="_blank" rel="sponsored nofollow noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-[#d26246] px-4 py-2.5 text-xs font-extrabold text-white transition hover:bg-[#b95138]">
-                    {isArabic ? "اشترِ الآن" : "Buy now"} <ExternalLink size={14} />
-                  </a>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <a href={product.buyUrl} target="_blank" rel="sponsored nofollow noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d26246] px-3 py-2.5 text-xs font-extrabold text-white transition hover:bg-[#b95138]">
+                      {isArabic ? "شراء من أمازون" : "Buy from Amazon"} <ExternalLink size={14} />
+                    </a>
+                    <a href={noonHref || undefined} aria-disabled={!noonHref} onClick={event => { if (!noonHref) event.preventDefault(); }} target={noonHref ? "_blank" : undefined} rel="sponsored nofollow noreferrer" className={`inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-xs font-extrabold transition ${noonHref ? "bg-[#f5c24b] text-[#3d3214] hover:bg-[#e8b536]" : "cursor-not-allowed bg-[#f0f1ed] text-[#9aa6a0]"}`}>
+                      {isArabic ? "شراء من نون" : "Buy from Noon"} <ExternalLink size={14} />
+                    </a>
+                  </div>
+                  {product.noonCoupon && <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "كود خصم نون:" : "Noon coupon:"} <span dir="ltr">{product.noonCoupon}</span></p>}
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">

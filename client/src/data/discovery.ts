@@ -84,6 +84,8 @@ export type RecommendedProduct = {
   priceAr: string;
   image: string;
   buyUrl: string;
+  noonUrl: string;
+  noonCoupon: string;
   tagEn: string;
   tagAr: string;
 };
@@ -101,6 +103,8 @@ export const RECOMMENDED_PRODUCTS: RecommendedProduct[] = [
     priceAr: "تحقق من السعر الحالي",
     image: "/images/bird-seed.jpg",
     buyUrl: "https://www.amazon.eg/s?k=bird+seed+mix",
+    noonUrl: "",
+    noonCoupon: "",
     tagEn: "Everyday care",
     tagAr: "رعاية يومية",
   },
@@ -115,6 +119,8 @@ export const RECOMMENDED_PRODUCTS: RecommendedProduct[] = [
     priceAr: "تحقق من السعر الحالي",
     image: "/images/cage-gold.jpg",
     buyUrl: "https://www.amazon.eg/s?k=natural+wood+bird+perch",
+    noonUrl: "",
+    noonCoupon: "",
     tagEn: "Enrichment",
     tagAr: "تنويع ونشاط",
   },
@@ -129,6 +135,8 @@ export const RECOMMENDED_PRODUCTS: RecommendedProduct[] = [
     priceAr: "تحقق من السعر الحالي",
     image: "/images/cage-gold.jpg",
     buyUrl: "https://www.amazon.eg/s?k=small+bird+travel+carrier",
+    noonUrl: "",
+    noonCoupon: "",
     tagEn: "Safe transport",
     tagAr: "نقل آمن",
   },
