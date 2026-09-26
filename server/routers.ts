@@ -16,7 +16,7 @@ import { sdk } from "./_core/sdk";
 import { ENV } from "./_core/env";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { storagePut } from "./storage";
+import { hasRemoteStorage, storagePut } from "./storage";
 import { validateChatUpload } from "./chatUploads";
 import { collectExternalPriceDraft } from "./priceRefresh";
 import {
@@ -710,7 +710,7 @@ export const appRouter = router({
         let normalizedImage: Buffer | null = null;
         if (input.imageData) {
           const match = input.imageData.match(
-            /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/
+            /^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i
           );
           if (!match)
             throw new TRPCError({
@@ -749,7 +749,35 @@ export const appRouter = router({
           imageData: normalizedImage,
         });
         const postId = Number(created.insertId);
-        if (normalizedImage) await db.update(communityPosts).set({ imagePath: `/api/community-posts/${postId}/image` }).where(eq(communityPosts.id, postId));
+        if (normalizedImage) {
+          if (hasRemoteStorage()) {
+            try {
+              const stored = await storagePut(
+                `community/${ctx.user.id}/post-${postId}.webp`,
+                normalizedImage,
+                "image/webp",
+              );
+              await db
+                .update(communityPosts)
+                .set({ imagePath: stored.url, imageData: null })
+                .where(eq(communityPosts.id, postId));
+            } catch (error) {
+              console.warn(
+                "[Community] Remote image storage failed; using database blob",
+                error,
+              );
+              await db
+                .update(communityPosts)
+                .set({ imagePath: `/api/community-posts/${postId}/image` })
+                .where(eq(communityPosts.id, postId));
+            }
+          } else {
+            await db
+              .update(communityPosts)
+              .set({ imagePath: `/api/community-posts/${postId}/image` })
+              .where(eq(communityPosts.id, postId));
+          }
+        }
         return { id: postId };
       }),
   }),

@@ -21,8 +21,13 @@ export function createApp() {
     const image = await getCommunityPostImage(postId);
     if (!image?.imageData) return res.status(404).send("Image not found");
     res.setHeader("Content-Type", image.imageMime || "image/webp");
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    return res.send(image.imageData);
+    const imageData = Buffer.isBuffer(image.imageData)
+      ? image.imageData
+      : Buffer.from(image.imageData as Uint8Array);
+    res.setHeader("Content-Length", imageData.byteLength);
+    return res.send(imageData);
   });
   app.get("/api/version", (_req, res) =>
     res
