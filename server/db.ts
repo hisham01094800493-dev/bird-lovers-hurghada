@@ -403,6 +403,7 @@ export async function listCommunityPosts() {
       title: communityPosts.title,
       body: communityPosts.body,
       imagePath: communityPosts.imagePath,
+      authorId: communityPosts.authorId,
       likesCount: communityPosts.likesCount,
       commentsCount: communityPosts.commentsCount,
       createdAt: communityPosts.createdAt,

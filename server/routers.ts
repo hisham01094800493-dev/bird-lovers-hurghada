@@ -780,6 +780,129 @@ export const appRouter = router({
         }
         return { id: postId };
       }),
+    update: protectedProcedure
+      .input(
+        z.object({
+          postId: z.number().int().positive(),
+          category: z.enum([
+            "care",
+            "nutrition",
+            "health",
+            "breeding",
+            "general",
+            "other",
+          ]),
+          title: z.string().trim().min(4).max(180),
+          body: z.string().trim().min(10).max(5000),
+          imageData: z.string().max(30_000_000).optional(),
+          removeImage: z.boolean().default(false),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database is not available",
+          });
+        const [post] = await db
+          .select({ authorId: communityPosts.authorId })
+          .from(communityPosts)
+          .where(eq(communityPosts.id, input.postId))
+          .limit(1);
+        if (!post) throw new TRPCError({ code: "NOT_FOUND" });
+        if (post.authorId !== ctx.user.id)
+          throw new TRPCError({ code: "FORBIDDEN" });
+
+        let normalizedImage: Buffer | null = null;
+        if (input.imageData) {
+          const match = input.imageData.match(
+            /^data:(image\/(?:jpeg|jpg|png|webp));base64,(.+)$/i
+          );
+          if (!match)
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "استخدم صورة JPG أو PNG أو WebP",
+            });
+          try {
+            const buffer = Buffer.from(match[2], "base64");
+            if (buffer.length > 20_000_000) throw new Error("large");
+            normalizedImage = await sharp(buffer, { failOn: "error" })
+              .rotate()
+              .resize({
+                width: 1800,
+                height: 1800,
+                fit: "inside",
+                withoutEnlargement: true,
+              })
+              .webp({ quality: 82 })
+              .toBuffer();
+          } catch {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "تعذر قراءة الصورة، جرّب صورة JPG أو PNG عادية",
+            });
+          }
+        }
+
+        const imageChanged = Boolean(input.imageData) || input.removeImage;
+        await db
+          .update(communityPosts)
+          .set({
+            category: input.category,
+            title: input.title,
+            body: input.body,
+            ...(imageChanged
+              ? {
+                  imagePath: normalizedImage
+                    ? `/api/community-posts/${input.postId}/image`
+                    : null,
+                  imageMime: normalizedImage ? "image/webp" : null,
+                  imageData: normalizedImage,
+                }
+              : {}),
+          })
+          .where(eq(communityPosts.id, input.postId));
+
+        if (normalizedImage && hasRemoteStorage()) {
+          try {
+            const stored = await storagePut(
+              `community/${ctx.user.id}/post-${input.postId}.webp`,
+              normalizedImage,
+              "image/webp"
+            );
+            await db
+              .update(communityPosts)
+              .set({ imagePath: stored.url, imageData: null })
+              .where(eq(communityPosts.id, input.postId));
+          } catch (error) {
+            console.warn("[Community] Remote image update failed", error);
+          }
+        }
+        return { success: true } as const;
+      }),
+    delete: protectedProcedure
+      .input(z.object({ postId: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database is not available",
+          });
+        const [post] = await db
+          .select({ authorId: communityPosts.authorId })
+          .from(communityPosts)
+          .where(eq(communityPosts.id, input.postId))
+          .limit(1);
+        if (!post) throw new TRPCError({ code: "NOT_FOUND" });
+        if (post.authorId !== ctx.user.id)
+          throw new TRPCError({ code: "FORBIDDEN" });
+        await db
+          .delete(communityPosts)
+          .where(eq(communityPosts.id, input.postId));
+        return { success: true } as const;
+      }),
   }),
   notifications: router({
     list: protectedProcedure.query(({ ctx }) => listNotifications(ctx.user.id)),
