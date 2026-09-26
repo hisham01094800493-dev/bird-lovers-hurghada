@@ -26,8 +26,12 @@ export function createMySqlPoolOptions(
   rawCa = process.env.AIVEN_CA_CERT,
 ): PoolOptions {
   const ssl = getAivenSslOptions(connectionUrl, rawCa);
+  const normalizedUrl = new URL(connectionUrl);
+  // Aiven's sample URLs may specify this libmysql-specific parameter; mysql2
+  // warns about it and TLS is configured explicitly below instead.
+  normalizedUrl.searchParams.delete("ssl-mode");
   return {
-    uri: connectionUrl,
+    uri: normalizedUrl.toString(),
     connectionLimit: 1,
     maxIdle: 1,
     idleTimeout: 60_000,

@@ -33,6 +33,16 @@ describe("Aiven MySQL connection settings", () => {
     });
   });
 
+  it("removes mysql ssl-mode URL options because TLS is configured explicitly", () => {
+    const options = createMySqlPoolOptions(
+      `${aivenUrl}?ssl-mode=REQUIRED&charset=utf8mb4`,
+      ca,
+    );
+    expect(options.uri).not.toContain("ssl-mode");
+    expect(options.uri).toContain("charset=utf8mb4");
+    expect(options.ssl).toMatchObject({ rejectUnauthorized: true });
+  });
+
   it("does not apply Aiven-specific certificate requirements to other MySQL hosts", () => {
     expect(
       getAivenSslOptions("mysql://user:pass@db.example.com:3306/app", undefined),

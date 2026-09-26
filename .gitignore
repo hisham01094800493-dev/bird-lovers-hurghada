@@ -116,3 +116,4 @@ client/public/__manus__/version.json
 # Vercel project metadata and build-copied production assets
 .vercel/
 /public/
+/dist/vercel-app.mjs
