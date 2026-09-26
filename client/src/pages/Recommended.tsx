@@ -13,9 +13,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { RECOMMENDED_PRODUCTS } from "@/data/discovery";
 import { trpc } from "@/lib/trpc";
 
-const handleNoonPurchase = (coupon = "helz", destination = "https://www.noon.com/egypt-ar/") => {
-  navigator.clipboard?.writeText(coupon);
-  alert(`تم نسخ كود الخصم (${coupon}) بنجاح! استخدمه عند الدفع على نون للاستفادة من الخصم.`);
+const handleNoonPurchase = (coupon: string, destination = "https://www.noon.com/egypt-ar/") => {
+  if (coupon) {
+    navigator.clipboard?.writeText(coupon);
+    alert(`تم نسخ كود الخصم (${coupon}) بنجاح! استخدمه عند الدفع على نون للاستفادة من الخصم.`);
+  }
   window.open(destination, "_blank", "noopener,noreferrer");
 };
 
@@ -110,11 +112,11 @@ export default function Recommended() {
                     <a href={product.buyUrl} target="_blank" rel="sponsored nofollow noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#d26246] px-3 py-2.5 text-xs font-extrabold text-white transition hover:bg-[#b95138]">
                       {isArabic ? "شراء من أمازون" : "Buy from Amazon"} <ExternalLink size={14} />
                     </a>
-                    <button type="button" onClick={() => handleNoonPurchase(product.noonCoupon || "helz", noonHref)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#f5c24b] px-3 py-2.5 text-xs font-extrabold text-[#3d3214] transition hover:bg-[#e8b536]">
+                    <button type="button" onClick={() => handleNoonPurchase(product.noonCoupon, noonHref)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#f5c24b] px-3 py-2.5 text-xs font-extrabold text-[#3d3214] transition hover:bg-[#e8b536]">
                       {isArabic ? "شراء من نون" : "Buy from Noon"} <ExternalLink size={14} />
                     </button>
                   </div>
-                  <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "كود خصم نون:" : "Noon coupon:"} <span dir="ltr">{product.noonCoupon || "helz"}</span></p>
+                  {product.noonCoupon && <p className="rounded-lg bg-[#fff8df] px-3 py-2 text-center text-[11px] font-bold text-[#78601d]">{isArabic ? "كود خصم نون:" : "Noon coupon:"} <span dir="ltr">{product.noonCoupon}</span></p>}
                 </div>
               </div>
             </article>
