@@ -25,9 +25,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .desktop-sidebar { position: fixed; inset: 74px auto 0 0; z-index: 35; width: 258px; overflow-y: auto; flex-direction: column; padding: 24px 18px; border-right: 1px solid #dce7df; background: rgba(247,245,239,.98); box-shadow: 8px 0 28px rgba(24,59,57,.05); backdrop-filter: blur(14px); }
   .site-content { margin-inline-start: 258px; }
   html[dir="rtl"] .desktop-sidebar { inset: 74px 0 0 auto; border-right: 0; border-left: 1px solid #dce7df; box-shadow: -8px 0 28px rgba(24,59,57,.05); }
-  html[dir="rtl"] .site-content { margin-inline-start: 0; margin-inline-end: 258px; }
+  html[dir="rtl"] .site-content { margin-inline-start: 258px; margin-inline-end: 0; }
   .site-shell-root[dir="rtl"] .desktop-sidebar { inset: 74px 0 0 auto; border-right: 0; border-left: 1px solid #dce7df; box-shadow: -8px 0 28px rgba(24,59,57,.05); }
-  .site-shell-root[dir="rtl"] .site-content { margin-inline-start: 0; margin-inline-end: 258px; }
+  .site-shell-root[dir="rtl"] .site-content { margin-inline-start: 258px; margin-inline-end: 0; }
 }
 .sell-button { display: inline-flex; align-items: center; gap: 7px; border-radius: 12px; background: #d26246; padding: 10px 14px; color: white; font-size: 13px; font-weight: 700; box-shadow: 0 7px 16px rgba(210,98,70,.2); }
 .sell-button:hover { background: #b95138; }
@@ -37,6 +37,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #d26246; box-shadow: 0 0 0 5px rgba(210,98,70,.12); }
 .hero-section { padding-block: 72px 90px; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, .85fr); align-items: center; gap: 50px; }
+.hero-copy { min-width: 0; }
 .hero-title, .page-title { margin-top: 20px; color: #183b39; font-family: 'Playfair Display', Georgia, serif; font-size: clamp(42px, 6vw, 74px); font-weight: 600; line-height: .98; letter-spacing: -.045em; }
 .hero-accent, .page-title em { color: #d26246; font-style: italic; }
 .hero-lede, .page-lede { max-width: 500px; margin-top: 25px; color: #6f8580; font-size: 16px; line-height: 1.8; }
@@ -225,3 +226,6 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .facebook-community-button { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 6px; border-radius: 11px; background: #6856a6; padding: 10px 13px; color: white; font-size: 11px; font-weight: 800; transition: transform .18s ease, background .18s ease; }
 .facebook-community-button:hover { background: #56458e; transform: translateY(-1px); }
 @media (max-width: 640px) { .facebook-community-cta { align-items: flex-start; flex-wrap: wrap; padding: 13px; } .facebook-community-cta > div:nth-child(2) { flex-basis: calc(100% - 58px); } .facebook-community-button { width: 100%; justify-content: center; } }
+
+.site-shell-root[dir="rtl"] .hero-title { width: 100%; max-width: 100%; font-size: clamp(30px, 2.8vw, 44px); line-height: 1.18; overflow-wrap: anywhere; white-space: normal; }
+@media (min-width: 1024px) { .site-shell-root[dir="rtl"] .hero-grid { grid-template-columns: minmax(0, .9fr) minmax(340px, .85fr); gap: 32px; } }
