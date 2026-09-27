@@ -161,7 +161,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     }
   };
   return (
-    <div className="min-h-screen bg-[#f7f5ef] text-[#183b39]">
+    <div dir={isArabic ? "rtl" : "ltr"} className="site-shell-root min-h-screen bg-[#f7f5ef] text-[#183b39]">
       <header className="sticky top-0 z-40 border-b border-[#dce7df] bg-[#f7f5ef]/95 backdrop-blur">
         <div className="shell flex h-[74px] items-center justify-between gap-4">
           <Link

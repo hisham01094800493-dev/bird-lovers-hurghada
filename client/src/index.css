@@ -26,6 +26,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .site-content { margin-inline-start: 258px; }
   html[dir="rtl"] .desktop-sidebar { inset: 74px 0 0 auto; border-right: 0; border-left: 1px solid #dce7df; box-shadow: -8px 0 28px rgba(24,59,57,.05); }
   html[dir="rtl"] .site-content { margin-inline-start: 0; margin-inline-end: 258px; }
+  .site-shell-root[dir="rtl"] .desktop-sidebar { inset: 74px 0 0 auto; border-right: 0; border-left: 1px solid #dce7df; box-shadow: -8px 0 28px rgba(24,59,57,.05); }
+  .site-shell-root[dir="rtl"] .site-content { margin-inline-start: 0; margin-inline-end: 258px; }
 }
 .sell-button { display: inline-flex; align-items: center; gap: 7px; border-radius: 12px; background: #d26246; padding: 10px 14px; color: white; font-size: 13px; font-weight: 700; box-shadow: 0 7px 16px rgba(210,98,70,.2); }
 .sell-button:hover { background: #b95138; }
