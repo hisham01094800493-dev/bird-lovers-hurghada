@@ -13,6 +13,8 @@ import {
   Share2,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   MessageCircle,
   Plus,
   Search,
@@ -33,6 +35,7 @@ import PriceTicker from "@/components/PriceTicker";
 
 const FACEBOOK_GROUP_URL =
   "https://www.facebook.com/groups/798363001904219/?ref=share_group_link";
+const DESKTOP_SIDEBAR_KEY = "bird-lovers-desktop-sidebar-collapsed";
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -48,6 +51,13 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   });
   const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
   const [menuOpen, setMenuOpen] = useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(DESKTOP_SIDEBAR_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
   const newestNotificationId = useRef<number | null>(null);
   useEffect(() => {
     const newest = notifications.data?.find(
@@ -139,6 +149,17 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     toggleLanguage();
     setMenuOpen(false);
   };
+  const toggleDesktopSidebar = () => {
+    setDesktopSidebarCollapsed(current => {
+      const next = !current;
+      try {
+        localStorage.setItem(DESKTOP_SIDEBAR_KEY, String(next));
+      } catch {
+        // Keep the current session usable when storage is unavailable.
+      }
+      return next;
+    });
+  };
   const shareApp = async () => {
     const shareData = {
       title: isArabic ? "Bird Lovers في الغردقة" : "Bird Lovers Hurghada",
@@ -161,7 +182,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     }
   };
   return (
-    <div dir={isArabic ? "rtl" : "ltr"} className="site-shell-root min-h-screen bg-[#f7f5ef] text-[#183b39]">
+    <div dir={isArabic ? "rtl" : "ltr"} className={`site-shell-root min-h-screen bg-[#f7f5ef] text-[#183b39] ${desktopSidebarCollapsed ? "desktop-sidebar-is-collapsed" : ""}`}>
       <header className="sticky top-0 z-40 border-b border-[#dce7df] bg-[#f7f5ef]/95 backdrop-blur">
         <div className="shell flex h-[74px] items-center justify-between gap-4">
           <Link
@@ -200,7 +221,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             )}
             <button
               type="button"
-              className="icon-button"
+              className="icon-button mobile-header-share hidden md:inline-flex"
               onClick={shareApp}
               aria-label={isArabic ? "مشاركة التطبيق" : "Share app"}
               title={isArabic ? "مشاركة التطبيق" : "Share app"}
@@ -209,7 +230,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             </button>
             <Link
               href="/notifications"
-              className={`relative grid size-11 place-items-center rounded-xl border border-[#dce7df] bg-white text-[#183b39] transition hover:bg-[#eef5ed] ${location.startsWith("/notifications") ? "ring-2 ring-[#76a68f]/40" : ""}`}
+              className={`relative hidden size-11 place-items-center rounded-xl border border-[#dce7df] bg-white text-[#183b39] transition hover:bg-[#eef5ed] sm:grid ${location.startsWith("/notifications") ? "ring-2 ring-[#76a68f]/40" : ""}`}
               aria-label={t("notifications")}
               title={t("notifications")}
             >
@@ -236,7 +257,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             <>
               <Link
                 href="/my-listings"
-                className="sell-button border border-[#76a68f] bg-white text-[#183b39]"
+                className="sell-button mobile-header-my-listings hidden border border-[#76a68f] bg-white text-[#183b39] sm:inline-flex"
               >
                 <ImageIcon size={17} />{" "}
                 <span className="hidden sm:inline">
@@ -251,7 +272,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             </>
             {isAuthenticated ? (
               <button
-                className="icon-button hidden sm:flex"
+                className="icon-button mobile-header-account hidden sm:flex"
                 onClick={() => logout()}
                 aria-label={t("logout")}
               >
@@ -259,7 +280,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               </button>
             ) : (
               <button
-                className="icon-button hidden sm:flex"
+                className="icon-button mobile-header-account hidden sm:flex"
                 onClick={() => startLogin()}
                 aria-label={t("login")}
               >
@@ -267,7 +288,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               </button>
             )}
             <button
-              className="icon-button md:hidden"
+              className="icon-button lg:hidden"
               onClick={() => setMenuOpen(value => !value)}
               aria-label="Toggle menu"
             >
@@ -276,7 +297,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {menuOpen && (
-          <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 md:hidden">
+          <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 lg:hidden">
             <div className="mx-auto flex max-w-6xl flex-col gap-1">
               {nav.map(({ href, label, icon: Icon }) => (
                 <Link
@@ -354,22 +375,36 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <aside className="desktop-sidebar hidden lg:flex" aria-label={isArabic ? "القائمة الرئيسية" : "Main navigation"}>
         <div className="desktop-sidebar-brand">
           <span className="brand-mark"><img src="/icons/bird-lovers-budgie-icon-64.png" alt="" /></span>
-          <div><strong>{isArabic ? "القائمة الرئيسية" : "Main menu"}</strong><span>{isArabic ? "تنقّل أسهل" : "Easy navigation"}</span></div>
+          <div className="desktop-sidebar-brand-copy"><strong>{isArabic ? "القائمة الرئيسية" : "Main menu"}</strong><span>{isArabic ? "تنقّل أسهل" : "Easy navigation"}</span></div>
+          <button
+            type="button"
+            className="desktop-sidebar-toggle"
+            onClick={toggleDesktopSidebar}
+            aria-label={desktopSidebarCollapsed ? (isArabic ? "فتح القائمة الجانبية" : "Expand sidebar") : (isArabic ? "طي القائمة الجانبية" : "Collapse sidebar")}
+            title={desktopSidebarCollapsed ? (isArabic ? "فتح القائمة" : "Expand sidebar") : (isArabic ? "طي القائمة" : "Collapse sidebar")}
+          >
+            {desktopSidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+          </button>
         </div>
+        <p className="desktop-sidebar-section-label">{isArabic ? "التنقل" : "Navigate"}</p>
         <nav className="desktop-main-nav">
           {nav.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href} className={`nav-link ${location.startsWith(href) ? "nav-link-active" : ""}`}>
+            <Link key={href} href={href} title={desktopSidebarCollapsed ? label : undefined} className={`nav-link ${location.startsWith(href) ? "nav-link-active" : ""}`}>
               <span className={`nav-icon nav-icon-${href.slice(1).replace("/", "-")}`}><Icon size={17} /></span>
-              <span>{label}</span>
+              <span className="desktop-sidebar-link-label">{label}</span>
             </Link>
           ))}
-          <Link href="/notifications" className={`nav-link ${location.startsWith("/notifications") ? "nav-link-active" : ""}`}>
-            <span className="nav-icon nav-icon-bell"><Bell size={17} /></span><span>{t("notifications")}</span>
+          <Link href="/notifications" title={desktopSidebarCollapsed ? t("notifications") : undefined} className={`nav-link ${location.startsWith("/notifications") ? "nav-link-active" : ""}`}>
+            <span className="nav-icon nav-icon-bell"><Bell size={17} /></span><span className="desktop-sidebar-link-label">{t("notifications")}</span>
           </Link>
-          {isAdmin && <Link href="/admin" className={`nav-link ${location.startsWith("/admin") ? "nav-link-active" : ""}`}>
-            <span className="nav-icon nav-icon-admin"><ShieldAlert size={17} /></span><span>{t("admin")}</span>
+          {isAdmin && <Link href="/admin" title={desktopSidebarCollapsed ? t("admin") : undefined} className={`nav-link ${location.startsWith("/admin") ? "nav-link-active" : ""}`}>
+            <span className="nav-icon nav-icon-admin"><ShieldAlert size={17} /></span><span className="desktop-sidebar-link-label">{t("admin")}</span>
           </Link>}
         </nav>
+        <div className="desktop-sidebar-hint">
+          <span className="desktop-sidebar-hint-dot" />
+          <span>{isArabic ? "المساحة مرتبة وجاهزة" : "Everything is in order"}</span>
+        </div>
       </aside>
       <div className="site-content">
         <PriceTicker />
