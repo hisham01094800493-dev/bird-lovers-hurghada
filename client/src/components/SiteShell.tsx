@@ -58,7 +58,22 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       return false;
     }
   });
+  const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
+  const notificationMenuRef = useRef<HTMLDivElement>(null);
   const newestNotificationId = useRef<number | null>(null);
+  useEffect(() => {
+    if (!notificationMenuOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (
+        notificationMenuRef.current &&
+        !notificationMenuRef.current.contains(event.target as Node)
+      ) {
+        setNotificationMenuOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [notificationMenuOpen]);
   useEffect(() => {
     const newest = notifications.data?.find(
       item =>
@@ -228,19 +243,99 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             >
               <Share2 size={18} />
             </button>
-            <Link
-              href="/notifications"
-              className={`relative hidden size-11 place-items-center rounded-xl border border-[#dce7df] bg-white text-[#183b39] transition hover:bg-[#eef5ed] sm:grid ${location.startsWith("/notifications") ? "ring-2 ring-[#76a68f]/40" : ""}`}
-              aria-label={t("notifications")}
-              title={t("notifications")}
-            >
-              <Bell size={19} />
-              {Boolean(unread.data) && (
-                <span className="notification-dot">
-                  {(unread.data ?? 0) > 99 ? "99+" : unread.data}
-                </span>
+            <div className="relative" ref={notificationMenuRef}>
+              <button
+                type="button"
+                className={`relative grid size-11 place-items-center rounded-xl border border-[#dce7df] bg-white text-[#183b39] transition hover:bg-[#eef5ed] ${location.startsWith("/notifications") ? "ring-2 ring-[#76a68f]/40" : ""}`}
+                aria-label={t("notifications")}
+                title={t("notifications")}
+                aria-expanded={notificationMenuOpen}
+                aria-controls="notification-menu"
+                onClick={() => setNotificationMenuOpen(open => !open)}
+              >
+                <Bell size={19} />
+                {Boolean(unread.data) && (
+                  <span className="notification-dot">
+                    {(unread.data ?? 0) > 99 ? "99+" : unread.data}
+                  </span>
+                )}
+              </button>
+              {notificationMenuOpen && (
+                <div
+                  id="notification-menu"
+                  role="region"
+                  aria-label={t("notifications")}
+                  className="absolute end-0 top-[calc(100%+10px)] z-50 w-[min(360px,calc(100vw-28px))] overflow-hidden rounded-2xl border border-[#315a54] bg-[#183b39] text-white shadow-[0_18px_45px_rgba(24,59,57,.28)]"
+                >
+                  <div className="flex items-center justify-between border-b border-[#315a54] px-4 py-3">
+                    <div>
+                      <p className="font-display text-lg font-semibold text-white">
+                        {t("notifications")}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[#b9d8c8]">
+                        {isArabic ? "آخر التنبيهات" : "Latest alerts"}
+                      </p>
+                    </div>
+                    {Boolean(unread.data) && (
+                      <span className="rounded-full bg-[#faece8] px-2 py-1 text-[10px] font-bold text-[#bd5941]">
+                        {isArabic ? `${unread.data} جديد` : `${unread.data} new`}
+                      </span>
+                    )}
+                  </div>
+                  <div className="max-h-[340px] overflow-y-auto p-2">
+                    {notifications.isLoading ? (
+                      <p className="px-3 py-8 text-center text-sm text-[#b9d8c8]">
+                        {isArabic ? "جارٍ تحميل التنبيهات…" : "Loading alerts…"}
+                      </p>
+                    ) : notifications.data?.length ? (
+                      notifications.data.slice(0, 5).map(item => (
+                        <Link
+                          key={item.id}
+                          href={item.link || "/notifications"}
+                          onClick={() => setNotificationMenuOpen(false)}
+                          className={`block rounded-xl px-3 py-3 transition hover:bg-[#285651] ${item.readAt ? "opacity-65" : "bg-[#285651]"}`}
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <span className="join-icon mt-0.5 size-8 shrink-0 rounded-lg">
+                              <Bell size={14} />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <strong className="block truncate text-xs text-white">
+                                {item.type === "app_update" && isArabic
+                                  ? "تحديث جديد للموقع"
+                                  : item.title}
+                              </strong>
+                              <span className="mt-1 block line-clamp-2 text-xs leading-5 text-[#d3e6da]">
+                                {item.body}
+                              </span>
+                              <small className="mt-1.5 block text-[10px] text-[#a9c9ba]">
+                                {new Date(item.createdAt).toLocaleString(
+                                  isArabic ? "ar-EG" : "en-EG"
+                                )}
+                              </small>
+                            </span>
+                            {!item.readAt && (
+                              <span className="mt-1.5 size-2 shrink-0 rounded-full bg-[#d26246]" />
+                            )}
+                          </div>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="px-3 py-8 text-center text-sm text-[#b9d8c8]">
+                        {isArabic ? "لا توجد تنبيهات الآن." : "No alerts right now."}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href="/notifications"
+                    onClick={() => setNotificationMenuOpen(false)}
+                    className="block border-t border-[#315a54] px-4 py-3 text-center text-xs font-bold text-[#f1d1a4] transition hover:bg-[#285651]"
+                  >
+                    {isArabic ? "عرض كل الإشعارات" : "View all notifications"}
+                  </Link>
+                </div>
               )}
-            </Link>
+            </div>
             <button
               type="button"
               className="language-toggle hidden sm:inline-flex"
