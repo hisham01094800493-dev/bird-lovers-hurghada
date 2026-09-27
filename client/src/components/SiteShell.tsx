@@ -265,7 +265,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                   id="notification-menu"
                   role="region"
                   aria-label={t("notifications")}
-                  className="absolute end-0 top-[calc(100%+10px)] z-50 w-[min(360px,calc(100vw-28px))] overflow-hidden rounded-2xl border border-[#315a54] bg-[#183b39] text-white shadow-[0_18px_45px_rgba(24,59,57,.28)]"
+                  className="fixed inset-x-3 top-[84px] z-50 w-auto overflow-hidden rounded-2xl border border-[#315a54] bg-[#183b39] text-white shadow-[0_18px_45px_rgba(24,59,57,.28)] sm:absolute sm:inset-x-auto sm:end-0 sm:top-[calc(100%+10px)] sm:w-[360px]"
                 >
                   <div className="flex items-center justify-between border-b border-[#315a54] px-4 py-3">
                     <div>
