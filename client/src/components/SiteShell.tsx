@@ -184,7 +184,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               </span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="desktop-main-nav hidden lg:flex">
             {nav.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
@@ -205,7 +205,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 className={`nav-link ${location.startsWith("/admin") ? "nav-link-active" : ""}`}
                 aria-label={t("admin")}
               >
-                <ShieldAlert size={16} />
+                <span className="nav-icon nav-icon-admin"><ShieldAlert size={16} /></span>
+                <span>{t("admin")}</span>
               </Link>
             )}
           </nav>
@@ -376,9 +377,10 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </header>
-      <PriceTicker />
-      <main>{children}</main>
-      <footer className="mt-24 border-t border-[#dce7df] bg-[#eef3ed]">
+      <div className="site-content">
+        <PriceTicker />
+        <main>{children}</main>
+        <footer className="mt-24 border-t border-[#dce7df] bg-[#eef3ed]">
         <div className="shell grid gap-8 py-12 md:grid-cols-[1fr_auto_auto]">
           <div>
             <div className="flex items-center gap-3">
@@ -447,7 +449,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               : "Built for the birds, by the community."}
           </span>
         </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   );
 }
