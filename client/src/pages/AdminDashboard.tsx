@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   const stats = trpc.admin.stats.useQuery(undefined, { enabled: isAdmin });
   const members = trpc.admin.users.useQuery(
     { limit: 200 },
-    { enabled: isAdmin && expandedCard === "users" }
+    { enabled: isAdmin && (expandedCard === "users" || expandedCard === "activeUsers") }
   );
   const reputation = trpc.admin.reputation.useQuery(
     { limit: 200 },
@@ -88,6 +88,15 @@ export default function AdminDashboard() {
     onError: error => toast.error(error.message),
   });
   const cards = [
+    {
+      key: "activeUsers",
+      label: "الموجودون الآن",
+      value: stats.data?.activeUsers ?? 0,
+      detail: "نشاط آخر 5 دقائق",
+      icon: Users,
+      color: "coral",
+      target: "admin-users-section",
+    },
     {
       key: "users",
       label: "إجمالي المستخدمين",
@@ -259,7 +268,16 @@ export default function AdminDashboard() {
             ))}
           </div>
         </section>
-        {expandedCard === "users" ? (
+        <nav className="admin-quick-nav mt-6" aria-label="أقسام لوحة الإدارة">
+          <span>انتقال سريع</span>
+          <a href="#admin-users">المستخدمون</a>
+          <a href="#admin-listings-section">الإعلانات</a>
+          <a href="#admin-products">المنتجات والروابط</a>
+          <a href="#admin-community-reputation">النقاط والشارات</a>
+          <a href="#admin-actions-section">الإشعارات</a>
+          <a href="#admin-attachments-section">المرفقات</a>
+        </nav>
+        {expandedCard === "users" || expandedCard === "activeUsers" ? (
           <section
             id="admin-users-section"
             aria-labelledby="admin-members"
@@ -318,8 +336,10 @@ export default function AdminDashboard() {
             )}
           </section>
         ) : null}
-        <AdminPriceGuide />
-        <AdminAffiliateProducts />
+        <section id="admin-products" className="admin-dashboard-tool-section">
+          <AdminPriceGuide />
+          <AdminAffiliateProducts />
+        </section>
         <section id="admin-community-reputation" className="mt-12">
           <div className="flex items-end justify-between gap-4">
             <div>

@@ -184,32 +184,6 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               </span>
             </span>
           </Link>
-          <nav className="desktop-main-nav hidden lg:flex">
-            {nav.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`nav-link ${location.startsWith(href) ? "nav-link-active" : ""}`}
-              >
-                <span
-                  className={`nav-icon nav-icon-${href.slice(1).replace("/", "-")}`}
-                >
-                  <Icon size={16} />
-                </span>{" "}
-                <span>{label}</span>
-              </Link>
-            ))}
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className={`nav-link ${location.startsWith("/admin") ? "nav-link-active" : ""}`}
-                aria-label={t("admin")}
-              >
-                <span className="nav-icon nav-icon-admin"><ShieldAlert size={16} /></span>
-                <span>{t("admin")}</span>
-              </Link>
-            )}
-          </nav>
           <div className="flex items-center gap-2">
             {isAuthenticated && (
               <Link
@@ -377,6 +351,26 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </header>
+      <aside className="desktop-sidebar hidden lg:flex" aria-label={isArabic ? "القائمة الرئيسية" : "Main navigation"}>
+        <div className="desktop-sidebar-brand">
+          <span className="brand-mark"><img src="/icons/bird-lovers-budgie-icon-64.png" alt="" /></span>
+          <div><strong>{isArabic ? "القائمة الرئيسية" : "Main menu"}</strong><span>{isArabic ? "تنقّل أسهل" : "Easy navigation"}</span></div>
+        </div>
+        <nav className="desktop-main-nav">
+          {nav.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href} className={`nav-link ${location.startsWith(href) ? "nav-link-active" : ""}`}>
+              <span className={`nav-icon nav-icon-${href.slice(1).replace("/", "-")}`}><Icon size={17} /></span>
+              <span>{label}</span>
+            </Link>
+          ))}
+          <Link href="/notifications" className={`nav-link ${location.startsWith("/notifications") ? "nav-link-active" : ""}`}>
+            <span className="nav-icon nav-icon-bell"><Bell size={17} /></span><span>{t("notifications")}</span>
+          </Link>
+          {isAdmin && <Link href="/admin" className={`nav-link ${location.startsWith("/admin") ? "nav-link-active" : ""}`}>
+            <span className="nav-icon nav-icon-admin"><ShieldAlert size={17} /></span><span>{t("admin")}</span>
+          </Link>}
+        </nav>
+      </aside>
       <div className="site-content">
         <PriceTicker />
         <main>{children}</main>

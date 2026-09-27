@@ -1158,14 +1158,19 @@ export async function getAdminStats() {
   if (!db)
     return {
       users: 0,
+      activeUsers: 0,
       listings: 0,
       pendingListings: 0,
       reports: 0,
       messages: 0,
     };
-  const [userRows, listingRows, pendingRows, reportRows, messageRows] =
+  const [userRows, activeUserRows, listingRows, pendingRows, reportRows, messageRows] =
     await Promise.all([
       db.select({ count: sql<number>`count(*)` }).from(users),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`${users.lastSignedIn} >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)`),
       db.select({ count: sql<number>`count(*)` }).from(listings),
       db
         .select({ count: sql<number>`count(*)` })
@@ -1179,6 +1184,7 @@ export async function getAdminStats() {
     ]);
   return {
     users: Number(userRows[0]?.count || 0),
+    activeUsers: Number(activeUserRows[0]?.count || 0),
     listings: Number(listingRows[0]?.count || 0),
     pendingListings: Number(pendingRows[0]?.count || 0),
     reports: Number(reportRows[0]?.count || 0),
