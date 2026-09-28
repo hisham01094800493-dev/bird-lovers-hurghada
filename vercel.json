@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "express",
-  "buildCommand": "pnpm exec drizzle-kit migrate && pnpm build && pnpm exec esbuild vercel-entry.ts --bundle --platform=node --packages=external --format=esm --outfile=index.js",
+  "buildCommand": "pnpm build && pnpm exec esbuild vercel-entry.ts --bundle --platform=node --packages=external --format=esm --outfile=index.js",
   "installCommand": "pnpm install --frozen-lockfile",
   "headers": [
     {
