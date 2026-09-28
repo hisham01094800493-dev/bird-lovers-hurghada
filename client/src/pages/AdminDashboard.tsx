@@ -19,7 +19,6 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ADMIN_EMAIL } from "@shared/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
@@ -40,7 +39,7 @@ export default function AdminDashboard() {
     ? { name: "Local Admin Preview", email: "admin-preview@localhost", role: "admin" as const }
     : null;
   const effectiveUser = user ?? previewUser;
-  const isAdmin = previewMode || user?.role === "admin" || user?.email === ADMIN_EMAIL;
+  const isAdmin = previewMode || user?.role === "admin";
   const adminDataEnabled = isAdmin && !previewMode;
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const stats = trpc.admin.stats.useQuery(undefined, { enabled: adminDataEnabled });

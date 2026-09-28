@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
 import ListingCard from "@/components/ListingCard";
-import AdSlot from "@/components/AdSlot";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const categoryIcons = {
@@ -332,22 +331,6 @@ export default function Home() {
           )}
         </div>
       </section>
-      <AdSlot
-        variant="compact"
-        image="/images/bird-lovers-group.jpg"
-        imageAlt={isArabic ? "طيور بادجي ملونة" : "Colourful budgies"}
-        title={
-          isArabic ? "جروب Bird Lovers Hurghada" : "Bird Lovers Hurghada group"
-        }
-        description={
-          isArabic
-            ? "انضم إلى الجروب المحلي لمحبي الطيور وتبادل الخبرات."
-            : "Join the local bird-lovers group and share useful tips."
-        }
-        cta={isArabic ? "انضم للجروب" : "Join the group"}
-        href="https://www.facebook.com/groups/798363001904219/?ref=share_group_link"
-        external
-      />
     </SiteShell>
   );
 }

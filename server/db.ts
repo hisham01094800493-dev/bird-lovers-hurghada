@@ -26,7 +26,6 @@ import {
   seasonalCareTips,
   users,
 } from "../drizzle/schema";
-import { ADMIN_EMAIL } from "@shared/const";
 import { PRICE_REFERENCES, type PriceReference } from "@shared/priceGuide";
 import { normalizeArabicSearch } from "@shared/arabicText";
 
@@ -246,7 +245,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (user.role !== undefined) {
     values.role = user.role;
     updateSet.role = user.role;
-  } else if (user.openId === ENV.ownerOpenId || user.email === ADMIN_EMAIL) {
+  } else if (user.openId === ENV.ownerOpenId) {
     values.role = "admin";
     updateSet.role = "admin";
   }
