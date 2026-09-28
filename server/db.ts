@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { createPool } from "mysql2/promise";
 import {
   auditLogs,
   appUpdates,
@@ -59,31 +60,21 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const ssl = process.env.DB_CA_CERT
+        ? { ca: process.env.DB_CA_CERT, rejectUnauthorized: true }
+        : undefined;
+      const pool = createPool({
+        uri: process.env.DATABASE_URL,
+        connectionLimit: 3,
+        ...(ssl ? { ssl } : {}),
+      });
+      _db = drizzle(pool as any);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
     }
   }
   return _db;
-}
-
-export async function ensureLocalAuthSchema() {
-  const db = await getDb();
-  if (!db) return;
-  try {
-    await db.execute(
-      sql.raw("ALTER TABLE `users` ADD COLUMN `passwordHash` text NULL")
-    );
-  } catch (error) {
-    const message = String(error);
-    if (
-      !message.toLowerCase().includes("duplicate column") &&
-      !message.toLowerCase().includes("already exists")
-    ) {
-      console.warn("[Database] Local auth schema check failed:", message);
-    }
-  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
