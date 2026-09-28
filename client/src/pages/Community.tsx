@@ -37,6 +37,7 @@ import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { compressImage } from "@/lib/imageCompression";
 
 const facebookGroup =
   "https://www.facebook.com/groups/798363001904219/?ref=share_group_link";
@@ -113,35 +114,12 @@ export default function Community() {
     },
     onError: error => toast.error(error.message),
   });
-  const optimizeImage = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      if (!file.type.startsWith("image/") || file.size > 25_000_000)
-        return reject(new Error("type"));
-      const source = URL.createObjectURL(file);
-      const image = new Image();
-      image.onload = () => {
-        URL.revokeObjectURL(source);
-        const scale = Math.min(1, 1800 / image.width, 1800 / image.height);
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.max(1, Math.round(image.width * scale));
-        canvas.height = Math.max(1, Math.round(image.height * scale));
-        const context = canvas.getContext("2d");
-        if (!context) return reject(new Error("canvas"));
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.78));
-      };
-      image.onerror = () => {
-        URL.revokeObjectURL(source);
-        reject(new Error("image"));
-      };
-      image.src = source;
-    });
   const chooseImage = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
     try {
-      const imageData = await optimizeImage(file);
+      const imageData = (await compressImage(file, { maxDimension: 1000, maxBytes: 500_000 })).dataUrl;
       setForm(current => ({ ...current, imageData, imagePreview: imageData }));
     } catch {
       toast.error("اختار صورة عادية من الهاتف بحجم أقل من 25MB");
@@ -152,7 +130,7 @@ export default function Community() {
     event.target.value = "";
     if (!file) return;
     try {
-      const imageData = await optimizeImage(file);
+      const imageData = (await compressImage(file, { maxDimension: 1000, maxBytes: 500_000 })).dataUrl;
       setEditForm(current => ({
         ...current,
         imageData,

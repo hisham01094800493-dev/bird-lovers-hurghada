@@ -11,6 +11,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
+import { compressImage } from "@/lib/imageCompression";
 
 type ListingForm = { categoryId: string; titleEn: string; titleAr: string; descriptionEn: string; descriptionAr: string; price: string; location: string; imageData: string[]; imagePreviews: string[]; negotiable: boolean; exchangeAvailable: boolean };
 
@@ -23,14 +24,12 @@ export default function CreateListing() {
   if (loading) return <SiteShell><div className="shell py-24 text-center"><Loader2 className="mx-auto animate-spin" /><p className="mt-3 text-sm text-[#718780]">جاري تجهيز حسابك…</p></div></SiteShell>;
   if (!isAuthenticated) return <SiteShell><div className="shell py-24"><div className="auth-card"><span className="brand-mark mx-auto"><Sparkles size={20} /></span><p className="eyebrow mt-5">Seller access / حساب البائع</p><h1 className="mt-3 font-display text-3xl font-semibold">Log in to share something good.</h1><p className="mt-3 text-sm leading-6 text-[#718780]">Your listing will go through a quick community review before it appears publicly.</p><Button className="cta-primary mt-7" onClick={() => startLogin()}>Continue with secure login</Button><Link href="/marketplace" className="text-link mt-5 inline-flex">Back to marketplace <ArrowLeft size={16} /></Link></div></div></SiteShell>;
   const update = (patch: Partial<ListingForm>) => setForm(current => ({ ...current, ...patch }));
-  const readImage = (file: File) => new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("read")); reader.readAsDataURL(file); });
-  const optimizeImage = (file: File) => new Promise<string>((resolve, reject) => { const source = URL.createObjectURL(file); const image = new Image(); image.onload = () => { URL.revokeObjectURL(source); if (image.width < 320 || image.height < 320) return reject(new Error("dimensions")); const scale = Math.min(1, 1800 / image.width, 1800 / image.height); const canvas = document.createElement("canvas"); canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale); canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL("image/jpeg", 0.82)); }; image.onerror = () => { URL.revokeObjectURL(source); reject(new Error("image")); }; image.src = source; });
   const handleImages = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []).slice(0, Math.max(0, 6 - form.imageData.length)); event.target.value = "";
     if (!files.length) return;
     if (files.some(file => file.size > 12_000_000)) { toast.error("كل صورة يجب أن تكون أقل من 12MB قبل الضغط"); return; }
     if (files.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type))) { toast.error("استخدم JPEG أو PNG أو WebP فقط"); return; }
-    try { const images = await Promise.all(files.map(optimizeImage)); update({ imageData: [...form.imageData, ...images], imagePreviews: [...form.imagePreviews, ...images] }); } catch { toast.error("الصور يجب أن تكون صالحة وبأبعاد لا تقل عن 320×320"); }
+    try { const images = await Promise.all(files.map(file => compressImage(file, { maxDimension: 1600, maxBytes: 600_000 }).then(result => result.dataUrl))); update({ imageData: [...form.imageData, ...images], imagePreviews: [...form.imagePreviews, ...images] }); } catch { toast.error("الصور يجب أن تكون صالحة وأقل من 12MB قبل الضغط"); }
   };
   const removeImage = (index: number) => update({ imageData: form.imageData.filter((_, imageIndex) => imageIndex !== index), imagePreviews: form.imagePreviews.filter((_, imageIndex) => imageIndex !== index) });
   const makeCover = (index: number) => { if (index === 0) return; const imageData = [...form.imageData]; const imagePreviews = [...form.imagePreviews]; const [data] = imageData.splice(index, 1); const [preview] = imagePreviews.splice(index, 1); imageData.unshift(data); imagePreviews.unshift(preview); update({ imageData, imagePreviews }); };

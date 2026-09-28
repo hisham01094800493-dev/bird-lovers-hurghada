@@ -24,6 +24,7 @@ async function storeListingImage(userId: number, listingId: number, index: numbe
   const metadata = await image.metadata();
   if (!metadata.width || !metadata.height || metadata.width < 320 || metadata.height < 320) throw new Error("Images must be at least 320×320 pixels");
   const normalized = await image.rotate().resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+  if (normalized.byteLength > 600_000) throw new Error("Normalized image is too large");
   return (await storagePut(`listings/${userId}/listing-${listingId}-${Date.now()}-${index}.webp`, normalized, "image/webp")).url;
 }
 
@@ -50,6 +51,7 @@ export function registerListingManagementRoutes(app: Express) {
     const imageData = Array.isArray(input.imageData) ? input.imageData.filter((value: unknown): value is string => typeof value === "string").slice(0, 6) : [];
     if (imageData.length) {
       const existingImages = await db.select({ id: listingImages.id }).from(listingImages).where(eq(listingImages.listingId, id)).orderBy(asc(listingImages.sortOrder));
+      if (existingImages.length + imageData.length > 6) return res.status(400).json({ message: "لا يمكن أن يتجاوز الإعلان 6 صور" });
       const urls = await Promise.all(imageData.map((value: string, index: number) => storeListingImage(user.id, id, index, value)));
       await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: text.titleEn })));
     }
