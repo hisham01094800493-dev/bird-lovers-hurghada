@@ -7,28 +7,25 @@ import { appRouter } from "./routers";
 import { scheduledPriceRefresh } from "./scheduledPriceRefresh";
 import { createContext } from "./_core/context";
 import {
-  ensureAffiliateProductsSchema,
-  ensureLocalAuthSchema,
+  checkDatabase,
+  cleanupExpiredMessageAttachments,
   getCommunityPostImage,
 } from "./db";
-
-let startupSchemaReady: Promise<void> | null = null;
+import { assertStorageConfigured } from "./storage";
 
 export function createApp() {
   const app = express();
+  assertStorageConfigured();
 
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  app.use(async (_req, _res, next) => {
-    startupSchemaReady ??= Promise.all([
-      ensureAffiliateProductsSchema(),
-      ensureLocalAuthSchema(),
-    ]).then(() => undefined);
-    await startupSchemaReady;
-    next();
+  app.use(express.json({ limit: "5mb" }));
+  app.use(express.urlencoded({ limit: "5mb", extended: true }));
+
+  app.get("/health", async (_req, res) => {
+    const database = await checkDatabase();
+    return res
+      .status(database.ok ? 200 : 503)
+      .json({ status: database.ok ? "ok" : "degraded", database });
   });
-
-  app.get("/health", (_req, res) => res.status(200).json({ status: "ok" }));
   app.get("/api/community-posts/:id/image", async (req, res) => {
     const postId = Number(req.params.id);
     if (!Number.isInteger(postId) || postId < 1) return res.status(400).send("Invalid post image");
@@ -61,6 +58,12 @@ export function createApp() {
   registerOAuthRoutes(app);
   registerListingManagementRoutes(app);
   app.all("/api/scheduled/price-guide-refresh", scheduledPriceRefresh);
+  app.post("/api/scheduled/message-attachments-cleanup", async (req, res) => {
+    if (!process.env.CRON_SECRET || req.header("x-cron-secret") !== process.env.CRON_SECRET)
+      return res.status(401).json({ error: "Unauthorized" });
+    const deleted = await cleanupExpiredMessageAttachments();
+    return res.json({ ok: true, deleted });
+  });
   app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
 
   return app;

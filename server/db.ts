@@ -69,10 +69,23 @@ function getDatabaseConnection() {
   if (!rawUrl) return null;
   const url = new URL(rawUrl);
   url.searchParams.delete("ssl-mode");
+  const ca = ENV.dbCaCert.trim().replace(/\\n/g, "\n");
   return {
     uri: url.toString(),
-    ssl: { rejectUnauthorized: false },
+    connectionLimit: 2,
+    ssl: ca ? { ca, rejectUnauthorized: true } : undefined,
   };
+}
+
+export async function checkDatabase() {
+  const db = await getDb();
+  if (!db) return { ok: false as const, error: "DATABASE_URL is not configured" };
+  try {
+    await db.execute(sql`select 1 as ok`);
+    return { ok: true as const };
+  } catch (error) {
+    return { ok: false as const, error: String(error) };
+  }
 }
 
 export async function getDb() {
@@ -86,130 +99,6 @@ export async function getDb() {
     }
   }
   return _db;
-}
-
-export async function ensureLocalAuthSchema() {
-  const db = await getDb();
-  if (!db) return;
-  try {
-    await db.execute(
-      sql.raw("ALTER TABLE `users` ADD COLUMN `passwordHash` text NULL")
-    );
-  } catch (error) {
-    const message = String(error);
-    if (
-      !message.toLowerCase().includes("duplicate column") &&
-      !message.toLowerCase().includes("already exists")
-    ) {
-      console.warn("[Database] Local auth schema check failed:", message);
-    }
-  }
-}
-
-export async function ensureAffiliateProductsSchema() {
-  const db = await getDb();
-  if (!db) return;
-  try {
-    await db.execute(
-      sql.raw(`CREATE TABLE IF NOT EXISTS \`affiliateProducts\` (
-        \`id\` varchar(80) NOT NULL,
-        \`category\` enum('food','care','housing') NOT NULL DEFAULT 'food',
-        \`nameEn\` varchar(180) NOT NULL,
-        \`nameAr\` varchar(180) NOT NULL,
-        \`descriptionEn\` text NOT NULL,
-        \`descriptionAr\` text NOT NULL,
-        \`priceEn\` varchar(120) NOT NULL,
-        \`priceAr\` varchar(120) NOT NULL,
-        \`imageUrl\` text NOT NULL,
-        \`affiliateUrl\` text NOT NULL,
-        \`noonUrl\` varchar(2000) NOT NULL DEFAULT '',
-        \`noonCoupon\` varchar(120) NOT NULL DEFAULT '',
-        \`tagEn\` varchar(80) NOT NULL,
-        \`tagAr\` varchar(80) NOT NULL,
-        \`isActive\` boolean NOT NULL DEFAULT true,
-        \`sortOrder\` int NOT NULL DEFAULT 0,
-        \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        \`updatedAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY (\`id\`),
-        KEY \`affiliate_products_active_idx\` (\`isActive\`, \`sortOrder\`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`)
-    );
-    for (const statement of [
-      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonUrl` varchar(2000) NOT NULL DEFAULT ''",
-      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonCoupon` varchar(120) NOT NULL DEFAULT ''",
-    ]) {
-      try {
-        await db.execute(sql.raw(statement));
-      } catch (error) {
-        const message = String(error).toLowerCase();
-        if (!message.includes("duplicate column") && !message.includes("already exists"))
-          console.warn("[Database] Noon affiliate column check failed:", String(error));
-      }
-    }
-    const existing = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(affiliateProducts);
-    if (Number(existing[0]?.count || 0) === 0) {
-      await db.insert(affiliateProducts).values([
-        {
-          id: "balanced-seed-mix",
-          category: "food",
-          nameEn: "Balanced seed mix",
-          nameAr: "خلطة بذور متوازنة",
-          descriptionEn: "A practical everyday starting point for small companion birds.",
-          descriptionAr: "اختيار عملي كبداية للتغذية اليومية للطيور الصغيرة.",
-          priceEn: "Check current price",
-          priceAr: "تحقق من السعر الحالي",
-          imageUrl: "/images/bird-seed.jpg",
-          affiliateUrl: "https://www.amazon.eg/s?k=bird+seed+mix",
-          noonUrl: "",
-          noonCoupon: "",
-          tagEn: "Everyday care",
-          tagAr: "رعاية يومية",
-          isActive: true,
-          sortOrder: 0,
-        },
-        {
-          id: "natural-perch",
-          category: "care",
-          nameEn: "Natural wood perch",
-          nameAr: "مجثم خشبي طبيعي",
-          descriptionEn: "A simple enrichment upgrade that gives feet different textures.",
-          descriptionAr: "إضافة بسيطة للتنويع تمنح أقدام الطائر أسطحًا مختلفة.",
-          priceEn: "Check current price",
-          priceAr: "تحقق من السعر الحالي",
-          imageUrl: "/images/cage-gold.jpg",
-          affiliateUrl: "https://www.amazon.eg/s?k=natural+wood+bird+perch",
-          noonUrl: "",
-          noonCoupon: "",
-          tagEn: "Enrichment",
-          tagAr: "تنويع ونشاط",
-          isActive: true,
-          sortOrder: 1,
-        },
-        {
-          id: "travel-carrier",
-          category: "housing",
-          nameEn: "Small bird travel carrier",
-          nameAr: "حقيبة نقل للطيور الصغيرة",
-          descriptionEn: "Useful for safe clinic visits and short trips around Hurghada.",
-          descriptionAr: "مفيدة للذهاب إلى العيادة والتنقلات القصيرة بأمان.",
-          priceEn: "Check current price",
-          priceAr: "تحقق من السعر الحالي",
-          imageUrl: "/images/cage-gold.jpg",
-          affiliateUrl: "https://www.amazon.eg/s?k=small+bird+travel+carrier",
-          noonUrl: "",
-          noonCoupon: "",
-          tagEn: "Safe transport",
-          tagAr: "نقل آمن",
-          isActive: true,
-          sortOrder: 2,
-        },
-      ]);
-    }
-  } catch (error) {
-    console.warn("[Database] Affiliate products schema check failed:", String(error));
-  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {

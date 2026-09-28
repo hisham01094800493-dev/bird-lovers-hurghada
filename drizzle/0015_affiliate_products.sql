@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS `affiliateProducts` (
+  `id` varchar(80) NOT NULL,
+  `category` enum('food','care','housing') NOT NULL DEFAULT 'food',
+  `nameEn` varchar(180) NOT NULL,
+  `nameAr` varchar(180) NOT NULL,
+  `descriptionEn` text NOT NULL,
+  `descriptionAr` text NOT NULL,
+  `priceEn` varchar(120) NOT NULL,
+  `priceAr` varchar(120) NOT NULL,
+  `imageUrl` text NOT NULL,
+  `affiliateUrl` text NOT NULL,
+  `noonUrl` varchar(2000) DEFAULT NULL,
+  `noonCoupon` varchar(120) DEFAULT NULL,
+  `tagEn` varchar(80) NOT NULL,
+  `tagAr` varchar(80) NOT NULL,
+  `isActive` boolean NOT NULL DEFAULT true,
+  `sortOrder` int NOT NULL DEFAULT 0,
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `affiliate_products_active_idx` (`isActive`, `sortOrder`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

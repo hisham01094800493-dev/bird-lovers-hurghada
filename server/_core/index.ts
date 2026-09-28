@@ -2,10 +2,6 @@ import "dotenv/config";
 import { createServer } from "http";
 import net from "net";
 import { createApp } from "../app";
-import {
-  cleanupExpiredMessageAttachments,
-  ensureAffiliateProductsSchema,
-} from "../db";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -25,7 +21,6 @@ async function findAvailablePort(startPort = 3000): Promise<number> {
 
 async function startServer() {
   console.log("[Release] lost-found alerts enabled");
-  await ensureAffiliateProductsSchema();
   const app = createApp();
   const server = createServer(app);
 
@@ -38,17 +33,6 @@ async function startServer() {
 
   server.listen(port, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${port}/`);
-    cleanupExpiredMessageAttachments().catch(error =>
-      console.warn("[Messages] Initial attachment cleanup failed:", error),
-    );
-    const cleanupTimer = setInterval(
-      () =>
-        cleanupExpiredMessageAttachments().catch(error =>
-          console.warn("[Messages] Scheduled attachment cleanup failed:", error),
-        ),
-      24 * 60 * 60 * 1000,
-    );
-    cleanupTimer.unref();
   });
 }
 
