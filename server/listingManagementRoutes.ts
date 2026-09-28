@@ -39,14 +39,17 @@ export function registerListingManagementRoutes(app: Express) {
     const existing = await db.select({ id: listings.id }).from(listings).where(and(eq(listings.id, id), eq(listings.sellerId, user.id))).limit(1);
     if (!existing[0]) return res.status(404).json({ message: "Listing not found" });
     const input = req.body || {};
-    const titleEn = bodyValue(input.titleEn); const descriptionEn = bodyValue(input.descriptionEn); const price = bodyValue(input.price);
-    if (titleEn.length < 4 || descriptionEn.length < 20 || !price) return res.status(400).json({ message: "Title, description, and price are required" });
-    await db.update(listings).set({ titleEn, titleAr: bodyValue(input.titleAr) || null, descriptionEn, descriptionAr: bodyValue(input.descriptionAr) || null, price, location: bodyValue(input.location, "Hurghada"), status: "pending_review", moderationStatus: "pending" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
+    const titleAr = bodyValue(input.titleAr); const titleEn = bodyValue(input.titleEn);
+    const descriptionAr = bodyValue(input.descriptionAr); const descriptionEn = bodyValue(input.descriptionEn);
+    const title = titleAr || titleEn; const description = descriptionAr || descriptionEn;
+    const numericPrice = typeof input.price === "number" ? input.price : Number(input.price);
+    if (title.length < 4 || description.length < 20 || !Number.isFinite(numericPrice) || numericPrice <= 0) return res.status(400).json({ message: "اكتب عنوانًا 4 أحرف ووصفًا 20 حرفًا على الأقل وسعرًا موجبًا" });
+    await db.update(listings).set({ titleEn: titleEn || titleAr, titleAr: titleAr || null, descriptionEn: descriptionEn || descriptionAr, descriptionAr: descriptionAr || null, price: numericPrice.toFixed(2), location: bodyValue(input.location, "Hurghada"), status: "pending_review", moderationStatus: "pending" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
     const imageData = Array.isArray(input.imageData) ? input.imageData.filter((value: unknown): value is string => typeof value === "string").slice(0, 6) : [];
     if (imageData.length) {
       const existingImages = await db.select({ id: listingImages.id }).from(listingImages).where(eq(listingImages.listingId, id)).orderBy(asc(listingImages.sortOrder));
       const urls = await Promise.all(imageData.map((value: string, index: number) => storeListingImage(user.id, id, index, value)));
-      await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: titleEn })));
+      await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: titleAr || titleEn })));
     }
     const coverImageId = Number(input.coverImageId);
     if (Number.isInteger(coverImageId) && coverImageId > 0) {

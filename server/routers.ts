@@ -296,16 +296,21 @@ async function storeLostFoundPhoto(
 
 const listingInput = z.object({
   categoryId: z.number().int().positive(),
-  titleEn: z.string().trim().min(2).max(180),
+  titleEn: z.string().trim().max(180).optional(),
   titleAr: z.string().trim().max(180).optional(),
-  descriptionEn: z.string().min(20).max(5000),
+  descriptionEn: z.string().trim().max(5000).optional(),
   descriptionAr: z.string().max(5000).optional(),
-  price: z.number().min(0).max(100000000),
+  price: z.number().finite().positive().max(100000000),
   negotiable: z.boolean().default(false),
   exchangeAvailable: z.boolean().default(false),
   location: z.string().min(2).max(120).default("Hurghada"),
   imageData: z.array(z.string().max(7000000)).max(6).optional(),
   imagePath: z.string().max(600).optional(),
+}).superRefine((value, context) => {
+  const title = value.titleAr?.trim() || value.titleEn?.trim() || "";
+  const description = value.descriptionAr?.trim() || value.descriptionEn?.trim() || "";
+  if (title.length < 4) context.addIssue({ code: "too_small", origin: "string", minimum: 4, inclusive: true, path: ["titleAr"], message: "العنوان يجب أن يكون 4 أحرف على الأقل" });
+  if (description.length < 20) context.addIssue({ code: "too_small", origin: "string", minimum: 20, inclusive: true, path: ["descriptionAr"], message: "الوصف يجب أن يكون 20 حرفًا على الأقل" });
 });
 
 const priceGuideInput = z.object({
@@ -504,6 +509,10 @@ export const appRouter = router({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database is not available",
           });
+        const titleEn = input.titleEn?.trim() || input.titleAr!.trim();
+        const titleAr = input.titleAr?.trim() || null;
+        const descriptionEn = input.descriptionEn?.trim() || input.descriptionAr!.trim();
+        const descriptionAr = input.descriptionAr?.trim() || null;
         const imagePaths: string[] = input.imagePath ? [input.imagePath] : [];
         for (
           let index = 0;
@@ -566,10 +575,10 @@ export const appRouter = router({
         const [created] = await db.insert(listings).values({
           sellerId: ctx.user.id,
           categoryId: input.categoryId,
-          titleEn: input.titleEn,
-          titleAr: input.titleAr || null,
-          descriptionEn: input.descriptionEn,
-          descriptionAr: input.descriptionAr || null,
+          titleEn,
+          titleAr,
+          descriptionEn,
+          descriptionAr,
           price: input.price.toFixed(2),
           negotiable: input.negotiable,
           exchangeAvailable: input.exchangeAvailable,
@@ -584,7 +593,7 @@ export const appRouter = router({
               storagePath,
               isCover: index === 0,
               sortOrder: index,
-              altText: input.titleEn,
+              altText: titleAr || titleEn,
             }))
           );
         await createNotification(

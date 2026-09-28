@@ -28,14 +28,20 @@ import {
 import { PRICE_REFERENCES, type PriceReference } from "@shared/priceGuide";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
-  { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
+  { match: /lorikeet|لوري/i, path: "/images/listing-lorikeet.jpg" },
   {
-    match: /parakeet|budgerigar|budgie/i,
+    match: /parakeet|budgerigar|budgie|بادجي|استرالي|استرالى/i,
     path: "/images/listing-green-parakeet.jpg",
   },
-  { match: /macaw/i, path: "/images/listing-blue-gold-macaw.jpg" },
-  { match: /cockatiel/i, path: "/images/listing-cockatiel.jpg" },
+  { match: /macaw|مكاو/i, path: "/images/listing-blue-gold-macaw.jpg" },
+  { match: /cockatiel|كوكتيل/i, path: "/images/listing-cockatiel.jpg" },
 ];
+function normalizeArabic(value: string) {
+  return value.trim().toLowerCase().normalize("NFKD").replace(/[\u064B-\u065F\u0670\u0640]/g, "").replace(/[ة]/g, "ه").replace(/[ى]/g, "ي");
+}
+function normalizedArabicColumn(column: any) {
+  return sql`replace(replace(replace(replace(lower(coalesce(${column}, '')), 'ة', 'ه'), 'ى', 'ي'), 'ـ', ''), 'َ', '')`;
+}
 
 function promotionalImageFor(
   title: string | null | undefined,
@@ -191,12 +197,14 @@ export async function listListings(input: {
   if (input.categoryId) filters.push(eq(listings.categoryId, input.categoryId));
   if (input.search?.trim()) {
     const term = `%${input.search.trim()}%`;
+    const arabicTerm = `%${normalizeArabic(input.search)}%`;
     filters.push(
       or(
         like(listings.titleEn, term),
-        like(listings.titleAr, term),
         like(listings.descriptionEn, term),
-        like(listings.location, term)
+        like(listings.location, term),
+        sql`${normalizedArabicColumn(listings.titleAr)} like ${arabicTerm}`,
+        sql`${normalizedArabicColumn(listings.descriptionAr)} like ${arabicTerm}`
       )!
     );
   }
@@ -238,7 +246,7 @@ export async function listListings(input: {
     .offset(input.offset);
   return rows.map(row => ({
     ...row,
-    coverImage: promotionalImageFor(row.titleEn, row.coverImage) || null,
+    coverImage: promotionalImageFor(`${row.titleAr || ""} ${row.titleEn || ""}`, row.coverImage) || null,
   }));
 }
 
@@ -300,7 +308,7 @@ export async function getListingById(id: number) {
   return {
     ...rows[0],
     coverImage:
-      promotionalImageFor(rows[0].titleEn, rows[0].coverImage) || null,
+      promotionalImageFor(`${rows[0].titleAr || ""} ${rows[0].titleEn || ""}`, rows[0].coverImage) || null,
   };
 }
 
@@ -315,6 +323,7 @@ export async function listListingImages(listingId: number) {
       sortOrder: listingImages.sortOrder,
       isCover: listingImages.isCover,
       titleEn: listings.titleEn,
+      titleAr: listings.titleAr,
     })
     .from(listingImages)
     .innerJoin(listings, eq(listingImages.listingId, listings.id))
@@ -330,7 +339,7 @@ export async function listListingImages(listingId: number) {
     id: row.id,
     storagePath:
       (index === 0
-        ? promotionalImageFor(row.titleEn, row.storagePath)
+        ? promotionalImageFor(`${row.titleAr || ""} ${row.titleEn || ""}`, row.storagePath)
         : row.storagePath) || "",
     altText: row.altText,
     sortOrder: row.sortOrder,
