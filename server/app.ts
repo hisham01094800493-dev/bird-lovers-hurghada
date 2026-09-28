@@ -11,10 +11,12 @@ import {
   cleanupExpiredMessageAttachments,
   getCommunityPostImage,
 } from "./db";
+import { assertProductionConfig } from "./_core/env";
 import { assertStorageConfigured } from "./storage";
 
 export function createApp() {
   const app = express();
+  assertProductionConfig();
   assertStorageConfigured();
 
   app.use(express.json({ limit: "5mb" }));
@@ -45,8 +47,6 @@ export function createApp() {
       .setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
       .json({
         version:
-          process.env.RAILWAY_GIT_COMMIT_SHA ||
-          process.env.RENDER_GIT_COMMIT ||
           process.env.VERCEL_GIT_COMMIT_SHA ||
           process.env.GIT_COMMIT ||
           process.env.npm_package_version ||

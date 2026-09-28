@@ -17,3 +17,13 @@ export const ENV = {
   s3PublicUrl: process.env.S3_PUBLIC_URL ?? "",
   s3ForcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
 };
+
+export function assertProductionConfig() {
+  if (!ENV.isProduction) return;
+  const missing = [
+    ["DATABASE_URL", ENV.databaseUrl],
+    ["JWT_SECRET", ENV.cookieSecret],
+    ["CRON_SECRET", ENV.cronSecret],
+  ].filter(([, value]) => !value.trim()).map(([name]) => name);
+  if (missing.length) throw new Error(`Missing required production environment variables: ${missing.join(", ")}`);
+}

@@ -46,6 +46,8 @@ Configure the following variables in the Vercel project before the first deploym
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | MySQL/TiDB connection string used by Drizzle and the migration command |
+| `DB_CA_CERT` | Recommended | CA certificate for verified TLS to the managed MySQL provider |
+| `CRON_SECRET` | Yes | Secret header for scheduled cleanup endpoints |
 | `JWT_SECRET` | Yes | Secret used to sign login session cookies; use a long random value |
 | `VITE_APP_ID` | Yes | Application identifier used by the OAuth client and frontend |
 | `OAUTH_SERVER_URL` | Yes | OAuth server base URL |
@@ -55,6 +57,7 @@ Configure the following variables in the Vercel project before the first deploym
 | `VITE_OAUTH_PORTAL_URL` | Yes for login | Public OAuth portal URL embedded in the client build |
 | `VITE_FRONTEND_FORGE_API_URL` | Feature-dependent | Browser-facing maps/API endpoint embedded in the client build |
 | `VITE_FRONTEND_FORGE_API_KEY` | Feature-dependent | Browser-facing maps/API key embedded in the client build |
+| `VITE_CONTACT_EMAIL` | Recommended | Public inbox used by the contact page; do not hardcode a personal address |
 
 Variables beginning with `VITE_` are embedded into the client bundle at build time, so set them before deploying or redeploy after changing them. Do not expose server-only secrets such as `JWT_SECRET`, `DATABASE_URL`, or `BUILT_IN_FORGE_API_KEY` as `VITE_` variables. After deployment, set the OAuth callback URL to `<Vercel public URL>/api/oauth/callback` in the OAuth provider. Check `<Vercel public URL>/health` before testing login, listings, uploads, and map features.
 

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import SiteShell from "@/components/SiteShell";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-const CONTACT_EMAIL = "h201065303382@gmail.com";
+const CONTACT_EMAIL = import.meta.env.VITE_CONTACT_EMAIL || "contact@bird-lovers.example";
 
 type ContactForm = {
   name: string;
