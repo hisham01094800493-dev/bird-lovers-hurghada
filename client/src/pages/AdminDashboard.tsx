@@ -19,7 +19,6 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ADMIN_EMAIL } from "@shared/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
@@ -29,7 +28,7 @@ import AdminPriceGuide from "@/components/AdminPriceGuide";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
-  const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.role === "admin";
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const stats = trpc.admin.stats.useQuery(undefined, { enabled: isAdmin });
   const members = trpc.admin.users.useQuery(

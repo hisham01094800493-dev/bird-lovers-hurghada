@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { ADMIN_EMAIL } from "@shared/const";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import AppVersionCard from "@/components/AppVersionCard";
@@ -44,7 +43,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     enabled: isAuthenticated,
     refetchInterval: 15000,
   });
-  const isAdmin = user?.role === "admin" || user?.email === ADMIN_EMAIL;
+  const isAdmin = user?.role === "admin";
   const [menuOpen, setMenuOpen] = useState(false);
   const newestNotificationId = useRef<number | null>(null);
   useEffect(() => {

@@ -6,10 +6,10 @@ function createPublicContext(): TrpcContext {
   return { user: null, req: { protocol: "https", headers: {} } as TrpcContext["req"], res: {} as TrpcContext["res"] };
 }
 
-function createUserContext(email = "member@example.com"): TrpcContext {
+function createUserContext(email = "member@example.com", role: "user" | "admin" = "user"): TrpcContext {
   const now = new Date();
   return {
-    user: { id: 22, openId: "member", email, name: "Member", loginMethod: "manus", role: "user", avatarUrl: null, phone: null, whatsappOptIn: false, area: null, bio: null, createdAt: now, updatedAt: now, lastSignedIn: now },
+    user: { id: 22, openId: "member", email, name: "Member", loginMethod: "manus", role, avatarUrl: null, phone: null, whatsappOptIn: false, area: null, bio: null, createdAt: now, updatedAt: now, lastSignedIn: now },
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   };
@@ -48,8 +48,8 @@ describe("MVP protected routes", () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.reviews.create({ sellerId: 99, listingId: 1, rating: 5, body: "A thoughtful and trustworthy seller." })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
-  it("recognizes the designated administrator identity", async () => {
-    const caller = appRouter.createCaller(createUserContext("h201065303382@gmail.com"));
+  it("recognizes an administrator by role", async () => {
+    const caller = appRouter.createCaller(createUserContext("admin@example.com", "admin"));
     await expect(caller.admin.stats()).resolves.toBeDefined();
   });
 });

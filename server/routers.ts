@@ -1,5 +1,4 @@
 import { COOKIE_NAME } from "@shared/const";
-import { ADMIN_EMAIL } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import {
@@ -115,7 +114,7 @@ function publicUser(
 }
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin" && ctx.user.email !== ADMIN_EMAIL)
+  if (ctx.user.role !== "admin")
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Admin access required",
