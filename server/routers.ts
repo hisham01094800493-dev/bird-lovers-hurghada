@@ -20,6 +20,11 @@ import { hasRemoteStorage, storagePut } from "./storage";
 import { validateChatUpload } from "./chatUploads";
 import { collectExternalPriceDraft } from "./priceRefresh";
 import {
+  canonicalizeListingText,
+  listingTextFields,
+  validateListingText,
+} from "../shared/listingValidation";
+import {
   communityPosts,
   favorites,
   listingImages,
@@ -302,17 +307,14 @@ async function storeLostFoundPhoto(
 
 const listingInput = z.object({
   categoryId: z.number().int().positive(),
-  titleEn: z.string().trim().min(2).max(180),
-  titleAr: z.string().trim().max(180).optional(),
-  descriptionEn: z.string().min(20).max(5000),
-  descriptionAr: z.string().max(5000).optional(),
-  price: z.number().min(0).max(100000000),
+  ...listingTextFields,
+  price: z.number().positive().max(100000000),
   negotiable: z.boolean().default(false),
   exchangeAvailable: z.boolean().default(false),
   location: z.string().min(2).max(120).default("Hurghada"),
   imageData: z.array(z.string().max(7000000)).max(6).optional(),
   imagePath: z.string().max(600).optional(),
-});
+}).superRefine(validateListingText);
 
 const priceGuideInput = z.object({
   id: z
@@ -535,6 +537,7 @@ export const appRouter = router({
             code: "INTERNAL_SERVER_ERROR",
             message: "Database is not available",
           });
+        const text = canonicalizeListingText(input);
         const imagePaths: string[] = input.imagePath ? [input.imagePath] : [];
         for (
           let index = 0;
@@ -597,10 +600,10 @@ export const appRouter = router({
         const [created] = await db.insert(listings).values({
           sellerId: ctx.user.id,
           categoryId: input.categoryId,
-          titleEn: input.titleEn,
-          titleAr: input.titleAr || null,
-          descriptionEn: input.descriptionEn,
-          descriptionAr: input.descriptionAr || null,
+          titleEn: text.titleEn,
+          titleAr: text.titleAr,
+          descriptionEn: text.descriptionEn,
+          descriptionAr: text.descriptionAr,
           price: input.price.toFixed(2),
           negotiable: input.negotiable,
           exchangeAvailable: input.exchangeAvailable,
@@ -615,7 +618,7 @@ export const appRouter = router({
               storagePath,
               isCover: index === 0,
               sortOrder: index,
-              altText: input.titleEn,
+              altText: text.titleEn,
             }))
           );
         await createNotification(

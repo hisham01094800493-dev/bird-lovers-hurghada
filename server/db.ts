@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, like, or, sql, type SQLWrapper } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   auditLogs,
@@ -28,25 +28,38 @@ import {
 } from "../drizzle/schema";
 import { ADMIN_EMAIL } from "@shared/const";
 import { PRICE_REFERENCES, type PriceReference } from "@shared/priceGuide";
+import { normalizeArabicSearch } from "@shared/arabicText";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
-  { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
+  { match: /lorikeet|لوريكيت|لوري/i, path: "/images/listing-lorikeet.jpg" },
   {
-    match: /parakeet|budgerigar|budgie/i,
+    match: /parakeet|budgerigar|budgie|بادجي|درة|دُرَّة/i,
     path: "/images/listing-green-parakeet.jpg",
   },
-  { match: /macaw/i, path: "/images/listing-blue-gold-macaw.jpg" },
-  { match: /cockatiel/i, path: "/images/listing-cockatiel.jpg" },
+  { match: /macaw|مكاو/i, path: "/images/listing-blue-gold-macaw.jpg" },
+  { match: /cockatiel|cockatoo|كوكتيل|كروان/i, path: "/images/listing-cockatiel.jpg" },
 ];
 
 function promotionalImageFor(
   title: string | null | undefined,
+  titleAr: string | null | undefined,
   fallback: string | null | undefined
 ) {
   return (
-    PROMOTIONAL_IMAGES.find(entry => entry.match.test(title || ""))?.path ||
+    PROMOTIONAL_IMAGES.find(entry => entry.match.test(`${title || ""} ${titleAr || ""}`))?.path ||
     fallback
   );
+}
+
+function normalizedArabicSql(column: SQLWrapper) {
+  let value = sql`LOWER(COALESCE(${column}, ''))`;
+  for (const mark of [
+    "َ", "ً", "ُ", "ٌ", "ِ", "ٍ", "ْ", "ّ", "ٰ", "ـ",
+  ]) {
+    value = sql`REPLACE(${value}, ${mark}, '')`;
+  }
+  value = sql`REPLACE(REPLACE(${value}, 'ة', 'ه'), 'ى', 'ي')`;
+  return value;
 }
 import { ENV } from "./_core/env";
 
@@ -310,13 +323,20 @@ export async function listListings(input: {
   ];
   if (input.categoryId) filters.push(eq(listings.categoryId, input.categoryId));
   if (input.search?.trim()) {
-    const term = `%${input.search.trim()}%`;
+    const rawTerm = input.search.trim();
+    const term = `%${rawTerm}%`;
+    const normalizedTerm = `%${normalizeArabicSearch(rawTerm)}%`;
     filters.push(
       or(
         like(listings.titleEn, term),
         like(listings.titleAr, term),
         like(listings.descriptionEn, term),
-        like(listings.location, term)
+        like(listings.descriptionAr, term),
+        like(listings.location, term),
+        like(normalizedArabicSql(listings.titleEn), normalizedTerm),
+        like(normalizedArabicSql(listings.titleAr), normalizedTerm),
+        like(normalizedArabicSql(listings.descriptionEn), normalizedTerm),
+        like(normalizedArabicSql(listings.descriptionAr), normalizedTerm)
       )!
     );
   }
@@ -358,7 +378,7 @@ export async function listListings(input: {
     .offset(input.offset);
   return rows.map(row => ({
     ...row,
-    coverImage: promotionalImageFor(row.titleEn, row.coverImage) || null,
+    coverImage: promotionalImageFor(row.titleEn, row.titleAr, row.coverImage) || null,
   }));
 }
 
@@ -420,7 +440,7 @@ export async function getListingById(id: number) {
   return {
     ...rows[0],
     coverImage:
-      promotionalImageFor(rows[0].titleEn, rows[0].coverImage) || null,
+      promotionalImageFor(rows[0].titleEn, rows[0].titleAr, rows[0].coverImage) || null,
   };
 }
 
@@ -435,6 +455,7 @@ export async function listListingImages(listingId: number) {
       sortOrder: listingImages.sortOrder,
       isCover: listingImages.isCover,
       titleEn: listings.titleEn,
+      titleAr: listings.titleAr,
     })
     .from(listingImages)
     .innerJoin(listings, eq(listingImages.listingId, listings.id))
@@ -450,7 +471,7 @@ export async function listListingImages(listingId: number) {
     id: row.id,
     storagePath:
       (index === 0
-        ? promotionalImageFor(row.titleEn, row.storagePath)
+        ? promotionalImageFor(row.titleEn, row.titleAr, row.storagePath)
         : row.storagePath) || "",
     altText: row.altText,
     sortOrder: row.sortOrder,
