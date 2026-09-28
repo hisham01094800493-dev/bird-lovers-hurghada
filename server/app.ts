@@ -8,6 +8,8 @@ import { scheduledPriceRefresh } from "./scheduledPriceRefresh";
 import { createContext } from "./_core/context";
 import { cleanupExpiredMessageAttachments, getDb } from "./db";
 import { ENV } from "./_core/env";
+import { and, eq } from "drizzle-orm";
+import { listings } from "../drizzle/schema";
 
 export function createApp() {
   if (ENV.isProduction && !ENV.databaseUrl) throw new Error("DATABASE_URL is required in production");
@@ -33,6 +35,21 @@ export function createApp() {
     if (!expected || req.header("authorization") !== `Bearer ${expected}`) return res.status(401).json({ message: "Unauthorized" });
     const deleted = await cleanupExpiredMessageAttachments();
     return res.json({ success: true, deleted });
+  });
+  app.get("/sitemap.xml", async (_req, res) => {
+    const base = "https://bird-lovers-hurghada.vercel.app";
+    const urls = ["/", "/marketplace", "/community", "/care", "/lost-found"];
+    try {
+      const db = await getDb();
+      if (db) {
+        const published = await db.select({ id: listings.id }).from(listings).where(and(eq(listings.status, "published"), eq(listings.moderationStatus, "approved")));
+        urls.push(...published.map(item => `/listing/${item.id}`));
+      }
+    } catch {
+      // Static pages remain available even if the database is temporarily down.
+    }
+    const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(path => `<url><loc>${base}${path}</loc></url>`).join("")}</urlset>`;
+    return res.type("application/xml").send(body);
   });
   app.get("/api/version", (_req, res) =>
     res
