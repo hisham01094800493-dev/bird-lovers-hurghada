@@ -5,6 +5,10 @@ import { listingImages, listings } from "../drizzle/schema";
 import { sdk } from "./_core/sdk";
 import { storagePut } from "./storage";
 import sharp from "sharp";
+import {
+  canonicalizeListingText,
+  listingEditSchema,
+} from "../shared/listingValidation";
 
 async function currentUser(req: Request) {
   try { return await sdk.authenticateRequest(req); } catch { return null; }
@@ -38,15 +42,16 @@ export function registerListingManagementRoutes(app: Express) {
     const db = await getDb(); if (!db) return res.status(503).json({ message: "Database is not available" });
     const existing = await db.select({ id: listings.id }).from(listings).where(and(eq(listings.id, id), eq(listings.sellerId, user.id))).limit(1);
     if (!existing[0]) return res.status(404).json({ message: "Listing not found" });
-    const input = req.body || {};
-    const titleEn = bodyValue(input.titleEn); const descriptionEn = bodyValue(input.descriptionEn); const price = bodyValue(input.price);
-    if (titleEn.length < 4 || descriptionEn.length < 20 || !price) return res.status(400).json({ message: "Title, description, and price are required" });
-    await db.update(listings).set({ titleEn, titleAr: bodyValue(input.titleAr) || null, descriptionEn, descriptionAr: bodyValue(input.descriptionAr) || null, price, location: bodyValue(input.location, "Hurghada"), status: "pending_review", moderationStatus: "pending" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
+    const parsed = listingEditSchema.safeParse(req.body || {});
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message || "Invalid listing data" });
+    const input = parsed.data;
+    const text = canonicalizeListingText(input);
+    await db.update(listings).set({ ...text, price: input.price.toFixed(2), location: input.location, status: "pending_review", moderationStatus: "pending" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
     const imageData = Array.isArray(input.imageData) ? input.imageData.filter((value: unknown): value is string => typeof value === "string").slice(0, 6) : [];
     if (imageData.length) {
       const existingImages = await db.select({ id: listingImages.id }).from(listingImages).where(eq(listingImages.listingId, id)).orderBy(asc(listingImages.sortOrder));
       const urls = await Promise.all(imageData.map((value: string, index: number) => storeListingImage(user.id, id, index, value)));
-      await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: titleEn })));
+      await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: text.titleEn })));
     }
     const coverImageId = Number(input.coverImageId);
     if (Number.isInteger(coverImageId) && coverImageId > 0) {
