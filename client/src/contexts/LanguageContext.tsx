@@ -14,7 +14,7 @@ interface LanguageContextValue { language: Language; isArabic: boolean; toggleLa
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 function readLanguage(): Language {
-  try { return localStorage.getItem("bird-lovers-language") === "ar" ? "ar" : "en"; } catch { return "en"; }
+  try { return localStorage.getItem("bird-lovers-language") === "en" ? "en" : "ar"; } catch { return "ar"; }
 }
 function persistLanguage(language: Language) { try { localStorage.setItem("bird-lovers-language", language); } catch { /* Storage may be blocked; the current session still works. */ } }
 
