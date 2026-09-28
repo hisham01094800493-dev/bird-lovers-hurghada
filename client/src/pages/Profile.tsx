@@ -22,6 +22,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
+import { compressImage } from "@/lib/imageCompression";
 
 const birdAvatars = [
   { label: "بادجي", url: "/images/hurghada-budgie-card.jpg" },
@@ -114,14 +115,11 @@ export default function Profile() {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (!file.type.startsWith("image/") || file.size > 4_000_000)
+    if (!file.type.startsWith("image/") || file.size > 12_000_000)
       return toast.error("اختار صورة أقل من 4 ميجابايت");
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string")
-        uploadAvatar.mutate({ imageData: reader.result });
-    };
-    reader.readAsDataURL(file);
+    compressImage(file, { maxDimension: 800, maxBytes: 400_000 })
+      .then(result => uploadAvatar.mutate({ imageData: result.dataUrl }))
+      .catch(() => toast.error("تعذر ضغط الصورة"));
   };
   return (
     <SiteShell>
