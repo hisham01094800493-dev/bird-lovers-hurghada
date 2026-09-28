@@ -131,12 +131,14 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     values.lastSignedIn = user.lastSignedIn;
     updateSet.lastSignedIn = user.lastSignedIn;
   }
-  if (user.role !== undefined) {
-    values.role = user.role;
-    updateSet.role = user.role;
-  } else if (user.openId === ENV.ownerOpenId) {
+  // The configured project owner must remain an admin even when an OAuth
+  // provider supplies the default "user" role during sign-in.
+  if (user.openId === ENV.ownerOpenId) {
     values.role = "admin";
     updateSet.role = "admin";
+  } else if (user.role !== undefined) {
+    values.role = user.role;
+    updateSet.role = user.role;
   }
   values.lastSignedIn ??= new Date();
   updateSet.lastSignedIn ??= new Date();
