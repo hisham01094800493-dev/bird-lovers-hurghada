@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <meta name="theme-color" content="#183b39" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" href="/icons/bird-lovers-budgie-icon-48.png" type="image/png" />
@@ -10,30 +10,68 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="description" content="محبي الطيور في مصر – سوق ومجتمع آمن لبيع وشراء الطيور والحيوانات الأليفة والأقفاص والأغذية والمستلزمات." />
+    <meta name="description" content="Bird Lovers in Hurghada — a calmer marketplace and community for birds, pets, cages, food and supplies." />
+    <meta name="mitgo-verification" content="433c49dd-b6da-4bee-ac85-fe03a6340c74" />
     <link rel="canonical" href="https://bird-lovers-hurghada.vercel.app/" />
-    <meta property="og:title" content="محبي الطيور في مصر – بيع وشراء الطيور والمستلزمات" />
-    <meta property="og:description" content="اكتشف الطيور والمستلزمات وتواصل مع محبي الطيور في الغردقة ومصر." />
+    <meta property="og:title" content="Bird Lovers in Hurghada" />
+    <meta property="og:description" content="Find good birds and good people in Hurghada." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://bird-lovers-hurghada.vercel.app/" />
-    <meta property="og:site_name" content="محبي الطيور في مصر" />
+    <meta property="og:site_name" content="Bird Lovers in Hurghada" />
     <meta property="og:image" content="https://bird-lovers-hurghada.vercel.app/icons/bird-lovers-budgie-icon-1024.png?v=2" />
     <meta property="og:image:secure_url" content="https://bird-lovers-hurghada.vercel.app/icons/bird-lovers-budgie-icon-1024.png?v=2" />
     <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1024" />
     <meta property="og:image:height" content="1024" />
-    <meta property="og:image:alt" content="شعار محبي الطيور في مصر" />
+    <meta property="og:image:alt" content="Bird Lovers in Hurghada" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="محبي الطيور في مصر – بيع وشراء الطيور والمستلزمات" />
-    <meta name="twitter:description" content="اكتشف الطيور والمستلزمات وتواصل مع محبي الطيور في الغردقة ومصر." />
+    <meta name="twitter:title" content="Bird Lovers in Hurghada" />
+    <meta name="twitter:description" content="Find good birds and good people in Hurghada." />
     <meta name="twitter:image" content="https://bird-lovers-hurghada.vercel.app/icons/bird-lovers-budgie-icon-1024.png?v=2" />
     <meta name="google-adsense-account" content="ca-pub-7793528934376126" />
     <script id="google-adsense-script" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7793528934376126" crossorigin="anonymous"></script>
-    <title>محبي الطيور في مصر – بيع وشراء الطيور والمستلزمات</title>
+    <title>Bird Lovers in Hurghada</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-boot-fallback" style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f5ef;color:#183b39;font-family:Arial,sans-serif;text-align:center">
+        <div><strong style="font-size:22px">Bird Lovers</strong><p style="margin:10px 0;color:#718780">جاري فتح الموقع…</p></div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var retryKey = "bird-lovers-boot-retries";
+        var retryDelays = [1500, 3000, 6000];
+        var retryScheduled = false;
+        function retryBoot() {
+          if (retryScheduled) return;
+          var attempt = 0;
+          try { attempt = Number(sessionStorage.getItem(retryKey) || "0"); } catch (_) {}
+          if (attempt >= retryDelays.length) return;
+          retryScheduled = true;
+          try { sessionStorage.setItem(retryKey, String(attempt + 1)); } catch (_) {}
+          window.setTimeout(function () {
+            var separator = window.location.href.indexOf("?") === -1 ? "?" : "&";
+            window.location.replace(window.location.href + separator + "boot_retry=" + Date.now());
+          }, retryDelays[attempt]);
+        }
+        function showRecovery() {
+          var root = document.getElementById("root");
+          if (!root || !document.getElementById("app-boot-fallback")) return;
+          root.innerHTML = '<div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f5ef;color:#183b39;font-family:Arial,sans-serif;text-align:center"><div><strong style="font-size:22px">تعذر فتح الموقع</strong><p style="margin:10px 0;color:#718780">اضغط إعادة المحاولة لتحميل نسخة جديدة.</p><button onclick="location.reload()" style="border:0;border-radius:12px;padding:12px 18px;background:#183b39;color:white;font-weight:700">إعادة المحاولة</button></div></div>';
+        }
+        window.addEventListener("error", function (event) {
+          if (event.target && event.target.tagName === "SCRIPT") retryBoot();
+        }, true);
+        window.addEventListener("unhandledrejection", retryBoot);
+        window.setTimeout(function () {
+          if (document.getElementById("app-boot-fallback")) retryBoot();
+        }, 12000);
+        window.setTimeout(function () {
+          if (document.getElementById("app-boot-fallback")) showRecovery();
+        }, 24000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
-    <script defer src="%VITE_ANALYTICS_ENDPOINT%/umami" data-website-id="%VITE_ANALYTICS_WEBSITE_ID%"></script>
   </body>
 </html>

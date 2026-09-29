@@ -1,1 +1,2 @@
-ALTER TABLE `notificationPreferences` DROP INDEX `notificationPreferences_userId_unique`;
+-- The unique index was already absent in the production database.
+-- Keep this historical migration as a no-op so fresh and existing databases can migrate safely.

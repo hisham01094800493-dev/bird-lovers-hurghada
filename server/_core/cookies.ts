@@ -42,7 +42,11 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
+    // Email/password login is same-origin. Lax is accepted by Chrome even
+    // when a reverse proxy does not forward the HTTPS scheme consistently.
+    // SameSite=None without Secure is rejected, which makes users appear to
+    // log in successfully and then immediately lose their session.
+    sameSite: "lax",
     secure: isSecureRequest(req),
   };
 }

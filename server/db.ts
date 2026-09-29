@@ -4,6 +4,7 @@ import { createPool } from "mysql2/promise";
 import {
   auditLogs,
   appUpdates,
+  affiliateProducts,
   categories,
   communityPosts,
   communityPostLikes,
@@ -29,20 +30,14 @@ import {
 import { PRICE_REFERENCES, type PriceReference } from "@shared/priceGuide";
 
 const PROMOTIONAL_IMAGES: Array<{ match: RegExp; path: string }> = [
-  { match: /lorikeet|لوري/i, path: "/images/listing-lorikeet.jpg" },
+  { match: /lorikeet/i, path: "/images/listing-lorikeet.jpg" },
   {
-    match: /parakeet|budgerigar|budgie|بادجي|استرالي|استرالى/i,
+    match: /parakeet|budgerigar|budgie/i,
     path: "/images/listing-green-parakeet.jpg",
   },
-  { match: /macaw|مكاو/i, path: "/images/listing-blue-gold-macaw.jpg" },
-  { match: /cockatiel|كوكتيل/i, path: "/images/listing-cockatiel.jpg" },
+  { match: /macaw/i, path: "/images/listing-blue-gold-macaw.jpg" },
+  { match: /cockatiel/i, path: "/images/listing-cockatiel.jpg" },
 ];
-function normalizeArabic(value: string) {
-  return value.trim().toLowerCase().normalize("NFKD").replace(/[\u064B-\u065F\u0670\u0640]/g, "").replace(/[ة]/g, "ه").replace(/[ى]/g, "ي");
-}
-function normalizedArabicColumn(column: any) {
-  return sql`replace(replace(replace(replace(lower(coalesce(${column}, '')), 'ة', 'ه'), 'ى', 'ي'), 'ـ', ''), 'َ', '')`;
-}
 
 function promotionalImageFor(
   title: string | null | undefined,
@@ -57,24 +52,153 @@ import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
+function getDatabaseConnection() {
+  const rawUrl = process.env.DATABASE_URL;
+  if (!rawUrl) return null;
+  const ssl = process.env.DB_CA_CERT
+    ? { ca: process.env.DB_CA_CERT, rejectUnauthorized: true }
+    : undefined;
+  return { uri: rawUrl, ssl };
+}
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      const ssl = process.env.DB_CA_CERT
-        ? { ca: process.env.DB_CA_CERT, rejectUnauthorized: true }
-        : undefined;
-      const pool = createPool({
-        uri: process.env.DATABASE_URL,
-        connectionLimit: 3,
-        ...(ssl ? { ssl } : {}),
-      });
-      _db = drizzle(pool as any);
+      const connection = getDatabaseConnection();
+      if (connection) {
+        const pool = createPool({ uri: connection.uri, connectionLimit: 3, ...(connection.ssl ? { ssl: connection.ssl } : {}) });
+        _db = drizzle(pool as any);
+      }
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
     }
   }
   return _db;
+}
+
+export async function ensureLocalAuthSchema() {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.execute(
+      sql.raw("ALTER TABLE `users` ADD COLUMN `passwordHash` text NULL")
+    );
+  } catch (error) {
+    const message = String(error);
+    if (
+      !message.toLowerCase().includes("duplicate column") &&
+      !message.toLowerCase().includes("already exists")
+    ) {
+      console.warn("[Database] Local auth schema check failed:", message);
+    }
+  }
+}
+
+export async function ensureAffiliateProductsSchema() {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.execute(
+      sql.raw(`CREATE TABLE IF NOT EXISTS \`affiliateProducts\` (
+        \`id\` varchar(80) NOT NULL,
+        \`category\` enum('food','care','housing') NOT NULL DEFAULT 'food',
+        \`nameEn\` varchar(180) NOT NULL,
+        \`nameAr\` varchar(180) NOT NULL,
+        \`descriptionEn\` text NOT NULL,
+        \`descriptionAr\` text NOT NULL,
+        \`priceEn\` varchar(120) NOT NULL,
+        \`priceAr\` varchar(120) NOT NULL,
+        \`imageUrl\` text NOT NULL,
+        \`affiliateUrl\` text NOT NULL,
+        \`noonUrl\` varchar(2000) NOT NULL DEFAULT '',
+        \`noonCoupon\` varchar(120) NOT NULL DEFAULT '',
+        \`tagEn\` varchar(80) NOT NULL,
+        \`tagAr\` varchar(80) NOT NULL,
+        \`isActive\` boolean NOT NULL DEFAULT true,
+        \`sortOrder\` int NOT NULL DEFAULT 0,
+        \`createdAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updatedAt\` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (\`id\`),
+        KEY \`affiliate_products_active_idx\` (\`isActive\`, \`sortOrder\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`)
+    );
+    for (const statement of [
+      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonUrl` varchar(2000) NOT NULL DEFAULT ''",
+      "ALTER TABLE `affiliateProducts` ADD COLUMN `noonCoupon` varchar(120) NOT NULL DEFAULT ''",
+    ]) {
+      try {
+        await db.execute(sql.raw(statement));
+      } catch (error) {
+        const message = String(error).toLowerCase();
+        if (!message.includes("duplicate column") && !message.includes("already exists"))
+          console.warn("[Database] Noon affiliate column check failed:", String(error));
+      }
+    }
+    const existing = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(affiliateProducts);
+    if (Number(existing[0]?.count || 0) === 0) {
+      await db.insert(affiliateProducts).values([
+        {
+          id: "balanced-seed-mix",
+          category: "food",
+          nameEn: "Balanced seed mix",
+          nameAr: "خلطة بذور متوازنة",
+          descriptionEn: "A practical everyday starting point for small companion birds.",
+          descriptionAr: "اختيار عملي كبداية للتغذية اليومية للطيور الصغيرة.",
+          priceEn: "Check current price",
+          priceAr: "تحقق من السعر الحالي",
+          imageUrl: "/images/bird-seed.jpg",
+          affiliateUrl: "https://www.amazon.eg/s?k=bird+seed+mix",
+          noonUrl: "",
+          noonCoupon: "",
+          tagEn: "Everyday care",
+          tagAr: "رعاية يومية",
+          isActive: true,
+          sortOrder: 0,
+        },
+        {
+          id: "natural-perch",
+          category: "care",
+          nameEn: "Natural wood perch",
+          nameAr: "مجثم خشبي طبيعي",
+          descriptionEn: "A simple enrichment upgrade that gives feet different textures.",
+          descriptionAr: "إضافة بسيطة للتنويع تمنح أقدام الطائر أسطحًا مختلفة.",
+          priceEn: "Check current price",
+          priceAr: "تحقق من السعر الحالي",
+          imageUrl: "/images/cage-gold.jpg",
+          affiliateUrl: "https://www.amazon.eg/s?k=natural+wood+bird+perch",
+          noonUrl: "",
+          noonCoupon: "",
+          tagEn: "Enrichment",
+          tagAr: "تنويع ونشاط",
+          isActive: true,
+          sortOrder: 1,
+        },
+        {
+          id: "travel-carrier",
+          category: "housing",
+          nameEn: "Small bird travel carrier",
+          nameAr: "حقيبة نقل للطيور الصغيرة",
+          descriptionEn: "Useful for safe clinic visits and short trips around Hurghada.",
+          descriptionAr: "مفيدة للذهاب إلى العيادة والتنقلات القصيرة بأمان.",
+          priceEn: "Check current price",
+          priceAr: "تحقق من السعر الحالي",
+          imageUrl: "/images/cage-gold.jpg",
+          affiliateUrl: "https://www.amazon.eg/s?k=small+bird+travel+carrier",
+          noonUrl: "",
+          noonCoupon: "",
+          tagEn: "Safe transport",
+          tagAr: "نقل آمن",
+          isActive: true,
+          sortOrder: 2,
+        },
+      ]);
+    }
+  } catch (error) {
+    console.warn("[Database] Affiliate products schema check failed:", String(error));
+  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -188,14 +312,12 @@ export async function listListings(input: {
   if (input.categoryId) filters.push(eq(listings.categoryId, input.categoryId));
   if (input.search?.trim()) {
     const term = `%${input.search.trim()}%`;
-    const arabicTerm = `%${normalizeArabic(input.search)}%`;
     filters.push(
       or(
         like(listings.titleEn, term),
+        like(listings.titleAr, term),
         like(listings.descriptionEn, term),
-        like(listings.location, term),
-        sql`${normalizedArabicColumn(listings.titleAr)} like ${arabicTerm}`,
-        sql`${normalizedArabicColumn(listings.descriptionAr)} like ${arabicTerm}`
+        like(listings.location, term)
       )!
     );
   }
@@ -237,7 +359,7 @@ export async function listListings(input: {
     .offset(input.offset);
   return rows.map(row => ({
     ...row,
-    coverImage: promotionalImageFor(`${row.titleAr || ""} ${row.titleEn || ""}`, row.coverImage) || null,
+    coverImage: promotionalImageFor(row.titleEn, row.coverImage) || null,
   }));
 }
 
@@ -299,7 +421,7 @@ export async function getListingById(id: number) {
   return {
     ...rows[0],
     coverImage:
-      promotionalImageFor(`${rows[0].titleAr || ""} ${rows[0].titleEn || ""}`, rows[0].coverImage) || null,
+      promotionalImageFor(rows[0].titleEn, rows[0].coverImage) || null,
   };
 }
 
@@ -314,7 +436,6 @@ export async function listListingImages(listingId: number) {
       sortOrder: listingImages.sortOrder,
       isCover: listingImages.isCover,
       titleEn: listings.titleEn,
-      titleAr: listings.titleAr,
     })
     .from(listingImages)
     .innerJoin(listings, eq(listingImages.listingId, listings.id))
@@ -330,7 +451,7 @@ export async function listListingImages(listingId: number) {
     id: row.id,
     storagePath:
       (index === 0
-        ? promotionalImageFor(`${row.titleAr || ""} ${row.titleEn || ""}`, row.storagePath)
+        ? promotionalImageFor(row.titleEn, row.storagePath)
         : row.storagePath) || "",
     altText: row.altText,
     sortOrder: row.sortOrder,
@@ -390,6 +511,7 @@ export async function listCommunityPosts() {
       title: communityPosts.title,
       body: communityPosts.body,
       imagePath: communityPosts.imagePath,
+      authorId: communityPosts.authorId,
       likesCount: communityPosts.likesCount,
       commentsCount: communityPosts.commentsCount,
       createdAt: communityPosts.createdAt,
@@ -402,7 +524,11 @@ export async function listCommunityPosts() {
     .orderBy(desc(communityPosts.createdAt))
     .limit(12);
 }
-
+export async function getCommunityPostImage(postId: number) {
+  const db = await getDb(); if (!db) return undefined;
+  const rows = await db.select({ imageData: communityPosts.imageData, imageMime: communityPosts.imageMime }).from(communityPosts).where(and(eq(communityPosts.id, postId), eq(communityPosts.status, "published"))).limit(1);
+  return rows[0];
+}
 export async function listCommunityComments(postId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -1033,14 +1159,19 @@ export async function getAdminStats() {
   if (!db)
     return {
       users: 0,
+      activeUsers: 0,
       listings: 0,
       pendingListings: 0,
       reports: 0,
       messages: 0,
     };
-  const [userRows, listingRows, pendingRows, reportRows, messageRows] =
+  const [userRows, activeUserRows, listingRows, pendingRows, reportRows, messageRows] =
     await Promise.all([
       db.select({ count: sql<number>`count(*)` }).from(users),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(users)
+        .where(sql`${users.lastSignedIn} >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)`),
       db.select({ count: sql<number>`count(*)` }).from(listings),
       db
         .select({ count: sql<number>`count(*)` })
@@ -1054,6 +1185,7 @@ export async function getAdminStats() {
     ]);
   return {
     users: Number(userRows[0]?.count || 0),
+    activeUsers: Number(activeUserRows[0]?.count || 0),
     listings: Number(listingRows[0]?.count || 0),
     pendingListings: Number(pendingRows[0]?.count || 0),
     reports: Number(reportRows[0]?.count || 0),
@@ -1112,6 +1244,98 @@ export async function listPriceGuide() {
     console.warn("[Database] Price guide is not available yet:", String(error));
     return PRICE_REFERENCES;
   }
+}
+
+export type AffiliateProductInput = {
+  id: string;
+  category: "food" | "care" | "housing";
+  nameEn: string;
+  nameAr: string;
+  descriptionEn: string;
+  descriptionAr: string;
+  priceEn: string;
+  priceAr: string;
+  imageUrl: string;
+  affiliateUrl: string;
+  noonUrl: string;
+  noonCoupon: string;
+  tagEn: string;
+  tagAr: string;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+function mapAffiliateProduct(row: typeof affiliateProducts.$inferSelect) {
+  return {
+    ...row,
+    noonUrl: row.noonUrl || "",
+    noonCoupon: row.noonCoupon || "",
+  };
+}
+
+export async function listAffiliateProducts(activeOnly = true) {
+  const db = await getDb();
+  if (!db) return [];
+  try {
+    const rows = await db
+      .select()
+      .from(affiliateProducts)
+      .where(activeOnly ? eq(affiliateProducts.isActive, true) : undefined)
+      .orderBy(asc(affiliateProducts.sortOrder), asc(affiliateProducts.createdAt));
+    return rows.map(mapAffiliateProduct);
+  } catch (error) {
+    console.warn("[Database] Affiliate products are not available yet:", String(error));
+    return [];
+  }
+}
+
+export async function createAffiliateProduct(actorId: number, input: AffiliateProductInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(affiliateProducts).values(input);
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "affiliate_product_create",
+    targetType: "affiliate_product",
+    targetId: null,
+    metadata: JSON.stringify({ id: input.id, affiliateUrl: input.affiliateUrl }),
+  });
+  return true as const;
+}
+
+export async function updateAffiliateProduct(actorId: number, input: AffiliateProductInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const { id, ...values } = input;
+  const existing = await db
+    .select({ id: affiliateProducts.id })
+    .from(affiliateProducts)
+    .where(eq(affiliateProducts.id, id))
+    .limit(1);
+  if (!existing[0]) throw new Error("Affiliate product not found");
+  await db.update(affiliateProducts).set(values).where(eq(affiliateProducts.id, id));
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "affiliate_product_update",
+    targetType: "affiliate_product",
+    targetId: null,
+    metadata: JSON.stringify({ id, affiliateUrl: input.affiliateUrl }),
+  });
+  return true as const;
+}
+
+export async function deleteAffiliateProduct(actorId: number, id: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.delete(affiliateProducts).where(eq(affiliateProducts.id, id));
+  await db.insert(auditLogs).values({
+    actorId,
+    action: "affiliate_product_delete",
+    targetType: "affiliate_product",
+    targetId: null,
+    metadata: JSON.stringify({ id }),
+  });
+  return true as const;
 }
 
 export async function createPriceGuideItem(

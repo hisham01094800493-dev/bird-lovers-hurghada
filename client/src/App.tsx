@@ -23,6 +23,9 @@ import LostFound from "./pages/LostFound";
 import UpdateNotice from "./components/UpdateNotice";
 import PriceGuide from "./pages/PriceGuide";
 import CareTools from "./pages/CareTools";
+import Directory from "./pages/Directory";
+import Recommended from "./pages/Recommended";
+import Contact from "./pages/Contact";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 
@@ -45,6 +48,9 @@ function Router() {
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/prices" component={PriceGuide} />
       <Route path="/care-tools" component={CareTools} />
+      <Route path="/directory" component={Directory} />
+      <Route path="/recommended" component={Recommended} />
+      <Route path="/contact" component={Contact} />
       <Route path="/listing/:id/edit" component={EditListing} />
       <Route path="/listing/:id" component={ListingDetails} />
       <Route path="/sell" component={CreateListing} />

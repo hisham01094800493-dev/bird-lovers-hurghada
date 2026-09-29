@@ -25,32 +25,44 @@ import SiteShell from "@/components/SiteShell";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import AdminPriceGuide from "@/components/AdminPriceGuide";
+import AdminAffiliateProducts from "@/components/AdminAffiliateProducts";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const previewMode =
+    import.meta.env.DEV &&
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1") &&
+    new URLSearchParams(window.location.search).get("adminPreview") === "1";
+  const previewUser = previewMode
+    ? { name: "Local Admin Preview", email: "admin-preview@localhost", role: "admin" as const }
+    : null;
+  const effectiveUser = user ?? previewUser;
+  const isAdmin = previewMode || user?.role === "admin";
+  const adminDataEnabled = isAdmin && !previewMode;
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
-  const stats = trpc.admin.stats.useQuery(undefined, { enabled: isAdmin });
+  const stats = trpc.admin.stats.useQuery(undefined, { enabled: adminDataEnabled });
   const members = trpc.admin.users.useQuery(
     { limit: 200 },
-    { enabled: isAdmin && expandedCard === "users" }
+    { enabled: adminDataEnabled && (expandedCard === "users" || expandedCard === "activeUsers") }
   );
   const reputation = trpc.admin.reputation.useQuery(
     { limit: 200 },
-    { enabled: isAdmin }
+    { enabled: adminDataEnabled }
   );
   const pending = trpc.admin.pendingListings.useQuery(undefined, {
-    enabled: isAdmin,
+    enabled: adminDataEnabled,
   });
   const reports = trpc.admin.openReports.useQuery(undefined, {
-    enabled: isAdmin,
+    enabled: adminDataEnabled,
   });
   const moderationPosts = trpc.admin.moderationPosts.useQuery(undefined, {
-    enabled: isAdmin,
+    enabled: adminDataEnabled,
   });
   const messageAttachments = trpc.admin.messageAttachments.useQuery(
     { limit: 100 },
-    { enabled: isAdmin }
+    { enabled: adminDataEnabled }
   );
   const utils = trpc.useUtils();
   const moderate = trpc.admin.moderateListing.useMutation({
@@ -85,11 +97,29 @@ export default function AdminDashboard() {
     },
     onError: error => toast.error(error.message),
   });
+  const previewStats = {
+    activeUsers: 18,
+    users: 284,
+    listings: 96,
+    pendingListings: 7,
+    reports: 3,
+    messages: 41,
+  };
+  const dashboardStats = stats.data ?? (previewMode ? previewStats : undefined);
   const cards = [
+    {
+      key: "activeUsers",
+      label: "الموجودون الآن",
+      value: dashboardStats?.activeUsers ?? 0,
+      detail: "نشاط آخر 5 دقائق",
+      icon: Users,
+      color: "coral",
+      target: "admin-users-section",
+    },
     {
       key: "users",
       label: "إجمالي المستخدمين",
-      value: stats.data?.users ?? 0,
+      value: dashboardStats?.users ?? 0,
       detail: "الأعضاء المسجلون",
       icon: Users,
       color: "mint",
@@ -98,7 +128,7 @@ export default function AdminDashboard() {
     {
       key: "listings",
       label: "كل الإعلانات",
-      value: stats.data?.listings ?? 0,
+      value: dashboardStats?.listings ?? 0,
       detail: "إعلانات السوق",
       icon: LayoutDashboard,
       color: "sky",
@@ -107,7 +137,7 @@ export default function AdminDashboard() {
     {
       key: "pending",
       label: "قيد المراجعة",
-      value: stats.data?.pendingListings ?? 0,
+      value: dashboardStats?.pendingListings ?? 0,
       detail: "إعلانات تحتاج مراجعة",
       icon: Clock3,
       color: "sand",
@@ -116,7 +146,7 @@ export default function AdminDashboard() {
     {
       key: "reports",
       label: "البلاغات المفتوحة",
-      value: stats.data?.reports ?? 0,
+      value: dashboardStats?.reports ?? 0,
       detail: "حالات سلامة المجتمع",
       icon: FileWarning,
       color: "coral",
@@ -125,7 +155,7 @@ export default function AdminDashboard() {
     {
       key: "messages",
       label: "الرسائل",
-      value: stats.data?.messages ?? 0,
+      value: dashboardStats?.messages ?? 0,
       detail: "نشاط المحادثات",
       icon: MessageCircle,
       color: "mint",
@@ -152,7 +182,7 @@ export default function AdminDashboard() {
         </div>
       </SiteShell>
     );
-  if (!user || !isAdmin)
+  if (!effectiveUser || !isAdmin)
     return (
       <SiteShell>
         <div className="shell py-24">
@@ -229,7 +259,7 @@ export default function AdminDashboard() {
             </p>
           </div>
           <span className="admin-badge">
-            <ShieldAlert size={15} /> حساب إداري محمي · {user.email}
+            <ShieldAlert size={15} /> {previewMode ? "وضع معاينة محلي" : "حساب إداري محمي"} · {effectiveUser.email}
           </span>
         </div>
         <section
@@ -257,7 +287,16 @@ export default function AdminDashboard() {
             ))}
           </div>
         </section>
-        {expandedCard === "users" ? (
+        <nav className="admin-quick-nav mt-6" aria-label="أقسام لوحة الإدارة">
+          <span>انتقال سريع</span>
+          <a href="#admin-users">المستخدمون</a>
+          <a href="#admin-listings-section">الإعلانات</a>
+          <a href="#admin-products">المنتجات والروابط</a>
+          <a href="#admin-community-reputation">النقاط والشارات</a>
+          <a href="#admin-actions-section">الإشعارات</a>
+          <a href="#admin-attachments-section">المرفقات</a>
+        </nav>
+        {expandedCard === "users" || expandedCard === "activeUsers" ? (
           <section
             id="admin-users-section"
             aria-labelledby="admin-members"
@@ -273,7 +312,7 @@ export default function AdminDashboard() {
                 </h2>
               </div>
               <span className="text-xs font-semibold text-[#718780]">
-                {stats.data?.users ?? 0} عضو
+                {dashboardStats?.users ?? 0} عضو
               </span>
             </div>
             {members.isLoading ? (
@@ -316,7 +355,10 @@ export default function AdminDashboard() {
             )}
           </section>
         ) : null}
-        <AdminPriceGuide />
+        <section id="admin-products" className="admin-dashboard-tool-section">
+          <AdminPriceGuide />
+          <AdminAffiliateProducts />
+        </section>
         <section id="admin-community-reputation" className="mt-12">
           <div className="flex items-end justify-between gap-4">
             <div>

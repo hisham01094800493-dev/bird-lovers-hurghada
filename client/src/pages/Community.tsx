@@ -12,10 +12,12 @@ import {
   Lightbulb,
   Loader2,
   MessageCircle,
+  Pencil,
   Plus,
   Send,
   Share2,
   ThumbsUp,
+  Trash2,
   Users,
   X,
 } from "lucide-react";
@@ -57,7 +59,7 @@ const categoryHints: Record<string, string> = {
 
 export default function Community() {
   const { isArabic } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const posts = trpc.community.list.useQuery();
   const utils = trpc.useUtils();
   const [form, setForm] = useState({
@@ -68,6 +70,15 @@ export default function Community() {
     imagePreview: "",
   });
   const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({
+    category: "general",
+    title: "",
+    body: "",
+    imageData: "",
+    imagePreview: "",
+    removeImage: false,
+  });
   const sharePost = (postId: number, title: string) => {
     const postUrl = `${window.location.origin}/community#post-${postId}`;
     const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}&quote=${encodeURIComponent(title)}`;
@@ -84,6 +95,21 @@ export default function Community() {
       });
       utils.community.list.invalidate();
       toast.success("تم نشر المنشور في المجتمع");
+    },
+    onError: error => toast.error(error.message),
+  });
+  const update = trpc.community.update.useMutation({
+    onSuccess: () => {
+      setEditingPostId(null);
+      utils.community.list.invalidate();
+      toast.success("تم تعديل المنشور بنجاح");
+    },
+    onError: error => toast.error(error.message),
+  });
+  const remove = trpc.community.delete.useMutation({
+    onSuccess: () => {
+      utils.community.list.invalidate();
+      toast.success("تم حذف المنشور");
     },
     onError: error => toast.error(error.message),
   });
@@ -120,6 +146,57 @@ export default function Community() {
     } catch {
       toast.error("اختار صورة عادية من الهاتف بحجم أقل من 25MB");
     }
+  };
+  const chooseEditImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      const imageData = await optimizeImage(file);
+      setEditForm(current => ({
+        ...current,
+        imageData,
+        imagePreview: imageData,
+        removeImage: false,
+      }));
+    } catch {
+      toast.error("اختار صورة عادية من الهاتف بحجم أقل من 25MB");
+    }
+  };
+  const startEditing = (post: NonNullable<typeof posts.data>[number]) => {
+    setEditingPostId(post.id);
+    setEditForm({
+      category: post.category,
+      title: post.title,
+      body: post.body,
+      imageData: "",
+      imagePreview: post.imagePath || "",
+      removeImage: false,
+    });
+  };
+  const submitEdit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!editingPostId) return;
+    if (!editForm.title.trim() || !editForm.body.trim())
+      return toast.error("اكتب عنوانًا وتفاصيل المنشور أولًا");
+    update.mutate({
+      postId: editingPostId,
+      category: editForm.category as
+        | "care"
+        | "nutrition"
+        | "health"
+        | "breeding"
+        | "general"
+        | "other",
+      title: editForm.title,
+      body: editForm.body,
+      imageData: editForm.imageData || undefined,
+      removeImage: editForm.removeImage,
+    });
+  };
+  const deletePost = (postId: number) => {
+    if (window.confirm("هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع."))
+      remove.mutate({ postId });
   };
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -198,7 +275,111 @@ export default function Community() {
                         <span className="post-category">
                           {labels[post.category] || post.category}
                         </span>
+                        {user?.id === post.authorId && (
+                          <div className="mr-auto flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => startEditing(post)}
+                              className="rounded-full p-2 text-[#527169] hover:bg-[#eef5ed]"
+                              aria-label="تعديل المنشور"
+                            >
+                              <Pencil size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deletePost(post.id)}
+                              disabled={remove.isPending}
+                              className="rounded-full p-2 text-[#bd5941] hover:bg-[#fff0ed]"
+                              aria-label="حذف المنشور"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        )}
                       </div>
+                      {editingPostId === post.id && (
+                        <form
+                          onSubmit={submitEdit}
+                          className="mt-4 space-y-3 rounded-2xl bg-[#f7faf5] p-4"
+                        >
+                          <p className="font-display font-semibold text-[#183b39]">
+                            تعديل المنشور
+                          </p>
+                          <Input
+                            value={editForm.title}
+                            onChange={event =>
+                              setEditForm({ ...editForm, title: event.target.value })
+                            }
+                            maxLength={180}
+                          />
+                          <Select
+                            value={editForm.category}
+                            onValueChange={category =>
+                              setEditForm({ ...editForm, category })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="z-[100] border-2 border-[#183b39] bg-white shadow-xl">
+                              {Object.entries(labels).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Textarea
+                            value={editForm.body}
+                            onChange={event =>
+                              setEditForm({ ...editForm, body: event.target.value })
+                            }
+                            className="min-h-28"
+                            maxLength={5000}
+                          />
+                          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-[#b9cec0] bg-white px-3 py-3 text-sm font-semibold text-[#527169]">
+                            <ImagePlus size={17} /> تغيير الصورة
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={chooseEditImage}
+                            />
+                          </label>
+                          {editForm.imagePreview && (
+                            <div className="relative overflow-hidden rounded-xl border border-[#dce7df] bg-white">
+                              <img
+                                src={editForm.imagePreview}
+                                alt="معاينة صورة المنشور"
+                                className="max-h-52 w-full object-contain"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEditForm({
+                                    ...editForm,
+                                    imageData: "",
+                                    imagePreview: "",
+                                    removeImage: true,
+                                  })
+                                }
+                                className="absolute right-2 top-2 rounded-full bg-white/90 p-2 text-[#bd5941] shadow"
+                                aria-label="إزالة صورة المنشور"
+                              >
+                                <X size={15} />
+                              </button>
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <Button type="submit" className="cta-primary" disabled={update.isPending}>
+                              {update.isPending ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />} حفظ التعديل
+                            </Button>
+                            <Button type="button" variant="outline" onClick={() => setEditingPostId(null)}>
+                              إلغاء
+                            </Button>
+                          </div>
+                        </form>
+                      )}
                       <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[#69807b]">
                         {post.body}
                       </p>

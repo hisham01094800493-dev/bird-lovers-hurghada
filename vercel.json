@@ -3,5 +3,19 @@
   "framework": "express",
   "buildCommand": "pnpm build && pnpm exec esbuild vercel-entry.ts --bundle --platform=node --packages=external --format=esm --outfile=index.js",
   "installCommand": "pnpm install --frozen-lockfile",
-  "crons": [{ "path": "/api/cron/cleanup-message-attachments", "schedule": "0 3 * * *" }]
+  "crons": [{ "path": "/api/cron/cleanup-message-attachments", "schedule": "0 3 * * *" }],
+  "headers": [
+    {
+      "source": "/",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }]
+    },
+    {
+      "source": "/index.html",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }]
+    }
+  ]
 }
