@@ -133,7 +133,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
   // The configured project owner must remain an admin even when an OAuth
   // provider supplies the default "user" role during sign-in.
-  if (user.openId === ENV.ownerOpenId) {
+  if (user.openId === ENV.ownerOpenId || (ENV.ownerEmail && user.email?.toLowerCase() === ENV.ownerEmail)) {
     values.role = "admin";
     updateSet.role = "admin";
   } else if (user.role !== undefined) {
