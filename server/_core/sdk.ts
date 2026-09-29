@@ -313,10 +313,11 @@ class SDKServer {
 
     await db.upsertUser({
       openId: user.openId,
+      email: user.email ?? null,
       lastSignedIn: signedInAt,
     });
 
-    return user;
+    return (await db.getUserByOpenId(user.openId)) ?? user;
   }
 }
 
