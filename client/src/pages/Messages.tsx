@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useLanguage } from "@/contexts/LanguageContext";
 import SiteShell from "@/components/SiteShell";
+import { compressImage } from "@/lib/imageCompression";
 
 type Attachment = { data: string; type: string; name: string };
 type AttachmentType = "image/png" | "image/jpeg" | "image/webp" | "audio/webm" | "audio/ogg" | "audio/mp4";
@@ -23,25 +24,8 @@ function readAsDataUrl(blob: Blob) {
 }
 
 async function prepareImageAttachment(file: File) {
-  try {
-    const source = await readAsDataUrl(file);
-    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const element = new Image();
-      element.onload = () => resolve(element);
-      element.onerror = () => reject(new Error("Could not decode image"));
-      element.src = source;
-    });
-    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-    canvas.getContext("2d")?.drawImage(image, 0, 0, canvas.width, canvas.height);
-    const compressed = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, "image/webp", 0.82));
-    if (!compressed) return { data: source, type: file.type };
-    return { data: await readAsDataUrl(compressed), type: "image/webp" };
-  } catch {
-    return { data: await readAsDataUrl(file), type: file.type };
-  }
+  const compressed = await compressImage(file, { maxDimension: 1200, maxBytes: 600_000 });
+  return { data: compressed.dataUrl, type: compressed.contentType };
 }
 
 export default function Messages() {

@@ -30,13 +30,16 @@ function hasForgeStorage() { return Boolean(ENV.forgeApiUrl && ENV.forgeApiKey);
 function hasS3Storage() {
   return Boolean(ENV.s3Bucket && ENV.s3AccessKeyId && ENV.s3SecretAccessKey && ENV.s3Endpoint);
 }
+export function assertStorageConfigured() {
+  if (ENV.isProduction && !hasS3Storage()) throw storageConfigError();
+}
 export function hasRemoteStorage() { return hasForgeStorage() || hasS3Storage(); }
 function getS3Client() {
   if (!hasS3Storage()) return null;
   return new S3Client({ region: ENV.s3Region || "auto", endpoint: ENV.s3Endpoint, forcePathStyle: ENV.s3ForcePathStyle, credentials: { accessKeyId: ENV.s3AccessKeyId, secretAccessKey: ENV.s3SecretAccessKey } });
 }
 function storageConfigError() {
-  return new Error("Storage is not configured. On Railway set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY and optionally S3_PUBLIC_URL.");
+  return new Error("Storage is not configured. Set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY in production.");
 }
 
 export async function storagePut(

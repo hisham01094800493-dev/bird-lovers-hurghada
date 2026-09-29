@@ -48,8 +48,12 @@ describe("MVP protected routes", () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.reviews.create({ sellerId: 99, listingId: 1, rating: 5, body: "A thoughtful and trustworthy seller." })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
-  it("recognizes an administrator by role", async () => {
+  it("allows an administrator by role", async () => {
     const caller = appRouter.createCaller(createUserContext("admin@example.com", "admin"));
     await expect(caller.admin.stats()).resolves.toBeDefined();
+  });
+  it("does not grant admin access by email", async () => {
+    const caller = appRouter.createCaller(createUserContext("admin@example.com"));
+    await expect(caller.admin.stats()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });

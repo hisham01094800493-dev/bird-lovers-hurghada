@@ -6,37 +6,27 @@ import { registerListingManagementRoutes } from "./listingManagementRoutes";
 import { appRouter } from "./routers";
 import { scheduledPriceRefresh } from "./scheduledPriceRefresh";
 import { createContext } from "./_core/context";
-import { cleanupExpiredMessageAttachments, getCommunityPostImage, getDb } from "./db";
-import { ENV } from "./_core/env";
-import { and, eq } from "drizzle-orm";
-import { listings } from "../drizzle/schema";
+import {
+  checkDatabase,
+  cleanupExpiredMessageAttachments,
+  getCommunityPostImage,
+} from "./db";
+import { assertProductionConfig } from "./_core/env";
+import { assertStorageConfigured } from "./storage";
 
 export function createApp() {
-  if (ENV.isProduction && !ENV.databaseUrl) throw new Error("DATABASE_URL is required in production");
-  if (ENV.isProduction && !process.env.DB_CA_CERT) throw new Error("DB_CA_CERT is required in production");
-  if (ENV.isProduction && [ENV.s3Endpoint, ENV.s3Bucket, ENV.s3AccessKeyId, ENV.s3SecretAccessKey, ENV.s3PublicUrl, ENV.cookieSecret].some(value => !value)) throw new Error("S3_* storage settings and JWT_SECRET are required in production");
   const app = express();
+  assertProductionConfig();
+  assertStorageConfigured();
 
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ limit: "10mb", extended: true }));
+  app.use(express.json({ limit: "5mb" }));
+  app.use(express.urlencoded({ limit: "5mb", extended: true }));
 
   app.get("/health", async (_req, res) => {
-    try {
-      const db = await getDb();
-      if (!db) return res.status(503).json({ status: "degraded", database: "unavailable" });
-      await db.execute("select 1");
-      return res.status(200).json({ status: "ok", database: "ok" });
-    } catch { return res.status(503).json({ status: "degraded", database: "error" }); }
-  });
-  app.post("/api/cron/cleanup-message-attachments", async (req, res) => {
-    if (!process.env.CRON_SECRET || req.header("authorization") !== `Bearer ${process.env.CRON_SECRET}`) return res.status(401).json({ message: "Unauthorized" });
-    return res.json({ success: true, deleted: await cleanupExpiredMessageAttachments() });
-  });
-  app.get("/sitemap.xml", async (_req, res) => {
-    const base = "https://bird-lovers-hurghada.vercel.app";
-    const urls = ["/", "/marketplace", "/community", "/care", "/lost-found"];
-    try { const db = await getDb(); if (db) { const rows = await db.select({ id: listings.id }).from(listings).where(and(eq(listings.status, "published"), eq(listings.moderationStatus, "approved"))); urls.push(...rows.map(row => `/listing/${row.id}`)); } } catch { /* keep static URLs */ }
-    return res.type("application/xml").send(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map(path => `<url><loc>${base}${path}</loc></url>`).join("")}</urlset>`);
+    const database = await checkDatabase();
+    return res
+      .status(database.ok ? 200 : 503)
+      .json({ status: database.ok ? "ok" : "degraded", database });
   });
   app.get("/api/community-posts/:id/image", async (req, res) => {
     const postId = Number(req.params.id);
@@ -57,8 +47,6 @@ export function createApp() {
       .setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
       .json({
         version:
-          process.env.RAILWAY_GIT_COMMIT_SHA ||
-          process.env.RENDER_GIT_COMMIT ||
           process.env.VERCEL_GIT_COMMIT_SHA ||
           process.env.GIT_COMMIT ||
           process.env.npm_package_version ||
@@ -70,6 +58,12 @@ export function createApp() {
   registerOAuthRoutes(app);
   registerListingManagementRoutes(app);
   app.all("/api/scheduled/price-guide-refresh", scheduledPriceRefresh);
+  app.post("/api/scheduled/message-attachments-cleanup", async (req, res) => {
+    if (!process.env.CRON_SECRET || req.header("x-cron-secret") !== process.env.CRON_SECRET)
+      return res.status(401).json({ error: "Unauthorized" });
+    const deleted = await cleanupExpiredMessageAttachments();
+    return res.json({ ok: true, deleted });
+  });
   app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
 
   return app;

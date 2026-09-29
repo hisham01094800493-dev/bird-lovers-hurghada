@@ -5,6 +5,10 @@ import { listingImages, listings } from "../drizzle/schema";
 import { sdk } from "./_core/sdk";
 import { storagePut } from "./storage";
 import sharp from "sharp";
+import {
+  canonicalizeListingText,
+  listingEditSchema,
+} from "../shared/listingValidation";
 
 async function currentUser(req: Request) {
   try { return await sdk.authenticateRequest(req); } catch { return null; }
@@ -20,6 +24,7 @@ async function storeListingImage(userId: number, listingId: number, index: numbe
   const metadata = await image.metadata();
   if (!metadata.width || !metadata.height || metadata.width < 320 || metadata.height < 320) throw new Error("Images must be at least 320×320 pixels");
   const normalized = await image.rotate().resize({ width: 1800, height: 1800, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+  if (normalized.byteLength > 600_000) throw new Error("Normalized image is too large");
   return (await storagePut(`listings/${userId}/listing-${listingId}-${Date.now()}-${index}.webp`, normalized, "image/webp")).url;
 }
 
@@ -38,18 +43,17 @@ export function registerListingManagementRoutes(app: Express) {
     const db = await getDb(); if (!db) return res.status(503).json({ message: "Database is not available" });
     const existing = await db.select({ id: listings.id }).from(listings).where(and(eq(listings.id, id), eq(listings.sellerId, user.id))).limit(1);
     if (!existing[0]) return res.status(404).json({ message: "Listing not found" });
-    const input = req.body || {};
-    const titleAr = bodyValue(input.titleAr); const titleEn = bodyValue(input.titleEn);
-    const descriptionAr = bodyValue(input.descriptionAr); const descriptionEn = bodyValue(input.descriptionEn);
-    const title = titleAr || titleEn; const description = descriptionAr || descriptionEn;
-    const numericPrice = typeof input.price === "number" ? input.price : Number(input.price);
-    if (title.length < 4 || description.length < 20 || !Number.isFinite(numericPrice) || numericPrice <= 0) return res.status(400).json({ message: "اكتب عنوانًا 4 أحرف ووصفًا 20 حرفًا على الأقل وسعرًا موجبًا" });
-    await db.update(listings).set({ titleEn: titleEn || titleAr, titleAr: titleAr || null, descriptionEn: descriptionEn || descriptionAr, descriptionAr: descriptionAr || null, price: numericPrice.toFixed(2), location: bodyValue(input.location, "Hurghada"), status: "pending_review", moderationStatus: "pending" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
+    const parsed = listingEditSchema.safeParse(req.body || {});
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message || "Invalid listing data" });
+    const input = parsed.data;
+    const text = canonicalizeListingText(input);
+    await db.update(listings).set({ ...text, price: input.price.toFixed(2), location: input.location, status: "pending_review", moderationStatus: "pending" }).where(and(eq(listings.id, id), eq(listings.sellerId, user.id)));
     const imageData = Array.isArray(input.imageData) ? input.imageData.filter((value: unknown): value is string => typeof value === "string").slice(0, 6) : [];
     if (imageData.length) {
       const existingImages = await db.select({ id: listingImages.id }).from(listingImages).where(eq(listingImages.listingId, id)).orderBy(asc(listingImages.sortOrder));
+      if (existingImages.length + imageData.length > 6) return res.status(400).json({ message: "لا يمكن أن يتجاوز الإعلان 6 صور" });
       const urls = await Promise.all(imageData.map((value: string, index: number) => storeListingImage(user.id, id, index, value)));
-      await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: titleAr || titleEn })));
+      await db.insert(listingImages).values(urls.map((storagePath, index) => ({ listingId: id, storagePath, isCover: existingImages.length === 0 && index === 0, sortOrder: existingImages.length + index, altText: text.titleEn })));
     }
     const coverImageId = Number(input.coverImageId);
     if (Number.isInteger(coverImageId) && coverImageId > 0) {

@@ -2,6 +2,8 @@
 
 A bilingual Arabic/English marketplace and community foundation for buying, selling, and exchanging birds, pets, cages, food, and supplies in Hurghada.
 
+> تم إيقاف AdSense لأن Vercel Hobby غير تجارية؛ يُعاد عند الترقية إلى Pro أو النقل.
+
 ## MVP delivered
 
 The first production-oriented slice includes a real React + tRPC + Express + Drizzle + MySQL/TiDB application with Manus OAuth already wired. It includes a public landing page, marketplace browsing, search, category filtering, listing detail pages, saved listings, authenticated listing submission, community posts, responsive mobile-first UI, accessible empty/loading states, seeded content, and a safe link back to the original Facebook group.
@@ -37,33 +39,27 @@ The project relies on the managed environment variables already provided by WebD
 
 ## Vercel deployment
 
-Production runs as one Vercel deployment from GitHub `main`. Vercel builds the Express entry point, while database changes are applied only through reviewed Drizzle migrations.
+Production deploys automatically from the GitHub `main` branch to Vercel. Database migrations are applied explicitly with `pnpm exec drizzle-kit migrate`; the application does not mutate the schema or seed data during startup.
 
-Connect the Aiven MySQL database and Cloudflare R2 bucket to the Vercel project. Configure the following variables before deployment:
+Configure the following variables in the Vercel project before the first deployment:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | MySQL/TiDB connection string used by Drizzle and the migration command |
+| `DB_CA_CERT` | Recommended | CA certificate for verified TLS to the managed MySQL provider |
+| `CRON_SECRET` | Yes | Secret header for scheduled cleanup endpoints |
 | `JWT_SECRET` | Yes | Secret used to sign login session cookies; use a long random value |
-| `DB_CA_CERT` | Yes in production | Aiven CA certificate; the pool enforces certificate verification |
-| `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_PUBLIC_URL` | Yes in production | Cloudflare R2 S3-compatible storage and its public/custom-domain URL |
-| `CRON_SECRET` | Yes in production | Protects the Vercel message-attachment cleanup endpoint |
 | `VITE_APP_ID` | Yes | Application identifier used by the OAuth client and frontend |
 | `OAUTH_SERVER_URL` | Yes | OAuth server base URL |
-| `OWNER_OPEN_ID` | Recommended | Open ID that receives owner/admin behavior |
+| `OWNER_OPEN_ID` | Recommended | Open ID used only for the initial owner account |
 | `BUILT_IN_FORGE_API_URL` | Feature-dependent | Server-side storage, maps, media, and data API endpoint |
 | `BUILT_IN_FORGE_API_KEY` | Feature-dependent | Server-side credential for the Forge endpoint |
 | `VITE_OAUTH_PORTAL_URL` | Yes for login | Public OAuth portal URL embedded in the client build |
 | `VITE_FRONTEND_FORGE_API_URL` | Feature-dependent | Browser-facing maps/API endpoint embedded in the client build |
 | `VITE_FRONTEND_FORGE_API_KEY` | Feature-dependent | Browser-facing maps/API key embedded in the client build |
+| `VITE_CONTACT_EMAIL` | Recommended | Public inbox used by the contact page; do not hardcode a personal address |
 
-Variables beginning with `VITE_` are embedded into the client bundle at build time, so set them before deploying or redeploy after changing them. Do not expose server-only secrets such as `JWT_SECRET`, `DATABASE_URL`, `DB_CA_CERT`, or `BUILT_IN_FORGE_API_KEY` as `VITE_` variables. Set the OAuth callback URL to `https://bird-lovers-hurghada.vercel.app/api/oauth/callback`. Check `/health` before testing login, listings, uploads, and map features.
-
-Create and review new migrations locally, commit them, and apply them with `pnpm drizzle-kit migrate` against Aiven. Never use `drizzle-kit push --force`, and never run the seed script automatically during deployment.
-
-### Cloudflare R2 CORS
-
-Allow `PUT` from `https://bird-lovers-hurghada.vercel.app` (and the production custom domain if used), request headers `Content-Type`, `x-amz-*`, and `Authorization`, expose `ETag`, and allow `GET` from the same origins. Set `S3_PUBLIC_URL` to the intended Cloudflare public/custom domain.
+Variables beginning with `VITE_` are embedded into the client bundle at build time, so set them before deploying or redeploy after changing them. Do not expose server-only secrets such as `JWT_SECRET`, `DATABASE_URL`, or `BUILT_IN_FORGE_API_KEY` as `VITE_` variables. After deployment, set the OAuth callback URL to `<Vercel public URL>/api/oauth/callback` in the OAuth provider. Check `<Vercel public URL>/health` before testing login, listings, uploads, and map features.
 
 ## Database
 
