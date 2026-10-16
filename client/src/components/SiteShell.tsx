@@ -48,6 +48,13 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     enabled: isAuthenticated,
     refetchInterval: 15000,
   });
+  const utils = trpc.useUtils();
+  const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onSuccess: () => {
+      utils.notifications.list.invalidate();
+      utils.notifications.unreadCount.invalidate();
+    },
+  });
   const isAdmin = user?.role === "admin";
   const [menuOpen, setMenuOpen] = useState(false);
   const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState(() => {
@@ -59,6 +66,13 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   });
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
   const notificationMenuRef = useRef<HTMLDivElement>(null);
+  const handleNotificationToggle = () => {
+    const nextOpen = !notificationMenuOpen;
+    setNotificationMenuOpen(nextOpen);
+    if (nextOpen && (unread.data ?? 0) > 0 && !markAllRead.isPending) {
+      markAllRead.mutate();
+    }
+  };
   const newestNotificationId = useRef<number | null>(null);
   useEffect(() => {
     if (!notificationMenuOpen) return;
@@ -250,7 +264,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
                 title={t("notifications")}
                 aria-expanded={notificationMenuOpen}
                 aria-controls="notification-menu"
-                onClick={() => setNotificationMenuOpen(open => !open)}
+                onClick={handleNotificationToggle}
               >
                 <Bell size={19} />
                 {Boolean(unread.data) && (
