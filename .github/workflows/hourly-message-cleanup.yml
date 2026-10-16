@@ -19,7 +19,10 @@ jobs:
           BASE_URL: https://bird-lovers-hurghada.vercel.app
         run: |
           set -euo pipefail
-          test -n "$CRON_SECRET"
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "::notice::Cleanup skipped because CRON_SECRET is not configured."
+            exit 0
+          fi
           curl --fail-with-body --silent --show-error --retry 3 --retry-delay 5 \
             -X POST "$BASE_URL/api/scheduled/message-attachments-cleanup" \
             -H "x-cron-secret: $CRON_SECRET" \
