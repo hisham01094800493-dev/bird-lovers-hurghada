@@ -4,6 +4,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Bird,
+  Calculator,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -13,6 +14,7 @@ import {
   PawPrint,
   ShieldCheck,
   Sparkles,
+  ThermometerSun,
   Users,
   Wheat,
 } from "lucide-react";
@@ -219,6 +221,20 @@ export default function Home() {
               </Link>
             );
           })}
+        </div>
+        <div className="home-care-tools" aria-label={isArabic ? "أدوات الرعاية" : "Care tools"}>
+          <Link href="/care-tools" className="category-card home-tool-card home-tool-calculator">
+            <span className="category-icon"><Calculator size={25} strokeWidth={1.8} /></span>
+            <span className="category-name">{isArabic ? "حاسبة التكلفة" : "Cost calculator"}</span>
+            <span className="category-ar">{isArabic ? "اعرف ميزانيتك" : "Plan your budget"}</span>
+            <ChevronRight className="category-arrow" size={17} />
+          </Link>
+          <Link href="/care-tools" className="category-card home-tool-card home-tool-tips">
+            <span className="category-icon"><ThermometerSun size={25} strokeWidth={1.8} /></span>
+            <span className="category-name">{isArabic ? "نصائح موسمية" : "Seasonal tips"}</span>
+            <span className="category-ar">{isArabic ? "رعاية في وقتها" : "Care in season"}</span>
+            <ChevronRight className="category-arrow" size={17} />
+          </Link>
         </div>
         <HomePromoBanner isArabic={isArabic} listings={listings.data || []} />
       </section>
