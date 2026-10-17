@@ -4,13 +4,11 @@ import {
   ArrowRight,
   BadgeCheck,
   Bird,
-  Calculator,
   ChevronLeft,
   ChevronRight,
   Heart,
   House,
   MessageCircle,
-  ThermometerSun,
   Package,
   PawPrint,
   ShieldCheck,
@@ -207,55 +205,20 @@ export default function Home() {
                 );
               })}
         </div>
-        <div
-          className="home-quick-tools"
-          aria-label={isArabic ? "أدوات مفيدة" : "Helpful tools"}
-        >
-          <Link
-            href="/care-tools"
-            className="category-card home-tool-card home-tool-calculator"
-          >
-            <span className="category-icon">
-              <Calculator size={25} strokeWidth={1.8} />
-            </span>
-            <span className="category-name">
-              {isArabic ? "حاسبة التكلفة" : "Cost calculator"}
-            </span>
-            <span className="category-ar">
-              {isArabic ? "اعرف ميزانيتك" : "Plan your budget"}
-            </span>
-            <ChevronRight className="category-arrow" size={17} />
-          </Link>
-          <Link
-            href="/care-tools"
-            className="category-card home-tool-card home-tool-tips"
-          >
-            <span className="category-icon">
-              <ThermometerSun size={25} strokeWidth={1.8} />
-            </span>
-            <span className="category-name">
-              {isArabic ? "نصائح موسمية" : "Seasonal tips"}
-            </span>
-            <span className="category-ar">
-              {isArabic ? "رعاية في وقتها" : "Care in season"}
-            </span>
-            <ChevronRight className="category-arrow" size={17} />
-          </Link>
-          <Link
-            href="/community"
-            className="category-card home-tool-card home-tool-community"
-          >
-            <span className="category-icon">
-              <MessageCircle size={25} strokeWidth={1.8} />
-            </span>
-            <span className="category-name">
-              {isArabic ? "اسأل مجتمع الهواة" : "Ask the community"}
-            </span>
-            <span className="category-ar">
-              {isArabic ? "خبرة تساعدك" : "Helpful local advice"}
-            </span>
-            <ChevronRight className="category-arrow" size={17} />
-          </Link>
+        <div className="home-quick-tools" aria-label={isArabic ? "اختصارات إعلانات الطيور" : "Bird listing shortcuts"}>
+          {(["birds", "food", "cages"] as const).map(slug => {
+            const category = categories.data?.find(item => item.slug === slug);
+            if (!category) return <div key={slug} className="category-card home-tool-card home-ad-card animate-pulse" />;
+            const CategoryIcon = categoryIcons[slug];
+            return (
+              <Link key={category.id} href={`/marketplace?category=${category.id}`} className={`category-card home-tool-card home-ad-card category-${category.accent} category-${category.slug}`}>
+                <span className="category-icon"><CategoryIcon size={25} strokeWidth={1.8} /></span>
+                <span className="category-name">{isArabic ? category.nameAr : category.nameEn}</span>
+                <span className="category-ar">{isArabic ? "شاهد الإعلانات" : "Browse listings"}</span>
+                <ChevronRight className="category-arrow" size={17} />
+              </Link>
+            );
+          })}
         </div>
         <HomePromoBanner isArabic={isArabic} listings={listings.data || []} />
       </section>
