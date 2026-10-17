@@ -10,13 +10,11 @@ import {
   Heart,
   House,
   MessageCircle,
-  MapPinned,
   ThermometerSun,
   Package,
   PawPrint,
   ShieldCheck,
   Sparkles,
-  ShoppingBag,
   Users,
   Wheat,
 } from "lucide-react";
@@ -25,7 +23,7 @@ import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
 import ListingCard from "@/components/ListingCard";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { RECOMMENDED_PRODUCTS } from "@/data/discovery";
+import { DIRECTORY_ENTRIES, RECOMMENDED_PRODUCTS } from "@/data/discovery";
 
 const categoryIcons = {
   birds: Bird,
@@ -149,7 +147,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <HomePromoBanner isArabic={isArabic} />
       <section className="shell section-pad home-category-section pt-0">
         <div className="section-heading">
           <div>
@@ -260,22 +257,7 @@ export default function Home() {
             <ChevronRight className="category-arrow" size={17} />
           </Link>
         </div>
-        <div className="mt-5 grid gap-4 md:grid-cols-2" aria-label={isArabic ? "اختيارات ودليل الموقع" : "Recommendations and directory"}>
-          <Link href="/recommended" className="group relative overflow-hidden rounded-[26px] border border-[#ead9a5] bg-gradient-to-br from-[#fff9e8] via-[#fffdf5] to-[#f8edc7] p-6 shadow-[0_12px_30px_rgba(196,151,82,.12)] transition hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(196,151,82,.18)]">
-            <span className="absolute -right-8 -top-10 size-32 rounded-full bg-[#f5c24b]/20 transition group-hover:scale-125" />
-            <span className="relative grid size-14 place-items-center rounded-2xl bg-[#f5c24b] text-[#5d4714] shadow-sm"><ShoppingBag size={28} strokeWidth={1.8} /></span>
-            <span className="relative mt-5 block font-display text-2xl font-semibold text-[#183b39]">{isArabic ? "اختياراتنا" : "Our picks"}</span>
-            <span className="relative mt-1 block text-sm leading-6 text-[#796a3d]">{isArabic ? "منتجات موصى بها مع شراء مباشر من أمازون ونون." : "Recommended products with direct Amazon and Noon shopping."}</span>
-            <span className="relative mt-4 inline-flex items-center gap-2 text-xs font-extrabold text-[#8a6a20]">{isArabic ? "تصفح المنتجات" : "Browse products"} <ArrowRight size={15} /></span>
-          </Link>
-          <Link href="/directory" className="group relative overflow-hidden rounded-[26px] border border-[#c8d9e8] bg-gradient-to-br from-[#edf7fb] via-[#f8fcfd] to-[#dcecf4] p-6 shadow-[0_12px_30px_rgba(77,126,153,.11)] transition hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(77,126,153,.17)]">
-            <span className="absolute -left-8 -top-10 size-32 rounded-full bg-[#76a8c2]/20 transition group-hover:scale-125" />
-            <span className="relative grid size-14 place-items-center rounded-2xl bg-[#76a8c2] text-white shadow-sm"><MapPinned size={28} strokeWidth={1.8} /></span>
-            <span className="relative mt-5 block font-display text-2xl font-semibold text-[#183b39]">{isArabic ? "الدليل" : "The directory"}</span>
-            <span className="relative mt-1 block text-sm leading-6 text-[#527181]">{isArabic ? "عيادات ومحلات وأرقام اتصال ومواقع على الخريطة في الغردقة." : "Hurghada clinics and shops with phone numbers and map links."}</span>
-            <span className="relative mt-4 inline-flex items-center gap-2 text-xs font-extrabold text-[#47758c]">{isArabic ? "افتح الدليل" : "Open directory"} <ArrowRight size={15} /></span>
-          </Link>
-        </div>
+        <HomePromoBanner isArabic={isArabic} listings={listings.data || []} />
       </section>
       <section className="bg-[#eaf1ea] home-listings-section py-20">
         <div className="shell">
@@ -339,15 +321,20 @@ export default function Home() {
   );
 }
 
-type PromoBannerProps = { isArabic: boolean };
+type PromoBannerProps = { isArabic: boolean; listings: Array<{ id: number; titleAr: string | null; titleEn: string; coverImage: string | null }> };
 
-function HomePromoBanner({ isArabic }: PromoBannerProps) {
+function HomePromoBanner({ isArabic, listings }: PromoBannerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const product = RECOMMENDED_PRODUCTS[0];
+  const liveProducts = trpc.recommended.list.useQuery();
+  const latestListing = listings[0];
+  const latestProduct = liveProducts.data?.[0];
+  const fallbackProduct = RECOMMENDED_PRODUCTS[0];
+  const product = latestProduct || fallbackProduct;
+  const latestDirectory = DIRECTORY_ENTRIES[0];
   const slides = [
-    { id: "picks", href: "/recommended", image: product.image, badge: isArabic ? "اختيار من دليلنا" : "From our guide", title: isArabic ? product.nameAr : product.nameEn, description: isArabic ? product.descriptionAr : product.descriptionEn, cta: isArabic ? "شوف اختياراتنا" : "See our picks", tone: "home-promo-sand" },
-    { id: "directory", href: "/directory", image: "/images/hurghada-budgie-card.jpg", badge: isArabic ? "دليل الغردقة" : "Hurghada guide", title: isArabic ? "عيادات ومحلات قريبة منك" : "Clinics and shops near you", description: isArabic ? "أرقام اتصال وروابط خريطة تساعدك قبل المشوار." : "Phone numbers and map links to help before you visit.", cta: isArabic ? "افتح الدليل" : "Open the directory", tone: "home-promo-sky" },
-    { id: "marketplace", href: "/marketplace", image: "/images/listing-cockatiel.jpg", badge: isArabic ? "إعلانات الطيور" : "Bird listings", title: isArabic ? "دور على طيرك الجديد" : "Find your next bird", description: isArabic ? "إعلانات من المجتمع، بصور وتفاصيل واضحة." : "Community listings with clear photos and details.", cta: isArabic ? "تصفح الإعلانات" : "Browse listings", tone: "home-promo-mint" },
+    { id: "picks", href: "/recommended", image: latestProduct?.imageUrl || fallbackProduct.image, badge: isArabic ? "آخر اختيار من دليلنا" : "Latest pick from our guide", title: isArabic ? product.nameAr : product.nameEn, description: isArabic ? product.descriptionAr : product.descriptionEn, cta: isArabic ? "شوف اختياراتنا" : "See our picks", tone: "home-promo-sand" },
+    { id: "directory", href: "/directory", image: "/images/hurghada-budgie-card.jpg", badge: isArabic ? "آخر مكان في الدليل" : "Latest directory entry", title: isArabic ? latestDirectory.nameAr : latestDirectory.nameEn, description: isArabic ? latestDirectory.noteAr : latestDirectory.noteEn, cta: isArabic ? "افتح الدليل" : "Open the directory", tone: "home-promo-sky" },
+    { id: "marketplace", href: latestListing ? `/listing/${latestListing.id}` : "/marketplace", image: latestListing?.coverImage || "/images/listing-cockatiel.jpg", badge: isArabic ? "أحدث إعلان في السوق" : "Latest marketplace listing", title: latestListing ? (isArabic && latestListing.titleAr ? latestListing.titleAr : latestListing.titleEn) : (isArabic ? "دور على طيرك الجديد" : "Find your next bird"), description: latestListing ? (isArabic ? "إعلان جديد من مجتمع طيور الحب." : "A fresh listing from the Bird Lovers community.") : (isArabic ? "تصفح أحدث إعلانات الطيور بصور وتفاصيل واضحة." : "Browse bird listings with clear photos and details."), cta: isArabic ? "شوف الإعلان" : "View the listing", tone: "home-promo-mint" },
   ];
 
   useEffect(() => {
