@@ -99,7 +99,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .listing-card { overflow: hidden; border: 1px solid #dbe6dc; border-radius: 18px; background: #fff; box-shadow: 0 8px 25px rgba(24,59,57,.04); } .listing-card:hover { box-shadow: 0 16px 32px rgba(24,59,57,.1); transform: translateY(-3px); }
 .listing-image-wrap { position: relative; height: 235px; overflow: hidden; background: #dceadd; } .listing-image { width: 100%; height: 100%; object-fit: cover; transition: transform 450ms ease; } .listing-card:hover .listing-image { transform: scale(1.05); } .listing-image-placeholder { display: flex; height: 100%; align-items: center; justify-content: center; background: linear-gradient(135deg,#dceadd,#f8eddc); font-size: 45px; } .pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 5px 8px; font-size: 10px; font-weight: 700; } .pill-light { background: #ffffff; color: #183b39; border: 1px solid rgba(24,59,57,.14); box-shadow: 0 2px 8px rgba(24,59,57,.08); min-width: 58px; justify-content: center; } .pill-accent { background: #f6e1d8; color: #a5533d; }
 .page-hero { display: flex; align-items: end; justify-content: space-between; gap: 25px; padding-block: 65px 55px; } .page-title { font-size: clamp(42px, 6vw, 66px); } .filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; border: 1px solid #dce7df; border-radius: 17px; padding: 10px; background: #eef3ed; }
-.home-promo-wrap { padding-block: 0 38px; }
+.home-promo-wrap { width: 100%; padding-block: 0 26px; }
 .home-promo { position: relative; display: grid; min-height: 190px; grid-template-columns: 220px minmax(0, 1fr) auto; align-items: center; gap: 26px; overflow: hidden; border: 1px solid #dce7df; border-radius: 28px; padding: 17px 22px 17px 17px; box-shadow: 0 16px 34px rgba(24,59,57,.08); transition: background .35s ease, border-color .35s ease; }
 .home-promo-sand { background: linear-gradient(120deg, #fff8df 0%, #fffdf7 58%, #f7edcb 100%); border-color: #ead9a5; }
 .home-promo-sky { background: linear-gradient(120deg, #eaf6fa 0%, #fbfdfd 58%, #dcecf4 100%); border-color: #c8d9e8; }
@@ -248,26 +248,26 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 
 /* Compact home layout: keep the first screen focused and bring useful sections upward. */
 .home-hero { padding-block: 38px 42px; }
-.home-category-section { padding-block: 34px 54px; }
+.home-category-section { padding-block: 28px 30px; }
 .home-category-section .section-heading { margin-bottom: 22px; }
-.home-category-section .category-grid { gap: 10px; }
+.home-category-section .category-grid { gap: 8px; }
 .home-category-section .category-card { min-height: 132px; padding: 14px; border-radius: 16px; }
 .home-category-section .category-card .category-icon { width: 48px; height: 48px; border-radius: 15px; }
 .home-category-section .category-card .category-icon svg { width: 25px; height: 25px; }
 .home-category-section .category-name { margin-top: 14px; font-size: 13px; }
 .home-category-section .category-ar { font-size: 10px; }
-.home-listings-section { padding-block: 48px; }
+.home-listings-section { padding-block: 40px; }
 .home-tools-section, .home-community-section { padding-block: 52px; }
 .home-join-section { padding-bottom: 34px; }
-@media (max-width: 640px) { .home-hero { padding-block: 28px 26px; } .home-hero .hero-visual { height: 250px; } .home-hero .hero-lede { margin-top: 18px; font-size: 14px; } .home-hero .mt-8 { margin-top: 22px; } .home-hero .mt-10 { margin-top: 24px; gap: 11px; } .home-category-section { padding-block: 28px 38px; } .home-category-section .category-grid { gap: 8px; } .home-category-section .category-card { min-height: 116px; padding: 12px; } .home-category-section .category-card .category-icon { width: 43px; height: 43px; border-radius: 13px; } .home-category-section .category-card .category-icon svg { width: 22px; height: 22px; } .home-category-section .category-name { margin-top: 10px; font-size: 12px; } .home-listings-section { padding-block: 38px; } .home-tools-section, .home-community-section { padding-block: 38px; } }
+@media (max-width: 640px) { .home-hero { padding-block: 28px 26px; } .home-hero .hero-visual { height: 250px; } .home-hero .hero-lede { margin-top: 18px; font-size: 14px; } .home-hero .mt-8 { margin-top: 22px; } .home-hero .mt-10 { margin-top: 24px; gap: 11px; } .home-category-section { padding-block: 22px 22px; } .home-category-section .category-grid { gap: 7px; } .home-category-section .category-card { min-height: 108px; padding: 11px; } .home-category-section .category-card .category-icon { width: 42px; height: 42px; border-radius: 13px; } .home-category-section .category-card .category-icon svg { width: 21px; height: 21px; } .home-category-section .category-name { margin-top: 9px; font-size: 12px; } .home-listings-section { padding-block: 30px; } .home-tools-section, .home-community-section { padding-block: 30px; } }
 
-.home-quick-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.home-quick-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .home-tool-card { min-height: 132px !important; }
 .home-tool-calculator .category-icon { background: #fff0c8; color: #b77b22; }
 .home-tool-tips .category-icon { background: #fde8d6; color: #d26246; }
 .home-tool-community .category-icon { background: #e5e1f8; color: #6856a6; }
 .home-tool-card .category-name { max-width: 100%; }
-@media (max-width: 640px) { .home-quick-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; } .home-tool-card { min-height: 116px !important; padding: 10px !important; } .home-tool-card .category-icon { width: 43px !important; height: 43px !important; } .home-tool-card .category-name { margin-top: 9px !important; font-size: 11px !important; } .home-tool-card .category-ar { font-size: 9px !important; } .home-tool-card .category-arrow { right: 8px; bottom: 8px; } }
+@media (max-width: 640px) { .home-quick-tools { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .home-tool-card { min-height: 104px !important; padding: 9px !important; } .home-tool-card .category-icon { width: 40px !important; height: 40px !important; } .home-tool-card .category-name { margin-top: 8px !important; font-size: 10px !important; } .home-tool-card .category-ar { font-size: 8px !important; } .home-tool-card .category-arrow { right: 7px; bottom: 7px; } }
 
 /* Keep the final group promo compact after removing the redundant join strip. */
 .ad-slot-compact.ad-slot { min-height: 0; }

@@ -346,7 +346,7 @@ function HomePromoBanner({ isArabic, listings }: PromoBannerProps) {
   const move = (direction: number) => setActiveIndex(current => (current + direction + slides.length) % slides.length);
 
   return (
-    <section className="shell home-promo-wrap" aria-label={isArabic ? "إعلانات واختيارات Bird Lovers" : "Bird Lovers promotions and picks"}>
+    <section className="home-promo-wrap" aria-label={isArabic ? "إعلانات واختيارات Bird Lovers" : "Bird Lovers promotions and picks"}>
       <div className={`home-promo ${activeSlide.tone}`}>
         <div className="home-promo-image-wrap">
           <img key={activeSlide.id} src={activeSlide.image} alt={activeSlide.title} className="home-promo-image" />
