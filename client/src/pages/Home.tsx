@@ -207,21 +207,6 @@ export default function Home() {
                 );
               })}
         </div>
-        <div className="home-quick-tools" aria-label={isArabic ? "اختصارات إعلانات الطيور" : "Bird listing shortcuts"}>
-          {(["birds", "food", "cages"] as const).map(slug => {
-            const category = categories.data?.find(item => item.slug === slug);
-            if (!category) return <div key={slug} className="category-card home-tool-card home-ad-card animate-pulse" />;
-            const CategoryIcon = categoryIcons[slug];
-            return (
-              <Link key={category.id} href={`/marketplace?category=${category.id}`} className={`category-card home-tool-card home-ad-card category-${category.accent} category-${category.slug}`}>
-                <span className="category-icon"><CategoryIcon size={25} strokeWidth={1.8} /></span>
-                <span className="category-name">{isArabic ? category.nameAr : category.nameEn}</span>
-                <span className="category-ar">{isArabic ? "شاهد الإعلانات" : "Browse listings"}</span>
-                <ChevronRight className="category-arrow" size={17} />
-              </Link>
-            );
-          })}
-        </div>
         <div className="home-care-tools" aria-label={isArabic ? "أدوات الرعاية" : "Care tools"}>
           <Link href="/care-tools" className="category-card home-tool-card home-tool-calculator">
             <span className="category-icon"><Calculator size={25} strokeWidth={1.8} /></span>
