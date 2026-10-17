@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
   BadgeCheck,
   Bird,
   Calculator,
+  ChevronLeft,
   ChevronRight,
   Heart,
   House,
@@ -23,6 +25,7 @@ import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
 import ListingCard from "@/components/ListingCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { RECOMMENDED_PRODUCTS } from "@/data/discovery";
 
 const categoryIcons = {
   birds: Bird,
@@ -146,6 +149,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <HomePromoBanner isArabic={isArabic} />
       <section className="shell section-pad home-category-section pt-0">
         <div className="section-heading">
           <div>
@@ -332,5 +336,49 @@ export default function Home() {
         </div>
       </section>
     </SiteShell>
+  );
+}
+
+type PromoBannerProps = { isArabic: boolean };
+
+function HomePromoBanner({ isArabic }: PromoBannerProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const product = RECOMMENDED_PRODUCTS[0];
+  const slides = [
+    { id: "picks", href: "/recommended", image: product.image, badge: isArabic ? "اختيار من دليلنا" : "From our guide", title: isArabic ? product.nameAr : product.nameEn, description: isArabic ? product.descriptionAr : product.descriptionEn, cta: isArabic ? "شوف اختياراتنا" : "See our picks", tone: "home-promo-sand" },
+    { id: "directory", href: "/directory", image: "/images/hurghada-budgie-card.jpg", badge: isArabic ? "دليل الغردقة" : "Hurghada guide", title: isArabic ? "عيادات ومحلات قريبة منك" : "Clinics and shops near you", description: isArabic ? "أرقام اتصال وروابط خريطة تساعدك قبل المشوار." : "Phone numbers and map links to help before you visit.", cta: isArabic ? "افتح الدليل" : "Open the directory", tone: "home-promo-sky" },
+    { id: "marketplace", href: "/marketplace", image: "/images/listing-cockatiel.jpg", badge: isArabic ? "إعلانات الطيور" : "Bird listings", title: isArabic ? "دور على طيرك الجديد" : "Find your next bird", description: isArabic ? "إعلانات من المجتمع، بصور وتفاصيل واضحة." : "Community listings with clear photos and details.", cta: isArabic ? "تصفح الإعلانات" : "Browse listings", tone: "home-promo-mint" },
+  ];
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setActiveIndex(current => (current + 1) % slides.length), 5200);
+    return () => window.clearInterval(timer);
+  }, [slides.length]);
+
+  const activeSlide = slides[activeIndex];
+  const move = (direction: number) => setActiveIndex(current => (current + direction + slides.length) % slides.length);
+
+  return (
+    <section className="shell home-promo-wrap" aria-label={isArabic ? "إعلانات واختيارات Bird Lovers" : "Bird Lovers promotions and picks"}>
+      <div className={`home-promo ${activeSlide.tone}`}>
+        <div className="home-promo-image-wrap">
+          <img key={activeSlide.id} src={activeSlide.image} alt={activeSlide.title} className="home-promo-image" />
+          <span className="home-promo-count">{activeIndex + 1} / {slides.length}</span>
+        </div>
+        <div className="home-promo-content">
+          <span className="home-promo-badge"><Sparkles size={13} /> {activeSlide.badge}</span>
+          <h2>{activeSlide.title}</h2>
+          <p>{activeSlide.description}</p>
+          <Link href={activeSlide.href} className="home-promo-cta">{activeSlide.cta} <ArrowRight size={15} /></Link>
+        </div>
+        <div className="home-promo-controls">
+          <button type="button" onClick={() => move(-1)} aria-label={isArabic ? "الإعلان السابق" : "Previous promotion"}><ChevronRight size={18} /></button>
+          <div className="home-promo-dots" role="tablist" aria-label={isArabic ? "شرائح الإعلانات" : "Promotion slides"}>
+            {slides.map((slide, index) => <button key={slide.id} type="button" role="tab" aria-selected={activeIndex === index} aria-label={`${isArabic ? "الشريحة" : "Slide"} ${index + 1}`} onClick={() => setActiveIndex(index)} className={activeIndex === index ? "is-active" : ""} />)}
+          </div>
+          <button type="button" onClick={() => move(1)} aria-label={isArabic ? "الإعلان التالي" : "Next promotion"}><ChevronLeft size={18} /></button>
+        </div>
+      </div>
+    </section>
   );
 }
