@@ -311,6 +311,7 @@ const listingInput = z.object({
   negotiable: z.boolean().default(false),
   exchangeAvailable: z.boolean().default(false),
   location: z.string().min(2).max(120).default("Hurghada"),
+  locationUrl: z.string().trim().url().max(600).optional(),
   imageData: z.array(z.string().max(7000000)).max(6).optional(),
   imagePath: z.string().max(600).optional(),
 }).superRefine(validateListingText);
@@ -607,6 +608,7 @@ export const appRouter = router({
           negotiable: input.negotiable,
           exchangeAvailable: input.exchangeAvailable,
           location: input.location,
+          locationUrl: input.locationUrl || null,
           status: "pending_review",
           moderationStatus: "pending",
         });
