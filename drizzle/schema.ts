@@ -76,7 +76,6 @@ export const listings = mysqlTable(
     location: varchar("location", { length: 120 })
       .notNull()
       .default("Hurghada"),
-    locationUrl: varchar("locationUrl", { length: 600 }),
     status: mysqlEnum("status", [
       "draft",
       "pending_review",
