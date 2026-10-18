@@ -414,7 +414,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {menuOpen && (
-          <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 lg:hidden">
+          <div className="mobile-menu-scroll border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 lg:hidden">
             <div className="mx-auto flex max-w-6xl flex-col gap-1">
               {nav.map(({ href, label, icon: Icon }) => (
                 <Link
