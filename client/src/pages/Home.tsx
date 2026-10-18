@@ -39,7 +39,7 @@ export default function Home() {
   const { isArabic, t } = useLanguage();
   const [preference, setPreference] = useState<"beginner" | "quiet" | "social">("beginner");
   const categories = trpc.categories.list.useQuery();
-  const listings = trpc.listings.list.useQuery({ limit: 4, offset: 0 });
+  const listings = trpc.listings.list.useQuery({ limit: 7, offset: 0 });
   const care = trpc.care.overview.useQuery(undefined, { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false });
   const weather = care.data?.weather;
   const weatherAdvice = weather?.level === "critical"
@@ -52,6 +52,8 @@ export default function Home() {
     : preference === "social"
       ? { ar: "كوكتيل أليف", en: "A friendly cockatiel", noteAr: "رفيق اجتماعي يحب الصحبة والاهتمام اليومي.", noteEn: "A social companion who enjoys daily attention." }
       : { ar: "بادجي مناسب للمبتدئين", en: "A beginner-friendly budgie", noteAr: "اختيار عملي كبداية مع رعاية بسيطة وممتعة.", noteEn: "A cheerful first bird with simple, rewarding care." };
+  const visibleListings = listings.data?.slice(0, 6) ?? [];
+  const hasMoreListings = (listings.data?.length ?? 0) > 6;
   return (
     <SiteShell>
       <section className="shell hero-section home-hero">
@@ -297,7 +299,7 @@ export default function Home() {
           </div>
           {listings.isLoading ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 home-listings-grid">
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3, 4, 5, 6].map(i => (
                 <div
                   key={i}
                   className="h-80 animate-pulse rounded-2xl bg-white/70"
@@ -305,11 +307,18 @@ export default function Home() {
               ))}
             </div>
           ) : listings.data?.length ? (
+            <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 home-listings-grid">
-              {listings.data.map(listing => (
-                <ListingCard key={listing.id} listing={listing} />
+              {visibleListings.map(listing => (
+                <ListingCard key={listing.id} listing={listing} compact />
               ))}
             </div>
+            {hasMoreListings && (
+              <Link href="/marketplace" className="home-listings-more text-link">
+                {isArabic ? "المزيد من الإعلانات" : "More listings"} <ArrowRight size={16} />
+              </Link>
+            )}
+            </>
           ) : (
             <div className="empty-state">
               <Bird size={30} />
