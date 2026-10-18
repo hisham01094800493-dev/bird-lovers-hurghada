@@ -88,6 +88,19 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
   }, [notificationMenuOpen]);
   useEffect(() => {
+    if (!menuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [menuOpen]);
+  useEffect(() => {
     const newest = notifications.data?.find(
       item =>
         (item.type === "new_message" || item.type === "app_update") &&
@@ -414,8 +427,31 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         {menuOpen && (
-          <div className="border-t border-[#dce7df] bg-[#f7f5ef] px-4 py-4 lg:hidden">
-            <div className="mx-auto flex max-w-6xl flex-col gap-1">
+          <div
+            className="mobile-sidebar-overlay lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isArabic ? "القائمة الجانبية" : "Side menu"}
+            onMouseDown={event => {
+              if (event.target === event.currentTarget) setMenuOpen(false);
+            }}
+          >
+            <div className="mobile-sidebar-panel">
+              <div className="mobile-sidebar-heading">
+                <span className="brand-mark">
+                  <img src="/icons/bird-lovers-budgie-icon-64.png" alt="" />
+                </span>
+                <strong>{isArabic ? "القائمة الرئيسية" : "Main menu"}</strong>
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setMenuOpen(false)}
+                  aria-label={isArabic ? "إغلاق القائمة" : "Close menu"}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex flex-col gap-1">
               {nav.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}
@@ -484,6 +520,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
               </button>
               <div className="mobile-version-card mt-3 border-t border-[#dce7df] pt-3">
                 <AppVersionCard />
+              </div>
               </div>
             </div>
           </div>
