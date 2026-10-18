@@ -39,7 +39,7 @@ export default function Home() {
   const { isArabic, t } = useLanguage();
   const [preference, setPreference] = useState<"beginner" | "quiet" | "social">("beginner");
   const categories = trpc.categories.list.useQuery();
-  const listings = trpc.listings.list.useQuery({ limit: 6, offset: 0 });
+  const listings = trpc.listings.list.useQuery({ limit: 4, offset: 0 });
   const care = trpc.care.overview.useQuery(undefined, { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false });
   const weather = care.data?.weather;
   const weatherAdvice = weather?.level === "critical"
@@ -218,7 +218,7 @@ export default function Home() {
             <ArrowRight size={16} />
           </Link>
         </div>
-        <div className="category-grid">
+        <div className="category-grid home-category-scroll">
           {categories.isLoading
             ? [1, 2, 3, 4, 5, 6].map(i => (
                 <div key={i} className="skeleton-card" />
@@ -296,7 +296,7 @@ export default function Home() {
             </Link>
           </div>
           {listings.isLoading ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 home-listings-grid">
               {[1, 2, 3].map(i => (
                 <div
                   key={i}
@@ -305,7 +305,7 @@ export default function Home() {
               ))}
             </div>
           ) : listings.data?.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 home-listings-grid">
               {listings.data.map(listing => (
                 <ListingCard key={listing.id} listing={listing} />
               ))}
