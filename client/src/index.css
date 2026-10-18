@@ -261,6 +261,42 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-join-section { padding-bottom: 34px; }
 @media (max-width: 640px) { .home-hero { padding-block: 28px 26px; } .home-hero .hero-visual { height: 250px; } .home-hero .hero-lede { margin-top: 18px; font-size: 14px; } .home-hero .mt-8 { margin-top: 22px; } .home-hero .mt-10 { margin-top: 24px; gap: 11px; } .home-category-section { padding-block: 22px 22px; } .home-category-section .category-grid { gap: 7px; } .home-category-section .category-card { min-height: 108px; padding: 11px; } .home-category-section .category-card .category-icon { width: 42px; height: 42px; border-radius: 13px; } .home-category-section .category-card .category-icon svg { width: 21px; height: 21px; } .home-category-section .category-name { margin-top: 9px; font-size: 12px; } .home-listings-section { padding-block: 30px; } .home-tools-section, .home-community-section { padding-block: 30px; } }
 
+.home-discovery-strip { display: grid; gap: 12px; padding-bottom: 24px; }
+.home-intent-panel { border: 1px solid #dce7df; border-radius: 22px; padding: 17px; background: #fff; box-shadow: 0 12px 28px rgba(24,59,57,.05); }
+.home-mini-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.home-mini-heading h2 { margin-top: 4px; color: #183b39; font-family: 'Cairo', sans-serif; font-size: 20px; font-weight: 800; }
+.home-intent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.home-intent-card { display: flex; min-height: 78px; align-items: center; gap: 9px; border: 1px solid #e0e9e1; border-radius: 16px; padding: 11px; color: #183b39; transition: transform .18s ease, box-shadow .18s ease; }
+.home-intent-card:hover { transform: translateY(-3px); box-shadow: 0 10px 22px rgba(24,59,57,.08); }
+.home-intent-card > span:nth-child(2) { min-width: 0; flex: 1; }
+.home-intent-card strong, .home-intent-card small { display: block; }
+.home-intent-card strong { font-family: 'Cairo', sans-serif; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.home-intent-card small { margin-top: 2px; color: #789089; font-size: 9px; }
+.home-intent-card > svg { flex: 0 0 auto; color: #92aaa0; }
+.home-intent-icon, .home-feature-icon { display: grid; flex: 0 0 auto; width: 38px; height: 38px; place-items: center; border-radius: 13px; }
+.home-intent-birds { background: #eef7f0; } .home-intent-birds .home-intent-icon { background: #dcefe1; color: #2b8062; }
+.home-intent-food { background: #fff8e9; } .home-intent-food .home-intent-icon { background: #f9e9bd; color: #a3762f; }
+.home-intent-care { background: #fff0eb; } .home-intent-care .home-intent-icon { background: #f9dcd1; color: #c05e42; }
+.home-intent-community { background: #f2effb; } .home-intent-community .home-intent-icon { background: #e2dbf5; color: #715ca6; }
+.home-feature-cards { display: grid; grid-template-columns: .8fr 1.2fr; gap: 12px; }
+.home-weather-card, .home-bird-of-day-card { min-height: 176px; overflow: hidden; border: 1px solid #dce7df; border-radius: 22px; box-shadow: 0 12px 28px rgba(24,59,57,.05); }
+.home-weather-card { padding: 17px; background: linear-gradient(145deg, #eaf6f5, #fdfbf2); }
+.home-feature-top { display: flex; align-items: center; gap: 8px; color: #6d8580; }
+.home-feature-top > svg { margin-inline-start: auto; color: #c49752; }
+.home-weather-icon { width: 39px; height: 39px; background: #d5ece7; color: #357d7a; }
+.home-feature-label { color: #789089; font-family: 'Cairo', sans-serif; font-size: 10px; font-weight: 800; }
+.home-weather-reading { margin-top: 10px; color: #183b39; font-family: 'Playfair Display', Georgia, serif; font-size: 38px; font-weight: 700; line-height: 1; }
+.home-weather-reading small { margin-inline-start: 2px; font-family: 'DM Sans', sans-serif; font-size: 13px; }
+.home-weather-card p, .home-bird-of-day-card p { color: #6f8580; font-size: 11px; line-height: 1.55; }
+.home-weather-card p { margin-top: 7px; }
+.home-feature-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 10px; color: #d26246; font-size: 10px; font-weight: 800; }
+.home-bird-of-day-card { position: relative; display: flex; align-items: stretch; justify-content: space-between; background: linear-gradient(120deg, #183b39, #2e5b53); color: white; }
+.home-bird-of-day-copy { position: relative; z-index: 1; width: 57%; padding: 20px 17px; }
+.home-bird-of-day-card .home-feature-label { color: #b9d8c8; }
+.home-bird-of-day-card h3 { margin-top: 8px; color: white; font-family: 'Cairo', sans-serif; font-size: 18px; font-weight: 800; line-height: 1.35; }
+.home-bird-of-day-card p { margin-top: 7px; color: #d4e8d9; }
+.home-bird-of-day-card .home-feature-link { color: #f1d1a4; }
+.home-bird-of-day-card img { width: 43%; height: 100%; object-fit: cover; object-position: center; mask-image: linear-gradient(to right, transparent 0%, black 28%); }
 .home-care-tools { display: grid; max-width: 760px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .home-tool-card { min-height: 132px !important; }
 .home-tool-calculator .category-icon { background: #fff0c8; color: #b77b22; }
@@ -268,6 +304,7 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-tool-community .category-icon { background: #e5e1f8; color: #6856a6; }
 .home-tool-card .category-name { max-width: 100%; }
 @media (max-width: 640px) { .home-care-tools { gap: 6px; } .home-tool-card { min-height: 104px !important; padding: 9px !important; } .home-tool-card .category-icon { width: 40px !important; height: 40px !important; } .home-tool-card .category-name { margin-top: 8px !important; font-size: 10px !important; } .home-tool-card .category-ar { font-size: 8px !important; } .home-tool-card .category-arrow { right: 7px; bottom: 7px; } }
+@media (max-width: 640px) { .home-intent-panel { padding: 13px; } .home-intent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .home-intent-card { min-height: 70px; padding: 9px; } .home-intent-card strong { font-size: 11px; } .home-feature-cards { grid-template-columns: 1fr; } .home-weather-card, .home-bird-of-day-card { min-height: 156px; } .home-bird-of-day-card h3 { font-size: 16px; } }
 
 /* Keep the final group promo compact after removing the redundant join strip. */
 .ad-slot-compact.ad-slot { min-height: 0; }

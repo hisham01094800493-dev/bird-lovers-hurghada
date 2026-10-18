@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Bird,
   Calculator,
+  CloudSun,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -12,6 +13,7 @@ import {
   MessageCircle,
   Package,
   PawPrint,
+  ShoppingBag,
   ShieldCheck,
   Sparkles,
   ThermometerSun,
@@ -38,6 +40,13 @@ export default function Home() {
   const categories = trpc.categories.list.useQuery();
   const listings = trpc.listings.list.useQuery({ limit: 6, offset: 0 });
   const posts = trpc.community.list.useQuery();
+  const care = trpc.care.overview.useQuery(undefined, { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false });
+  const weather = care.data?.weather;
+  const weatherAdvice = weather?.level === "critical"
+    ? (isArabic ? "حر شديد — ظل وماء متجدد طوال اليوم" : "Extreme heat — provide shade and fresh water all day")
+    : weather?.level === "watch"
+      ? (isArabic ? "حرارة مرتفعة — أبعد القفص عن شمس الظهر" : "High heat — keep the cage away from midday sun")
+      : (isArabic ? "جو مناسب — حافظ على تهوية وماء نظيف" : "Comfortable day — keep airflow and clean water");
   return (
     <SiteShell>
       <section className="shell hero-section home-hero">
@@ -145,6 +154,32 @@ export default function Home() {
             </div>
             <div className="hero-feather">✦</div>
           </div>
+        </div>
+      </section>
+      <section className="shell home-discovery-strip" aria-label={isArabic ? "اختيارات سريعة للزائر" : "Quick visitor choices"}>
+        <div className="home-intent-panel">
+          <div className="home-mini-heading">
+            <p className="eyebrow">{isArabic ? "اختيارك يبدأ هنا" : "Start here"}</p>
+            <h2>{isArabic ? "ماذا تريد اليوم؟" : "What do you need today?"}</h2>
+          </div>
+          <div className="home-intent-grid">
+            <Link href="/marketplace" className="home-intent-card home-intent-birds"><span className="home-intent-icon"><ShoppingBag size={19} /></span><span><strong>{isArabic ? "أريد شراء طائر" : "Find a bird"}</strong><small>{isArabic ? "تصفح الإعلانات" : "Browse listings"}</small></span><ArrowRight size={15} /></Link>
+            <Link href="/marketplace" className="home-intent-card home-intent-food"><span className="home-intent-icon"><Wheat size={19} /></span><span><strong>{isArabic ? "أبحث عن غذاء" : "Find food"}</strong><small>{isArabic ? "اختيارات يومية" : "Everyday supplies"}</small></span><ArrowRight size={15} /></Link>
+            <Link href="/care-tools" className="home-intent-card home-intent-care"><span className="home-intent-icon"><Calculator size={19} /></span><span><strong>{isArabic ? "أحتاج نصيحة" : "Need care advice"}</strong><small>{isArabic ? "احسب واعرف" : "Plan with confidence"}</small></span><ArrowRight size={15} /></Link>
+            <Link href="/community" className="home-intent-card home-intent-community"><span className="home-intent-icon"><MessageCircle size={19} /></span><span><strong>{isArabic ? "أسأل الهواة" : "Ask the community"}</strong><small>{isArabic ? "خبرة من أهلها" : "Learn from bird lovers"}</small></span><ArrowRight size={15} /></Link>
+          </div>
+        </div>
+        <div className="home-feature-cards">
+          <Link href="/care-tools" className="home-weather-card">
+            <div className="home-feature-top"><span className="home-feature-icon home-weather-icon"><ThermometerSun size={20} /></span><span className="home-feature-label">{isArabic ? "طقس الغردقة اليوم" : "Hurghada today"}</span><CloudSun size={18} /></div>
+            <div className="home-weather-reading">{weather?.temperature === null || weather?.temperature === undefined ? "—" : `${Math.round(weather.temperature)}°`}<small>C</small></div>
+            <p>{weatherAdvice}</p>
+            <span className="home-feature-link">{isArabic ? "شوف النصيحة" : "See the care tip"} <ArrowRight size={14} /></span>
+          </Link>
+          <Link href="/care-tools" className="home-bird-of-day-card">
+            <div className="home-bird-of-day-copy"><span className="home-feature-label">{isArabic ? "طائر اليوم" : "Bird of the day"}</span><h3>{isArabic ? "كوكاتو أبيض ورفيق كوكتيل" : "White cockatoo & cockatiel friend"}</h3><p>{isArabic ? "اجتماعيان ويحبّان الصحبة والاهتمام الهادئ." : "Social birds who enjoy gentle company and daily care."}</p><span className="home-feature-link">{isArabic ? "اعرف أكثر" : "Learn more"} <ArrowRight size={14} /></span></div>
+            <img src="/images/hurghada-parrot-hero.jpg" alt={isArabic ? "كوكاتو أبيض مع كوكتيل أصفر" : "White cockatoo with a yellow cockatiel"} />
+          </Link>
         </div>
       </section>
       <section className="shell section-pad home-category-section pt-0">
