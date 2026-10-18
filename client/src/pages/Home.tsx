@@ -6,6 +6,7 @@ import {
   Bird,
   Calculator,
   CloudSun,
+  Search,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -21,6 +22,7 @@ import {
   Wheat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { trpc } from "@/lib/trpc";
 import SiteShell from "@/components/SiteShell";
 import ListingCard from "@/components/ListingCard";
@@ -38,6 +40,7 @@ const categoryIcons = {
 export default function Home() {
   const { isArabic, t } = useLanguage();
   const [preference, setPreference] = useState<"beginner" | "quiet" | "social">("beginner");
+  const [homeSearch, setHomeSearch] = useState("");
   const categories = trpc.categories.list.useQuery();
   const listings = trpc.listings.list.useQuery({ limit: 7, offset: 0 });
   const care = trpc.care.overview.useQuery(undefined, { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false });
@@ -85,6 +88,25 @@ export default function Home() {
                 ? "اعثر على طيرك المفضل، وتبادل بثقة، وتعلم من جيران يهتمون مثلك."
                 : "Find a feathered friend, trade with confidence, and learn from neighbours who care as much as you do."}
             </p>
+            <form
+              className="home-search-form"
+              onSubmit={event => {
+                event.preventDefault();
+                const term = homeSearch.trim();
+                window.location.assign(term ? `/marketplace?search=${encodeURIComponent(term)}` : "/marketplace");
+              }}
+            >
+              <Search size={18} aria-hidden="true" />
+              <Input
+                value={homeSearch}
+                onChange={event => setHomeSearch(event.target.value)}
+                placeholder={isArabic ? "ابحث عن طائر أو مستلزم أو منطقة" : "Search birds, supplies or areas"}
+                aria-label={isArabic ? "البحث في الإعلانات" : "Search listings"}
+              />
+              <Button type="submit" className="home-search-submit">
+                {isArabic ? "بحث" : "Search"}
+              </Button>
+            </form>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-stretch">
               <Link href="/marketplace">
                 <Button className="cta-primary h-full">
@@ -296,6 +318,14 @@ export default function Home() {
               {isArabic ? "شاهد السوق" : "See the marketplace"}{" "}
               <ArrowRight size={16} />
             </Link>
+          </div>
+          <div className="home-filter-chips" aria-label={isArabic ? "فلاتر سريعة للإعلانات" : "Quick listing filters"}>
+            <Link href="/marketplace" className="home-filter-chip is-active">{isArabic ? "الأحدث" : "Latest"}</Link>
+            {categories.data?.slice(0, 4).map(category => (
+              <Link key={category.id} href={`/marketplace?category=${category.id}`} className="home-filter-chip">
+                {isArabic ? category.nameAr : category.nameEn}
+              </Link>
+            ))}
           </div>
           {listings.isLoading ? (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 home-listings-grid">

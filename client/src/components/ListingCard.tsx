@@ -119,7 +119,10 @@ export default function ListingCard({ listing, compact = false }: { listing: Lis
       <div className="p-4">
         {compact && (
           <div className="listing-compact-meta">
-            <span className="listing-compact-category">{category}</span>
+            <span className="listing-compact-category">
+              {category}
+              {listing.exchangeAvailable && <span className="listing-compact-badge">{isArabic ? "تبادل" : "Exchange"}</span>}
+            </span>
             <span className="listing-compact-price">
               {price} <small>{isArabic ? "ج.م" : listing.currency}</small>
             </span>

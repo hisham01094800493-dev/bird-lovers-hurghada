@@ -53,6 +53,18 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .site-content { min-width: 0; }
 .site-shell-root.home-page { background: #eaf6fa !important; }
 .site-shell-root.home-page > header { background: rgba(234,246,250,.94) !important; }
+.home-search-form { display: flex; align-items: center; gap: 9px; max-width: 620px; margin-top: 22px; border: 1px solid #c8e0e8; border-radius: 16px; padding: 6px 7px 6px 14px; background: rgba(255,255,255,.86); box-shadow: 0 10px 24px rgba(38,105,125,.08); color: #5c8b9a; }
+.home-search-form input { min-width: 0; height: 40px; flex: 1; border: 0; background: transparent; padding-inline: 0; box-shadow: none; color: #183b39; }
+.home-search-form input:focus-visible { outline: 0; box-shadow: none; }
+.home-search-submit { flex: 0 0 auto; border-radius: 11px; background: #2d829e; padding-inline: 16px; }
+.home-search-submit:hover { background: #236c84; }
+.home-filter-chips { display: flex; gap: 8px; margin: -4px 0 18px; overflow-x: auto; padding: 2px 1px 8px; scrollbar-width: none; }
+.home-filter-chips::-webkit-scrollbar { display: none; }
+.home-filter-chip { flex: 0 0 auto; border: 1px solid #c9e0e7; border-radius: 999px; padding: 8px 13px; color: #527d8a; background: rgba(255,255,255,.7); font-size: 11px; font-weight: 800; transition: transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease; }
+.home-filter-chip:hover, .home-filter-chip.is-active { border-color: #2d829e; color: white; background: #2d829e; transform: translateY(-2px); }
+.listing-compact-badge { display: inline-flex; margin-inline-start: 6px; border-radius: 999px; padding: 3px 6px; color: #a6533e; background: #faece8; font-size: 9px; font-weight: 800; vertical-align: middle; }
+.home-listings-more { border: 1px solid #2d829e; border-radius: 999px; padding: 10px 16px; color: #236c84; background: rgba(255,255,255,.72); transition: transform .18s ease, background .18s ease, color .18s ease; }
+.home-listings-more:hover { color: white; background: #2d829e; transform: translateY(-2px); }
 .home-page .category-card, .home-page .home-intent-card, .home-page .home-weather-card, .home-page .home-bird-of-day-card, .home-page .listing-card, .home-page .home-promo { cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
 .home-page .category-card:hover, .home-page .home-intent-card:hover, .home-page .home-weather-card:hover, .home-page .home-bird-of-day-card:hover, .home-page .listing-card:hover, .home-page .home-promo:hover { border-color: #b9dce7; box-shadow: 0 16px 34px rgba(38,105,125,.14); transform: translateY(-4px); }
 .home-page .category-card:hover .category-icon, .home-page .home-intent-card:hover .home-intent-icon, .home-page .home-weather-card:hover .home-weather-icon { transform: scale(1.08); }
