@@ -51,6 +51,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .desktop-sidebar-brand strong { color: #183b39; font-family: 'Cairo', sans-serif; font-size: 14px; }
 .desktop-sidebar-brand span { margin-top: 2px; color: #82948e; font-size: 10px; }
 .site-content { min-width: 0; }
+.site-shell-root.home-page { background: #eaf6fa !important; }
+.site-shell-root.home-page > header { background: rgba(234,246,250,.94) !important; }
+.home-page .category-card, .home-page .home-intent-card, .home-page .home-weather-card, .home-page .home-bird-of-day-card, .home-page .listing-card, .home-page .home-promo { cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.home-page .category-card:hover, .home-page .home-intent-card:hover, .home-page .home-weather-card:hover, .home-page .home-bird-of-day-card:hover, .home-page .listing-card:hover, .home-page .home-promo:hover { border-color: #b9dce7; box-shadow: 0 16px 34px rgba(38,105,125,.14); transform: translateY(-4px); }
+.home-page .category-card:hover .category-icon, .home-page .home-intent-card:hover .home-intent-icon, .home-page .home-weather-card:hover .home-weather-icon { transform: scale(1.08); }
+.home-page .category-icon, .home-page .home-intent-icon, .home-page .home-weather-icon { transition: transform .2s ease; }
+@media (hover: none) { .home-page .category-card:active, .home-page .home-intent-card:active, .home-page .home-weather-card:active, .home-page .home-bird-of-day-card:active, .home-page .listing-card:active, .home-page .home-promo:active { transform: scale(.985); } }
 @media (min-width: 1024px) {
   .desktop-sidebar { position: fixed; inset: 74px auto 0 0; z-index: 35; width: 258px; overflow-y: auto; flex-direction: column; padding: 24px 18px; border-right: 1px solid #dce7df; background: rgba(247,245,239,.98); box-shadow: 8px 0 28px rgba(24,59,57,.05); backdrop-filter: blur(14px); transition: width 220ms cubic-bezier(.23,1,.32,1), padding 220ms ease; }
   .site-content { margin-inline-start: 258px; transition: margin 220ms cubic-bezier(.23,1,.32,1); }

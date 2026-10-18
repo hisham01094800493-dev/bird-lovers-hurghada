@@ -36,7 +36,7 @@ const FACEBOOK_GROUP_URL =
   "https://www.facebook.com/groups/798363001904219/?ref=share_group_link";
 const DESKTOP_SIDEBAR_KEY = "bird-lovers-desktop-sidebar-collapsed";
 
-export default function SiteShell({ children }: { children: React.ReactNode }) {
+export default function SiteShell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const [location] = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const { language, isArabic, toggleLanguage, t } = useLanguage();
@@ -219,7 +219,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const FloatingIcon = floatingAction.icon;
   const showFloatingAction = !location.startsWith("/community");
   return (
-    <div dir={isArabic ? "rtl" : "ltr"} className={`site-shell-root min-h-screen bg-[#f7f5ef] text-[#183b39] ${desktopSidebarCollapsed ? "desktop-sidebar-is-collapsed" : ""}`}>
+    <div dir={isArabic ? "rtl" : "ltr"} className={`site-shell-root min-h-screen bg-[#f7f5ef] text-[#183b39] ${className} ${desktopSidebarCollapsed ? "desktop-sidebar-is-collapsed" : ""}`}>
       <header className="sticky top-0 z-40 border-b border-[#dce7df] bg-[#f7f5ef]/95 backdrop-blur">
         <div className="shell flex h-[74px] items-center justify-between gap-4">
           <Link

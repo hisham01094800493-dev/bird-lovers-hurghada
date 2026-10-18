@@ -55,7 +55,7 @@ export default function Home() {
   const visibleListings = listings.data?.slice(0, 6) ?? [];
   const hasMoreListings = (listings.data?.length ?? 0) > 6;
   return (
-    <SiteShell>
+    <SiteShell className="home-page">
       <section className="shell hero-section home-hero">
         <div className="hero-grid">
           <div className="hero-copy">
