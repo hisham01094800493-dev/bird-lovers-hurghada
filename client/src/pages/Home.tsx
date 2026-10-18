@@ -40,7 +40,6 @@ export default function Home() {
   const [preference, setPreference] = useState<"beginner" | "quiet" | "social">("beginner");
   const categories = trpc.categories.list.useQuery();
   const listings = trpc.listings.list.useQuery({ limit: 6, offset: 0 });
-  const posts = trpc.community.list.useQuery();
   const care = trpc.care.overview.useQuery(undefined, { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false });
   const weather = care.data?.weather;
   const weatherAdvice = weather?.level === "critical"
@@ -163,16 +162,6 @@ export default function Home() {
         </div>
       </section>
       <section className="shell home-discovery-strip" aria-label={isArabic ? "اختيارات سريعة للزائر" : "Quick visitor choices"}>
-        <div className="home-live-strip">
-          <div className="home-live-title"><span className="home-live-dot" /> <strong>{isArabic ? "آخر ما يحدث" : "Happening now"}</strong><small>{isArabic ? "اسحب لتستكشف" : "Swipe to explore"}</small></div>
-          <div className="home-live-items">
-            {(posts.data?.slice(0, 4).map(post => ({ label: isArabic ? "سؤال جديد" : "New question", title: post.title })) ?? [
-              { label: isArabic ? "نصيحة اليوم" : "Today’s tip", title: isArabic ? "كيف تحافظ على ماء طائرك في الحر؟" : "How to keep your bird’s water fresh in the heat?" },
-              { label: isArabic ? "مجتمع الهواة" : "Community", title: isArabic ? "اسأل أهل الخبرة قبل ما تشتري" : "Ask experienced bird lovers before you buy" },
-              { label: isArabic ? "إعلان جديد" : "New listing", title: isArabic ? "اكتشف الطيور المتاحة في الغردقة" : "Discover birds available in Hurghada" },
-            ]).map((item, index) => <Link key={`${item.label}-${index}`} href={item.label.includes("إعلان") || item.label.includes("listing") ? "/marketplace" : item.label.includes("نصيحة") || item.label.includes("tip") ? "/care-tools" : "/community"} className="home-live-item"><small>{item.label}</small><span>{item.title}</span><ArrowRight size={14} /></Link>)}
-          </div>
-        </div>
         <div className="home-intent-panel">
           <div className="home-mini-heading">
             <p className="eyebrow">{isArabic ? "اختيارك يبدأ هنا" : "Start here"}</p>
