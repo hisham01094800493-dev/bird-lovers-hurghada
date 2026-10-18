@@ -37,6 +37,7 @@ const categoryIcons = {
 } as const;
 export default function Home() {
   const { isArabic, t } = useLanguage();
+  const [preference, setPreference] = useState<"beginner" | "quiet" | "social">("beginner");
   const categories = trpc.categories.list.useQuery();
   const listings = trpc.listings.list.useQuery({ limit: 6, offset: 0 });
   const posts = trpc.community.list.useQuery();
@@ -47,6 +48,11 @@ export default function Home() {
     : weather?.level === "watch"
       ? (isArabic ? "حرارة مرتفعة — أبعد القفص عن شمس الظهر" : "High heat — keep the cage away from midday sun")
       : (isArabic ? "جو مناسب — حافظ على تهوية وماء نظيف" : "Comfortable day — keep airflow and clean water");
+  const recommendation = preference === "quiet"
+    ? { ar: "كناري هادئ", en: "A calm canary", noteAr: "بداية لطيفة لمحبي الهدوء والصوت الجميل.", noteEn: "A gentle start for quiet homes and beautiful songs." }
+    : preference === "social"
+      ? { ar: "كوكتيل أليف", en: "A friendly cockatiel", noteAr: "رفيق اجتماعي يحب الصحبة والاهتمام اليومي.", noteEn: "A social companion who enjoys daily attention." }
+      : { ar: "بادجي مناسب للمبتدئين", en: "A beginner-friendly budgie", noteAr: "اختيار عملي كبداية مع رعاية بسيطة وممتعة.", noteEn: "A cheerful first bird with simple, rewarding care." };
   return (
     <SiteShell>
       <section className="shell hero-section home-hero">
@@ -157,6 +163,16 @@ export default function Home() {
         </div>
       </section>
       <section className="shell home-discovery-strip" aria-label={isArabic ? "اختيارات سريعة للزائر" : "Quick visitor choices"}>
+        <div className="home-live-strip">
+          <div className="home-live-title"><span className="home-live-dot" /> <strong>{isArabic ? "آخر ما يحدث" : "Happening now"}</strong><small>{isArabic ? "اسحب لتستكشف" : "Swipe to explore"}</small></div>
+          <div className="home-live-items">
+            {(posts.data?.slice(0, 4).map(post => ({ label: isArabic ? "سؤال جديد" : "New question", title: post.title })) ?? [
+              { label: isArabic ? "نصيحة اليوم" : "Today’s tip", title: isArabic ? "كيف تحافظ على ماء طائرك في الحر؟" : "How to keep your bird’s water fresh in the heat?" },
+              { label: isArabic ? "مجتمع الهواة" : "Community", title: isArabic ? "اسأل أهل الخبرة قبل ما تشتري" : "Ask experienced bird lovers before you buy" },
+              { label: isArabic ? "إعلان جديد" : "New listing", title: isArabic ? "اكتشف الطيور المتاحة في الغردقة" : "Discover birds available in Hurghada" },
+            ]).map((item, index) => <Link key={`${item.label}-${index}`} href={item.label.includes("إعلان") || item.label.includes("listing") ? "/marketplace" : item.label.includes("نصيحة") || item.label.includes("tip") ? "/care-tools" : "/community"} className="home-live-item"><small>{item.label}</small><span>{item.title}</span><ArrowRight size={14} /></Link>)}
+          </div>
+        </div>
         <div className="home-intent-panel">
           <div className="home-mini-heading">
             <p className="eyebrow">{isArabic ? "اختيارك يبدأ هنا" : "Start here"}</p>
@@ -168,6 +184,10 @@ export default function Home() {
             <Link href="/care-tools" className="home-intent-card home-intent-care"><span className="home-intent-icon"><Calculator size={19} /></span><span><strong>{isArabic ? "أحتاج نصيحة" : "Need care advice"}</strong><small>{isArabic ? "احسب واعرف" : "Plan with confidence"}</small></span><ArrowRight size={15} /></Link>
             <Link href="/community" className="home-intent-card home-intent-community"><span className="home-intent-icon"><MessageCircle size={19} /></span><span><strong>{isArabic ? "أسأل الهواة" : "Ask the community"}</strong><small>{isArabic ? "خبرة من أهلها" : "Learn from bird lovers"}</small></span><ArrowRight size={15} /></Link>
           </div>
+        </div>
+        <div className="home-recommend-card">
+          <div className="home-recommend-copy"><span className="home-feature-label">{isArabic ? "مناسب لك" : "Picked for you"}</span><h2>{isArabic ? recommendation.ar : recommendation.en}</h2><p>{isArabic ? recommendation.noteAr : recommendation.noteEn}</p><Link href="/marketplace" className="home-feature-link">{isArabic ? "شوف الإعلانات" : "See listings"} <ArrowRight size={14} /></Link></div>
+          <div className="home-recommend-choices"><small>{isArabic ? "اختار ما يهمك" : "Tell us what matters"}</small><div>{(["beginner", "quiet", "social"] as const).map(option => <button key={option} type="button" onClick={() => setPreference(option)} className={preference === option ? "is-active" : ""}>{option === "beginner" ? (isArabic ? "أول طائر" : "First bird") : option === "quiet" ? (isArabic ? "هادئ" : "Calm") : (isArabic ? "اجتماعي" : "Social")}</button>)}</div></div>
         </div>
         <div className="home-feature-cards">
           <Link href="/care-tools" className="home-weather-card">

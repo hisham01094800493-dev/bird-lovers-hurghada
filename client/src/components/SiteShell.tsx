@@ -209,6 +209,14 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         );
     }
   };
+  const floatingAction = location.startsWith("/marketplace")
+    ? { href: "/sell", label: isArabic ? "أضف إعلانًا" : "Add listing", icon: Plus }
+    : location.startsWith("/care-tools")
+      ? { href: "/care-tools", label: isArabic ? "احسب التكلفة" : "Calculate cost", icon: Calculator }
+      : location.startsWith("/community")
+        ? { href: "/community", label: isArabic ? "اكتب منشورًا" : "Write a post", icon: MessageCircle }
+        : { href: "/community", label: isArabic ? "اسأل الهواة" : "Ask the community", icon: MessageCircle };
+  const FloatingIcon = floatingAction.icon;
   return (
     <div dir={isArabic ? "rtl" : "ltr"} className={`site-shell-root min-h-screen bg-[#f7f5ef] text-[#183b39] ${desktopSidebarCollapsed ? "desktop-sidebar-is-collapsed" : ""}`}>
       <header className="sticky top-0 z-40 border-b border-[#dce7df] bg-[#f7f5ef]/95 backdrop-blur">
@@ -517,6 +525,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <div className="site-content">
         <PriceTicker />
         <main>{children}</main>
+        <Link href={floatingAction.href} className="smart-float-action"><span className="smart-float-icon"><FloatingIcon size={18} /></span><span>{floatingAction.label}</span></Link>
         <footer className="mt-24 border-t border-[#dce7df] bg-[#eef3ed]">
         <div className="shell grid gap-8 py-12 md:grid-cols-[1fr_auto_auto]">
           <div>

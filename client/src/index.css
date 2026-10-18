@@ -262,6 +262,18 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 @media (max-width: 640px) { .home-hero { padding-block: 28px 26px; } .home-hero .hero-visual { height: 250px; } .home-hero .hero-lede { margin-top: 18px; font-size: 14px; } .home-hero .mt-8 { margin-top: 22px; } .home-hero .mt-10 { margin-top: 24px; gap: 11px; } .home-category-section { padding-block: 22px 22px; } .home-category-section .category-grid { gap: 7px; } .home-category-section .category-card { min-height: 108px; padding: 11px; } .home-category-section .category-card .category-icon { width: 42px; height: 42px; border-radius: 13px; } .home-category-section .category-card .category-icon svg { width: 21px; height: 21px; } .home-category-section .category-name { margin-top: 9px; font-size: 12px; } .home-listings-section { padding-block: 30px; } .home-tools-section, .home-community-section { padding-block: 30px; } }
 
 .home-discovery-strip { display: grid; gap: 12px; padding-bottom: 24px; }
+.home-live-strip { display: flex; align-items: center; gap: 12px; overflow: hidden; border: 1px solid #dce7df; border-radius: 18px; padding: 9px; background: #183b39; color: white; }
+.home-live-title { display: flex; flex: 0 0 112px; flex-direction: column; gap: 1px; padding-inline: 5px; }
+.home-live-title strong { font-family: 'Cairo', sans-serif; font-size: 11px; }
+.home-live-title small { color: #b9d8c8; font-size: 8px; }
+.home-live-dot { width: 7px; height: 7px; margin-bottom: 2px; border-radius: 50%; background: #f1d1a4; box-shadow: 0 0 0 4px rgba(241,209,164,.14); }
+.home-live-items { display: flex; min-width: 0; gap: 7px; overflow-x: auto; scrollbar-width: none; }
+.home-live-items::-webkit-scrollbar { display: none; }
+.home-live-item { display: flex; min-width: 184px; flex: 0 0 184px; flex-direction: column; gap: 2px; border: 1px solid rgba(185,216,200,.2); border-radius: 13px; padding: 8px 10px; background: rgba(255,255,255,.08); color: white; }
+.home-live-item:hover { background: rgba(255,255,255,.16); }
+.home-live-item small { color: #f1d1a4; font-size: 8px; font-weight: 800; }
+.home-live-item span { overflow: hidden; font-family: 'Cairo', sans-serif; font-size: 10px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.home-live-item > svg { align-self: end; color: #b9d8c8; }
 .home-intent-panel { border: 1px solid #dce7df; border-radius: 22px; padding: 17px; background: #fff; box-shadow: 0 12px 28px rgba(24,59,57,.05); }
 .home-mini-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .home-mini-heading h2 { margin-top: 4px; color: #183b39; font-family: 'Cairo', sans-serif; font-size: 20px; font-weight: 800; }
@@ -278,6 +290,15 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-intent-food { background: #fff8e9; } .home-intent-food .home-intent-icon { background: #f9e9bd; color: #a3762f; }
 .home-intent-care { background: #fff0eb; } .home-intent-care .home-intent-icon { background: #f9dcd1; color: #c05e42; }
 .home-intent-community { background: #f2effb; } .home-intent-community .home-intent-icon { background: #e2dbf5; color: #715ca6; }
+.home-recommend-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; overflow: hidden; border: 1px solid #ecdcb2; border-radius: 22px; padding: 17px 19px; background: linear-gradient(110deg, #fff9e8, #fffdf7); }
+.home-recommend-copy { min-width: 0; }
+.home-recommend-copy h2 { margin-top: 4px; color: #183b39; font-family: 'Cairo', sans-serif; font-size: 20px; font-weight: 800; }
+.home-recommend-copy p { margin-top: 3px; color: #718780; font-size: 11px; }
+.home-recommend-choices { flex: 0 0 auto; text-align: right; }
+.home-recommend-choices small { color: #8a6a20; font-size: 9px; font-weight: 800; }
+.home-recommend-choices > div { display: flex; gap: 5px; margin-top: 7px; }
+.home-recommend-choices button { border: 1px solid #e4d39c; border-radius: 999px; padding: 7px 10px; color: #8a6a20; background: #fffdf5; font-family: 'Cairo', sans-serif; font-size: 9px; font-weight: 700; }
+.home-recommend-choices button.is-active, .home-recommend-choices button:hover { border-color: #c49752; color: white; background: #c49752; }
 .home-feature-cards { display: grid; grid-template-columns: .8fr 1.2fr; gap: 12px; }
 .home-weather-card, .home-bird-of-day-card { min-height: 176px; overflow: hidden; border: 1px solid #dce7df; border-radius: 22px; box-shadow: 0 12px 28px rgba(24,59,57,.05); }
 .home-weather-card { padding: 17px; background: linear-gradient(145deg, #eaf6f5, #fdfbf2); }
@@ -297,6 +318,10 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-bird-of-day-card p { margin-top: 7px; color: #d4e8d9; }
 .home-bird-of-day-card .home-feature-link { color: #f1d1a4; }
 .home-bird-of-day-card img { width: 43%; height: 100%; object-fit: cover; object-position: center; mask-image: linear-gradient(to right, transparent 0%, black 28%); }
+.smart-float-action { position: fixed; right: 18px; bottom: 18px; z-index: 45; display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 8px 13px 8px 8px; background: #d26246; color: white; font-family: 'Cairo', sans-serif; font-size: 11px; font-weight: 800; box-shadow: 0 12px 28px rgba(210,98,70,.28); }
+.smart-float-action:hover { transform: translateY(-3px); background: #b95138; }
+.smart-float-icon { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.2); }
+html[dir="rtl"] .smart-float-action { right: auto; left: 18px; padding: 8px 8px 8px 13px; }
 .home-care-tools { display: grid; max-width: 760px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .home-tool-card { min-height: 132px !important; }
 .home-tool-calculator .category-icon { background: #fff0c8; color: #b77b22; }
@@ -304,7 +329,7 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .home-tool-community .category-icon { background: #e5e1f8; color: #6856a6; }
 .home-tool-card .category-name { max-width: 100%; }
 @media (max-width: 640px) { .home-care-tools { gap: 6px; } .home-tool-card { min-height: 104px !important; padding: 9px !important; } .home-tool-card .category-icon { width: 40px !important; height: 40px !important; } .home-tool-card .category-name { margin-top: 8px !important; font-size: 10px !important; } .home-tool-card .category-ar { font-size: 8px !important; } .home-tool-card .category-arrow { right: 7px; bottom: 7px; } }
-@media (max-width: 640px) { .home-intent-panel { padding: 13px; } .home-intent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .home-intent-card { min-height: 70px; padding: 9px; } .home-intent-card strong { font-size: 11px; } .home-feature-cards { grid-template-columns: 1fr; } .home-weather-card, .home-bird-of-day-card { min-height: 156px; } .home-bird-of-day-card h3 { font-size: 16px; } }
+@media (max-width: 640px) { .home-live-strip { align-items: stretch; flex-direction: column; gap: 7px; } .home-live-title { flex-basis: auto; flex-direction: row; align-items: center; gap: 6px; } .home-live-title small { margin-inline-start: auto; } .home-live-items { width: 100%; } .home-intent-panel { padding: 13px; } .home-intent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .home-intent-card { min-height: 70px; padding: 9px; } .home-intent-card strong { font-size: 11px; } .home-recommend-card { align-items: stretch; flex-direction: column; gap: 12px; padding: 15px; } .home-recommend-choices { text-align: start; } .home-recommend-choices > div { flex-wrap: wrap; } .home-feature-cards { grid-template-columns: 1fr; } .home-weather-card, .home-bird-of-day-card { min-height: 156px; } .home-bird-of-day-card h3 { font-size: 16px; } .smart-float-action { right: 12px; bottom: 12px; } html[dir="rtl"] .smart-float-action { right: auto; left: 12px; } }
 
 /* Keep the final group promo compact after removing the redundant join strip. */
 .ad-slot-compact.ad-slot { min-height: 0; }
