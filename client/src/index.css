@@ -322,6 +322,7 @@ html[dir="rtl"] .mobile-sidebar-panel { margin-left: 0; margin-right: 0; animati
 .smart-float-action:hover { transform: translateY(-3px); background: #b95138; }
 .smart-float-icon { display: grid; width: 31px; height: 31px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.2); }
 html[dir="rtl"] .smart-float-action { right: auto; left: 18px; padding: 8px 8px 8px 13px; }
+.community-composer { order: 0; }
 .home-care-tools { display: grid; max-width: 760px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
 .home-tool-card { min-height: 132px !important; }
 .home-tool-calculator .category-icon { background: #fff0c8; color: #b77b22; }
@@ -329,7 +330,8 @@ html[dir="rtl"] .smart-float-action { right: auto; left: 18px; padding: 8px 8px 
 .home-tool-community .category-icon { background: #e5e1f8; color: #6856a6; }
 .home-tool-card .category-name { max-width: 100%; }
 @media (max-width: 640px) { .home-care-tools { gap: 6px; } .home-tool-card { min-height: 104px !important; padding: 9px !important; } .home-tool-card .category-icon { width: 40px !important; height: 40px !important; } .home-tool-card .category-name { margin-top: 8px !important; font-size: 10px !important; } .home-tool-card .category-ar { font-size: 8px !important; } .home-tool-card .category-arrow { right: 7px; bottom: 7px; } }
-@media (max-width: 640px) { .home-live-strip { align-items: stretch; flex-direction: column; gap: 7px; } .home-live-title { flex-basis: auto; flex-direction: row; align-items: center; gap: 6px; } .home-live-title small { margin-inline-start: auto; } .home-live-items { width: 100%; } .home-intent-panel { padding: 13px; } .home-intent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .home-intent-card { min-height: 70px; padding: 9px; } .home-intent-card strong { font-size: 11px; } .home-recommend-card { align-items: stretch; flex-direction: column; gap: 12px; padding: 15px; } .home-recommend-choices { text-align: start; } .home-recommend-choices > div { flex-wrap: wrap; } .home-feature-cards { grid-template-columns: 1fr; } .home-weather-card, .home-bird-of-day-card { min-height: 156px; } .home-bird-of-day-card h3 { font-size: 16px; } .smart-float-action { right: 12px; bottom: 12px; } html[dir="rtl"] .smart-float-action { right: auto; left: 12px; } }
+@media (max-width: 1023px) { .community-page-layout .community-composer { order: -1; } }
+@media (max-width: 640px) { .home-live-strip { align-items: stretch; flex-direction: column; gap: 7px; } .home-live-title { flex-basis: auto; flex-direction: row; align-items: center; gap: 6px; } .home-live-title small { margin-inline-start: auto; } .home-live-items { width: 100%; } .home-intent-panel { padding: 13px; } .home-intent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .home-intent-card { min-height: 70px; padding: 9px; } .home-intent-card strong { font-size: 11px; } .home-recommend-card { align-items: stretch; flex-direction: column; gap: 12px; padding: 15px; } .home-recommend-choices { text-align: start; } .home-recommend-choices > div { flex-wrap: wrap; } .home-feature-cards { grid-template-columns: 1fr; } .home-weather-card, .home-bird-of-day-card { min-height: 156px; } .home-bird-of-day-card h3 { font-size: 16px; } .smart-float-action { right: 12px; bottom: 12px; } html[dir="rtl"] .smart-float-action { right: auto; left: 12px; } } 
 
 /* Keep the final group promo compact after removing the redundant join strip. */
 .ad-slot-compact.ad-slot { min-height: 0; }

@@ -217,7 +217,7 @@ export default function Community() {
         </a>
       </section>
       <section className="shell pb-20">
-        <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <div className="community-page-layout grid gap-8 lg:grid-cols-[1fr_360px]">
           <div className="space-y-4">
             {posts.isLoading ? (
               [1, 2, 3].map(i => (
@@ -404,7 +404,7 @@ export default function Community() {
               </div>
             )}
           </div>
-          <aside className="space-y-5">
+          <aside className="community-composer space-y-5">
             <div className="post-composer">
               <div className="flex items-center gap-3">
                 <span className="join-icon">
@@ -412,7 +412,7 @@ export default function Community() {
                 </span>
                 <div>
                   <h2 className="font-display text-lg font-semibold">
-                    شارك معلومة تفيد غيرك
+                    اكتب منشورًا يفيد غيرك
                   </h2>
                   <p className="text-xs text-[#82948d]">
                     اكتب نصيحة واضحة أو سؤالًا يساعد المربين.
