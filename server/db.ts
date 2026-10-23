@@ -21,6 +21,7 @@ import {
   notifications,
   priceGuide,
   priceGuideDrafts,
+  passwordResetTokens,
   reports,
   reviews,
   seasonalCareTips,
@@ -170,6 +171,25 @@ export async function getUserByEmail(email: string) {
   return result[0];
 }
 
+export async function createPasswordResetToken(userId: number, tokenHash: string, expiresAt: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, userId));
+  await db.insert(passwordResetTokens).values({ userId, tokenHash, expiresAt });
+}
+export async function consumePasswordResetToken(tokenHash: string, passwordHash: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const rows = await db.select().from(passwordResetTokens).where(eq(passwordResetTokens.tokenHash, tokenHash)).limit(1);
+  const token = rows[0];
+  if (!token || token.expiresAt.getTime() < Date.now()) {
+    if (token) await db.delete(passwordResetTokens).where(eq(passwordResetTokens.id, token.id));
+    return false;
+  }
+  await db.update(users).set({ passwordHash }).where(eq(users.id, token.userId));
+  await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, token.userId));
+  return true;
+}
 export async function createLocalUser(input: {
   openId: string;
   name: string;

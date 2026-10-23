@@ -19,6 +19,7 @@ import BrandSplash from "./components/BrandSplash";
 import Profile from "./pages/Profile";
 import MyListings from "./pages/MyListings";
 import Login from "./pages/Login";
+import PasswordReset from "./pages/PasswordReset";
 import LostFound from "./pages/LostFound";
 import UpdateNotice from "./components/UpdateNotice";
 import PriceGuide from "./pages/PriceGuide";
@@ -44,6 +45,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
+      <Route path="/forgot-password">{() => <PasswordReset />}</Route>
+      <Route path="/reset-password">{() => <PasswordReset reset />}</Route>
       <Route path="/lost-found" component={LostFound} />
       <Route path="/marketplace" component={Marketplace} />
       <Route path="/prices" component={PriceGuide} />

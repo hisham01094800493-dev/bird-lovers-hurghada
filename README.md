@@ -86,3 +86,13 @@ Buttons for features that are not yet implemented are either absent or explicitl
 ## Deployment
 
 Production deploys automatically from the GitHub `main` branch to Vercel.
+
+## Password reset email setup
+
+Password reset links are single-use, expire after 30 minutes, and are stored as SHA-256 hashes. To enable email delivery, configure these server environment variables:
+
+- `RESEND_API_KEY`: API key for Resend.
+- `PASSWORD_RESET_FROM_EMAIL`: verified sender, for example `Bird Lovers <auth@your-domain.example>`.
+- `PUBLIC_APP_URL`: canonical public site URL (for example `https://your-domain.example`), without a trailing path.
+
+Apply the database migration `drizzle/0016_password_reset.sql` before deploying the feature. Without these environment variables, the request page explains that email delivery is not enabled; no reset email is sent.

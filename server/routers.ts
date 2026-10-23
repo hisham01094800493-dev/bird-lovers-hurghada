@@ -40,6 +40,8 @@ import {
   createConversationMessage,
   createCustomNotifications,
   createLocalUser,
+  createPasswordResetToken,
+  consumePasswordResetToken,
   createLostFoundReport,
   createNotification,
   createPriceGuideItem,
@@ -432,6 +434,48 @@ export const appRouter = router({
           maxAge: 1000 * 60 * 60 * 24 * 365,
         });
         return publicUser(user);
+      }),
+    requestPasswordReset: publicProcedure
+      .input(z.object({ email: z.string().trim().email().max(320) }))
+      .mutation(async ({ input }) => {
+        const key = process.env.RESEND_API_KEY;
+        const from = process.env.PASSWORD_RESET_FROM_EMAIL;
+        const appUrl = process.env.PUBLIC_APP_URL;
+        if (!key || !from || !appUrl) {
+          console.warn("[Auth] Password reset email is not configured (RESEND_API_KEY, PASSWORD_RESET_FROM_EMAIL, PUBLIC_APP_URL)");
+          return { accepted: true, emailConfigured: false };
+        }
+        const user = await getUserByEmail(input.email.toLowerCase());
+        if (user?.passwordHash && user.loginMethod === "password") {
+          const token = randomBytes(32).toString("base64url");
+          const tokenHash = (await import("node:crypto")).createHash("sha256").update(token).digest("hex");
+          await createPasswordResetToken(user.id, tokenHash, new Date(Date.now() + 30 * 60 * 1000));
+          const url = new URL("/reset-password", appUrl);
+          url.searchParams.set("token", token);
+          const response = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from,
+              to: [user.email!],
+              subject: "إعادة تعيين كلمة المرور - Bird Lovers Hurghada",
+              html: `<div dir="rtl" style="font-family:Arial,sans-serif;line-height:1.8"><h2>إعادة تعيين كلمة المرور</h2><p>اضغط الرابط أدناه لاختيار كلمة مرور جديدة. الرابط صالح لمدة 30 دقيقة ويستخدم مرة واحدة.</p><p><a href="${url.toString()}">إعادة تعيين كلمة المرور</a></p><p>إذا لم تطلب ذلك، تجاهل هذه الرسالة.</p></div>`,
+            }),
+          });
+          if (!response.ok) {
+            console.error("[Auth] Password reset email provider rejected request", response.status);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Could not send reset email" });
+          }
+        }
+        return { accepted: true, emailConfigured: true };
+      }),
+    resetPassword: publicProcedure
+      .input(z.object({ token: z.string().min(20).max(200), password: z.string().min(8).max(128) }))
+      .mutation(async ({ input }) => {
+        const tokenHash = (await import("node:crypto")).createHash("sha256").update(input.token).digest("hex");
+        const changed = await consumePasswordResetToken(tokenHash, await hashPassword(input.password));
+        if (!changed) throw new TRPCError({ code: "BAD_REQUEST", message: "Reset link is invalid or expired" });
+        return { success: true };
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
