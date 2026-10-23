@@ -9,6 +9,9 @@ const statusLabel: Record<string, string> = {
 export default function AdminPasswordRecovery() {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [issuedLink, setIssuedLink] = useState<{ id: number; url: string } | null>(null);
+  const [directEmail, setDirectEmail] = useState("");
+  const [identityVerified, setIdentityVerified] = useState(false);
+  const [directLink, setDirectLink] = useState("");
   const utils = trpc.useUtils();
   const requests = trpc.admin.passwordRecoveryRequests.useQuery();
   const update = trpc.admin.updatePasswordRecoveryRequest.useMutation({
@@ -25,12 +28,20 @@ export default function AdminPasswordRecovery() {
     },
     onError: error => toast.error(error.message),
   });
+  const directIssue = trpc.admin.issuePasswordResetForEmail.useMutation({
+    onSuccess: result => {
+      setDirectLink(`${window.location.origin}/reset-password?token=${encodeURIComponent(result.token)}`);
+      toast.success("تم إنشاء رابط لمرة واحدة صالح 30 دقيقة. أرسله إلى وسيلة التواصل التي تحققت منها.");
+    },
+    onError: error => toast.error(error.message),
+  });
   const copy = async (text: string) => {
     try { await navigator.clipboard.writeText(text); toast.success("تم نسخ الرابط"); }
     catch { toast.error("تعذر النسخ؛ حدد الرابط وانسخه يدوياً"); }
   };
   return <section id="admin-password-recovery" className="mt-10 rounded-2xl border border-[#dce7df] bg-white p-5 sm:p-7">
     <div className="flex items-start gap-3"><span className="join-icon"><KeyRound size={19} /></span><div><p className="eyebrow">دعم الحسابات</p><h2 className="section-title mt-2 text-3xl">طلبات استعادة كلمة المرور</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-[#718780]">تحقق من هوية العضو عبر وسيلة موثوقة قبل إصدار الرابط. الرابط يظهر مرة واحدة فقط، صالح 30 دقيقة، ولا ترسله إلى جهة غير متحققة.</p></div></div>
+    <div className="mt-6 rounded-2xl border border-[#dce7df] bg-[#f4f8f4] p-4 sm:p-5"><h3 className="font-bold text-[#183b39]">طلب وصل عبر واتساب</h3><p className="mt-1 text-sm leading-6 text-[#718780]">تحقق من هوية صاحب الحساب عبر قناة موثوقة، ثم أدخل بريده هنا. لا تصدر الرابط قبل إتمام التحقق.</p><div className="mt-3 flex flex-col gap-3 sm:flex-row"><input type="email" required value={directEmail} onChange={event => setDirectEmail(event.target.value)} placeholder="بريد الحساب" className="h-11 min-w-0 flex-1 rounded-xl border border-[#dce7df] bg-white px-3" /><button type="button" disabled={!identityVerified || !directEmail || directIssue.isPending} onClick={() => directIssue.mutate({ email: directEmail, identityVerified: true })} className="cta-primary rounded-xl px-4 py-2 text-sm disabled:opacity-50">{directIssue.isPending ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />} إصدار رابط مؤقت</button></div><label className="mt-3 flex items-start gap-2 text-sm text-[#48665f]"><input type="checkbox" checked={identityVerified} onChange={event => { setIdentityVerified(event.target.checked); setDirectLink(""); }} className="mt-1" /> أؤكد أنني تحققت من ملكية الحساب عبر وسيلة موثوقة.</label>{directLink && <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-bold text-amber-900">انسخ الرابط الآن وأرسله للعضو عبر وسيلة التحقق؛ لن يظهر مجدداً بعد مغادرة الصفحة.</p><div className="mt-2 flex gap-2"><input readOnly value={directLink} className="min-w-0 flex-1 rounded-lg border border-amber-200 bg-white px-2 py-2 text-left text-xs" dir="ltr" /><button type="button" onClick={() => copy(directLink)} className="rounded-lg bg-amber-800 px-3 py-2 text-xs font-bold text-white"><Clipboard size={14} className="inline" /> نسخ</button></div></div>}</div>
     {requests.isLoading ? <div className="p-8 text-center"><Loader2 className="mx-auto animate-spin" /></div> : !requests.data?.length ? <div className="empty-state mt-6"><ShieldCheck size={24} /><p>لا توجد طلبات استعادة حالياً.</p></div> : <div className="mt-6 space-y-4">{requests.data.map(request => <article key={request.id} className="rounded-2xl border border-[#e3ebe5] bg-[#fbfcfa] p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-[#183b39]">{request.email}</h3><span className="rounded-full bg-[#e9f1eb] px-3 py-1 text-xs font-bold text-[#52766d]">{statusLabel[request.status]}</span></div><p className="mt-2 flex items-center gap-2 text-sm text-[#52766d]"><MessageCircle size={15} /> {request.contact}</p><p className="mt-1 flex items-center gap-2 text-xs text-[#82948e]"><Clock3 size={14} /> {new Date(request.createdAt).toLocaleString("ar-EG")}</p>{request.message && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#48665f]">{request.message}</p>}</div><div className="text-xs text-[#82948e]">رقم الطلب #{request.id}</div></div>
       <label className="mt-4 block text-xs font-bold text-[#52766d]">ملاحظة داخلية للمدير<textarea value={notes[request.id] ?? request.adminNote ?? ""} onChange={event => setNotes(current => ({ ...current, [request.id]: event.target.value }))} maxLength={1000} className="mt-2 min-h-20 w-full rounded-xl border border-[#dce7df] bg-white p-3 text-sm" placeholder="نتيجة التحقق أو ملاحظات المتابعة" /></label>

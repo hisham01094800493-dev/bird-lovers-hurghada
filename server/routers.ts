@@ -1241,6 +1241,17 @@ export const appRouter = router({
   admin: router({
     stats: adminProcedure.query(() => getAdminStats()),
     passwordRecoveryRequests: adminProcedure.query(() => listPasswordRecoveryRequests()),
+    issuePasswordResetForEmail: adminProcedure
+      .input(z.object({ email: z.string().trim().email().max(320), identityVerified: z.literal(true) }))
+      .mutation(async ({ input }) => {
+        const user = await getUserByEmail(input.email.toLowerCase());
+        if (!user?.passwordHash || user.loginMethod !== "password")
+          throw new TRPCError({ code: "NOT_FOUND", message: "لم يتم العثور على حساب بكلمة مرور محلية لهذا البريد" });
+        const token = randomBytes(32).toString("base64url");
+        const tokenHash = createHash("sha256").update(token).digest("hex");
+        await createPasswordResetToken(user.id, tokenHash, new Date(Date.now() + 30 * 60 * 1000));
+        return { token };
+      }),
     updatePasswordRecoveryRequest: adminProcedure
       .input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "reviewing", "completed", "rejected"]), adminNote: z.string().trim().max(1000).optional() }))
       .mutation(async ({ ctx, input }) => {
