@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "drizzle-orm";
 import {
+  createHash,
   randomBytes,
   randomUUID,
   scrypt as nodeScrypt,
@@ -41,6 +42,10 @@ import {
   createCustomNotifications,
   createLocalUser,
   createPasswordResetToken,
+  createPasswordRecoveryRequest,
+  listPasswordRecoveryRequests,
+  getPasswordRecoveryRequest,
+  updatePasswordRecoveryRequest,
   consumePasswordResetToken,
   createLostFoundReport,
   createNotification,
@@ -435,6 +440,12 @@ export const appRouter = router({
         });
         return publicUser(user);
       }),
+    requestManualPasswordRecovery: publicProcedure
+      .input(z.object({ email: z.string().trim().email().max(320), contact: z.string().trim().min(5).max(180), message: z.string().trim().max(1000).optional() }))
+      .mutation(async ({ input }) => {
+        await createPasswordRecoveryRequest({ email: input.email.toLowerCase(), contact: input.contact, message: input.message });
+        return { accepted: true };
+      }),
     requestPasswordReset: publicProcedure
       .input(z.object({ email: z.string().trim().email().max(320) }))
       .mutation(async ({ input }) => {
@@ -448,7 +459,7 @@ export const appRouter = router({
         const user = await getUserByEmail(input.email.toLowerCase());
         if (user?.passwordHash && user.loginMethod === "password") {
           const token = randomBytes(32).toString("base64url");
-          const tokenHash = (await import("node:crypto")).createHash("sha256").update(token).digest("hex");
+          const tokenHash = createHash("sha256").update(token).digest("hex");
           await createPasswordResetToken(user.id, tokenHash, new Date(Date.now() + 30 * 60 * 1000));
           const url = new URL("/reset-password", appUrl);
           url.searchParams.set("token", token);
@@ -472,7 +483,7 @@ export const appRouter = router({
     resetPassword: publicProcedure
       .input(z.object({ token: z.string().min(20).max(200), password: z.string().min(8).max(128) }))
       .mutation(async ({ input }) => {
-        const tokenHash = (await import("node:crypto")).createHash("sha256").update(input.token).digest("hex");
+        const tokenHash = createHash("sha256").update(input.token).digest("hex");
         const changed = await consumePasswordResetToken(tokenHash, await hashPassword(input.password));
         if (!changed) throw new TRPCError({ code: "BAD_REQUEST", message: "Reset link is invalid or expired" });
         return { success: true };
@@ -1229,6 +1240,29 @@ export const appRouter = router({
   }),
   admin: router({
     stats: adminProcedure.query(() => getAdminStats()),
+    passwordRecoveryRequests: adminProcedure.query(() => listPasswordRecoveryRequests()),
+    updatePasswordRecoveryRequest: adminProcedure
+      .input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "reviewing", "completed", "rejected"]), adminNote: z.string().trim().max(1000).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const request = await getPasswordRecoveryRequest(input.id);
+        if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Request not found" });
+        await updatePasswordRecoveryRequest(input.id, { status: input.status, adminNote: input.adminNote ?? null, reviewedBy: ctx.user.id, reviewedAt: new Date() });
+        return { success: true };
+      }),
+    issuePasswordRecoveryLink: adminProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const request = await getPasswordRecoveryRequest(input.id);
+        if (!request) throw new TRPCError({ code: "NOT_FOUND", message: "Request not found" });
+        if (request.status !== "reviewing") throw new TRPCError({ code: "PRECONDITION_FAILED", message: "ابدأ مراجعة الطلب وتحقق من هوية صاحبه أولاً" });
+        const user = await getUserByEmail(request.email.toLowerCase());
+        if (!user?.passwordHash || user.loginMethod !== "password") throw new TRPCError({ code: "BAD_REQUEST", message: "لم يتم العثور على حساب محلي قابل لاستعادة كلمة مروره" });
+        const token = randomBytes(32).toString("base64url");
+        const tokenHash = createHash("sha256").update(token).digest("hex");
+        await createPasswordResetToken(user.id, tokenHash, new Date(Date.now() + 30 * 60 * 1000));
+        await updatePasswordRecoveryRequest(input.id, { status: "link_issued", reviewedBy: ctx.user.id, reviewedAt: new Date(), resetLinkCreatedAt: new Date() });
+        return { token };
+      }),
     users: adminProcedure
       .input(
         z

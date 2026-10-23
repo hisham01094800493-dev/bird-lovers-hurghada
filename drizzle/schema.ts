@@ -46,6 +46,18 @@ export const passwordResetTokens = mysqlTable("passwordResetTokens", {
   expiresAt: timestamp("expiresAt").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({ userIdx: index("password_reset_user_idx").on(table.userId) }));
+export const passwordRecoveryRequests = mysqlTable("passwordRecoveryRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  contact: varchar("contact", { length: 180 }).notNull(),
+  message: varchar("message", { length: 1000 }),
+  status: mysqlEnum("status", ["pending", "reviewing", "link_issued", "completed", "rejected"]).notNull().default("pending"),
+  adminNote: varchar("adminNote", { length: 1000 }),
+  reviewedBy: int("reviewedBy").references(() => users.id),
+  reviewedAt: timestamp("reviewedAt"),
+  resetLinkCreatedAt: timestamp("resetLinkCreatedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ emailIdx: index("password_recovery_email_idx").on(table.email), statusIdx: index("password_recovery_status_idx").on(table.status) }));
 export const categories = mysqlTable(
   "categories",
   {

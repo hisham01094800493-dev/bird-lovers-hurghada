@@ -22,6 +22,7 @@ import {
   priceGuide,
   priceGuideDrafts,
   passwordResetTokens,
+  passwordRecoveryRequests,
   reports,
   reviews,
   seasonalCareTips,
@@ -189,6 +190,31 @@ export async function consumePasswordResetToken(tokenHash: string, passwordHash:
   await db.update(users).set({ passwordHash }).where(eq(users.id, token.userId));
   await db.delete(passwordResetTokens).where(eq(passwordResetTokens.userId, token.userId));
   return true;
+}
+export async function createPasswordRecoveryRequest(input: { email: string; contact: string; message?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const recent = await db.select({ id: passwordRecoveryRequests.id }).from(passwordRecoveryRequests)
+    .where(and(eq(passwordRecoveryRequests.email, input.email), sql`${passwordRecoveryRequests.createdAt} > DATE_SUB(NOW(), INTERVAL 30 MINUTE)`)).limit(1);
+  if (recent.length) return false;
+  await db.insert(passwordRecoveryRequests).values(input);
+  return true;
+}
+export async function listPasswordRecoveryRequests() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(passwordRecoveryRequests).orderBy(desc(passwordRecoveryRequests.createdAt)).limit(300);
+}
+export async function getPasswordRecoveryRequest(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const rows = await db.select().from(passwordRecoveryRequests).where(eq(passwordRecoveryRequests.id, id)).limit(1);
+  return rows[0];
+}
+export async function updatePasswordRecoveryRequest(id: number, input: { status?: "pending" | "reviewing" | "link_issued" | "completed" | "rejected"; adminNote?: string | null; reviewedBy?: number; reviewedAt?: Date; resetLinkCreatedAt?: Date }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(passwordRecoveryRequests).set(input).where(eq(passwordRecoveryRequests.id, id));
 }
 export async function createLocalUser(input: {
   openId: string;

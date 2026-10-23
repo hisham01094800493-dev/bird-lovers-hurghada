@@ -96,3 +96,9 @@ Password reset links are single-use, expire after 30 minutes, and are stored as 
 - `PUBLIC_APP_URL`: canonical public site URL (for example `https://your-domain.example`), without a trailing path.
 
 Apply the database migration `drizzle/0016_password_reset.sql` before deploying the feature. Without these environment variables, the request page explains that email delivery is not enabled; no reset email is sent.
+
+## Manual password recovery (temporary fallback)
+
+Members can submit a manual recovery request from `/forgot-password` with the account email and a return contact method. Requests are rate-limited per email (one every 30 minutes) and displayed only to authenticated administrators in the admin dashboard. The administrator must independently verify account ownership, move the request to **reviewing**, then issue a one-time 30-minute reset link and send it manually. The raw reset token is returned only to the issuing admin once and is not stored in the request record.
+
+Apply `drizzle/0017_manual_password_recovery.sql` after the password-reset migration. Never send a reset link to an unverified contact method.

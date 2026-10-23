@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import AdminPriceGuide from "@/components/AdminPriceGuide";
 import AdminAffiliateProducts from "@/components/AdminAffiliateProducts";
+import AdminPasswordRecovery from "@/components/AdminPasswordRecovery";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -295,7 +296,9 @@ export default function AdminDashboard() {
           <a href="#admin-community-reputation">النقاط والشارات</a>
           <a href="#admin-actions-section">الإشعارات</a>
           <a href="#admin-attachments-section">المرفقات</a>
+          <a href="#admin-password-recovery">استعادة الحسابات</a>
         </nav>
+        {adminDataEnabled && <AdminPasswordRecovery />}
         {expandedCard === "users" || expandedCard === "activeUsers" ? (
           <section
             id="admin-users-section"
